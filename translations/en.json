@@ -218,5 +218,12 @@
   "게이지를 길게 눌러 항목 · 모양 · 위치 편집": "Hold a gauge to edit its signal, style or position",
   "3 × 2 보기": "3 x 2 grid",
   "4 × 3 보기": "4 x 3 grid",
-  "언어 설정을 저장하지 못했습니다.": "Could not save the language setting."
+  "언어 설정을 저장하지 못했습니다.": "Could not save the language setting.",
+  "퍼포먼스": "Performance",
+  "배터리": "Battery",
+  "앞 왼쪽": "Front left",
+  "앞 오른쪽": "Front right",
+  "뒤 왼쪽": "Rear left",
+  "뒤 오른쪽": "Rear right",
+  "기어": "Gear"
 }

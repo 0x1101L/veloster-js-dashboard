@@ -1,5 +1,7 @@
 # ADB access and USB connection
 
+[Documentation / 문서 안내](README.md) · [Status / 확인 범위](STATUS.md)
+
 **English** | [한국어](ADB.md)
 
 ## What has actually been established

@@ -3,7 +3,9 @@ import hashlib
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
+import stat
 import shlex
 import subprocess
 import tempfile
@@ -151,6 +153,22 @@ class DeployTests(unittest.TestCase):
 
     def no_mutations(self):
         self.assertFalse(any(c[0] in ("push", "rm") or c[:2] == ("pm", "install") for c in self.adb.calls))
+
+    def test_journal_sync_failure_stops_before_install(self):
+        real_sync = os.fsync
+
+        def fail_applying(fd):
+            if stat.S_ISREG(os.fstat(fd).st_mode):
+                pending = json.loads((self.backup / "receipt.tmp").read_text())
+                if pending["status"] == "applying":
+                    raise OSError("receipt sync failed")
+            real_sync(fd)
+
+        with patch("os.fsync", side_effect=fail_applying):
+            with self.assertRaisesRegex(OSError, "receipt sync failed"):
+                self.deploy()
+        self.no_mutations()
+        self.assertEqual(json.loads((self.backup / "receipt.json").read_text())["status"], "stopped")
 
     def test_wrong_build_stops_before_backup_or_mutation(self):
         self.adb.props["ro.build.version.incremental"] = "other-build"
@@ -362,6 +380,64 @@ class DeployTests(unittest.TestCase):
         self.assertEqual(m.free_bytes("Filesystem 1K-blocks Used Available Use% Mounted on\n/dev/x 500000 100000 400000 20% /data\n"), 400000 * 1024)
         with self.assertRaises(m.Stopped):
             m.free_bytes("Filesystem Size Used Free Blksize\n/data 1000 500 500 4096\n")
+
+
+class JournalTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.journal = m.Journal(Path(self.temp.name) / "operation", "test", FakeAdb)
+        self.original = self.journal.path.read_bytes()
+        self.journal.data["status"] = "applying"
+
+    def test_syncs_complete_file_before_replace_and_directory_after(self):
+        events = []
+        real_sync = os.fsync
+
+        def observe(fd):
+            if stat.S_ISDIR(os.fstat(fd).st_mode):
+                events.append("directory")
+                self.assertEqual(m.read_json(self.journal.path)["status"], "applying")
+            else:
+                events.append("file")
+                self.assertEqual(self.journal.path.read_bytes(), self.original)
+                self.assertEqual(m.read_json(self.journal.path.with_suffix(".tmp"))["status"], "applying")
+            real_sync(fd)
+
+        with patch("os.fsync", side_effect=observe):
+            self.journal.save()
+        self.assertEqual(events, ["file", "directory"] if os.name == "posix" else ["file"])
+        self.assertEqual(m.read_json(self.journal.path)["status"], "applying")
+        self.assertFalse(self.journal.path.with_suffix(".tmp").exists())
+
+    def test_file_sync_failure_keeps_previous_receipt(self):
+        with patch("os.fsync", side_effect=OSError("sync failed")):
+            with self.assertRaisesRegex(OSError, "sync failed"):
+                self.journal.save()
+        self.assertEqual(self.journal.path.read_bytes(), self.original)
+        self.assertFalse(self.journal.path.with_suffix(".tmp").exists())
+
+    def test_replace_failure_keeps_previous_receipt(self):
+        with patch.object(Path, "replace", side_effect=OSError("replace failed")):
+            with self.assertRaisesRegex(OSError, "replace failed"):
+                self.journal.save()
+        self.assertEqual(self.journal.path.read_bytes(), self.original)
+        self.assertFalse(self.journal.path.with_suffix(".tmp").exists())
+
+    @unittest.skipUnless(os.name == "posix", "Directory sync is POSIX-only")
+    def test_directory_sync_failure_is_reported_after_valid_replace(self):
+        real_sync = os.fsync
+
+        def fail_directory(fd):
+            if stat.S_ISDIR(os.fstat(fd).st_mode):
+                raise OSError("directory sync failed")
+            real_sync(fd)
+
+        with patch("os.fsync", side_effect=fail_directory):
+            with self.assertRaisesRegex(OSError, "directory sync failed"):
+                self.journal.save()
+        self.assertEqual(m.read_json(self.journal.path)["status"], "applying")
+        self.assertFalse(self.journal.path.with_suffix(".tmp").exists())
 
 
 if __name__ == "__main__":

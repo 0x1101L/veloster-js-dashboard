@@ -29,6 +29,8 @@ public final class PitRenderer {
     private GraphLayout graphLayout;
     private GaugeLayout gaugeLayout;
     private OverviewLayout overviewLayout=new OverviewLayout();
+    private boolean performancePage;
+    private final PerformanceRenderer performanceRenderer=new PerformanceRenderer();
     private final java.text.SimpleDateFormat clockFormat=new java.text.SimpleDateFormat("HH:mm",Locale.US);
     private long clockMinute=Long.MIN_VALUE;
     private String clockText="";
@@ -37,6 +39,7 @@ public final class PitRenderer {
         if(minute!=clockMinute){clockMinute=minute;clockFormat.setTimeZone(java.util.TimeZone.getDefault());clockText=clockFormat.format(new java.util.Date(now));}
         return clockText;
     }
+    public void setPerformancePage(boolean value){performancePage=value;}
     public void setArtwork(Bitmap value){artwork=value;}
     public void setGaugeLayout(GaugeLayout value){gaugeLayout=value;}
     public void setGraphLayout(GraphLayout value){graphLayout=value;}
@@ -62,19 +65,19 @@ public final class PitRenderer {
         paint.setShader(background);c.drawRect(0,0,800,480,paint);paint.setShader(null);
         for(int y=56;y<480;y+=8)stroke(c,0,y,800,y,0x063f4948,1);
         box(c,0,0,800,52,0xff090b0c);box(c,18,51,782,52,LINE);
-        stroke(c,19,16,13,35,RED,4);stroke(c,27,16,21,35,BLUE,4);
-        text(c,"N / PIT",36,33,23,WHITE,true);
-        button(c,UiText.t("전체 조망"),144,8,100,38,!cluster&&gaugeLayout==null&&graphLayout==null,BLUE);
+        button(c,UiText.t("퍼포먼스"),DashboardPage.left(DashboardPage.PERFORMANCE),8,DashboardPage.width(DashboardPage.PERFORMANCE),38,performancePage,BLUE);
+        button(c,UiText.t("전체 조망"),144,8,100,38,!performancePage&&!cluster&&gaugeLayout==null&&graphLayout==null,BLUE);
         button(c,"F1",250,8,72,38,cluster&&gaugeLayout==null&&graphLayout==null,BLUE);
         button(c,UiText.t("게이지"),328,8,84,38,gaugeLayout!=null,BLUE);
         button(c,UiText.t("그래프"),418,8,110,38,graphLayout!=null,BLUE);
         button(c,UiText.language().toUpperCase(Locale.US),534,8,48,38,false,BLUE);
         centered(c,clock(),620,33,22,WHITE,true);
         button(c,UiText.t("돌아가기"),666,8,116,38,false,BLUE);
-        if(graphLayout!=null)graphRenderer.draw(c,model,now,graphLayout);
+        if(performancePage)performanceRenderer.draw(c,model,now);
+        else if(graphLayout!=null)graphRenderer.draw(c,model,now,graphLayout);
         else if(gaugeLayout!=null)gaugeRenderer.draw(c,model,now,gaugeLayout);
         else if(mediaPage)drawCombined(c);else if(cluster)drawCluster(c);else drawDashboard(c);
-        if(graphLayout==null&&!mediaPage && music!=null && music.notice)drawMedia(c,true);
+        if(!performancePage&&graphLayout==null&&!mediaPage && music!=null && music.notice)drawMedia(c,true);
         if(cluster&&gaugeLayout==null&&graphLayout==null)drawArtworkToggle(c);
         c.restore();
     }

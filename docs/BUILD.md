@@ -1,5 +1,7 @@
 # 공개 소스 빌드와 테스트
 
+[Documentation / 문서 안내](README.md) · [Status / 확인 범위](STATUS.md)
+
 ## 설치 파일과 빌드 결과 구분
 
 바로 설치할 파일은 `apks/`의 기존 서명된 배포본입니다. 아래 공개 빌더는 **서명 전 APK**까지만 만듭니다. 개인키·OEM SDK 구현·순정 APK·차량 로그가 필요하거나 포함되지 않으며 차량에 연결하지 않습니다.
@@ -54,8 +56,17 @@ python3 scripts/build.py hub \
 
 ## 실행 바로가기와 선택형 메뉴 도구
 
-현재 Hub 소스는 v10이며 부팅 시 직접 켜 둔 바로가기만 복원합니다. 호스트 검사는 실제 서비스·리시버를 작은 Android 스텁과 실행하지만 실제 차량 표시/부팅 전달을 대신하지 않습니다.
+현재 Hub 소스는 v10 이후의 미배포 후보이며 OEM 화면 복귀·QuickBoot 방송 처리를 추가했습니다. 매니페스트 버전은 릴리스 준비 전까지 v10으로 유지하므로 새 빌드와 기존 배포 APK를 해시로 구분합니다. 부팅 시 직접 켜 둔 바로가기만 복원합니다. 호스트 검사는 실제 서비스·리시버를 작은 Android 스텁과 실행하지만 실제 차량 표시/부팅 전달을 대신하지 않습니다.
 
 [단일 설치 명령](INSTALL.md)은 Python 표준 라이브러리와 ADB만 사용합니다. 빌드 도구나 키가 필요하지 않습니다. [선택형 OEM 메뉴 재구성](MENU_ENTRY_ko.md)에만 별도 JDK·Androguard·smali·개인 원본이 필요합니다. 관련 소스는 `menu-entry/`와 `scripts/build_menu_entry.py`이며, 외부 키를 받아 해당 로컬 메뉴 APK를 서명하는 경로입니다. OEM 코드가 포함된 생성물을 공개하지 않습니다.
 
-다국어 문자열은 `translations/en.json`, `ko.json`을 수정하고 `python3 scripts/generate_translations.py`로 Java 카탈로그를 갱신합니다. 빌더는 카탈로그 일치 여부를 검사하고 `res/values`, `res/values-ko`의 앱 이름 리소스도 컴파일합니다. 현재 소스는 계기판 v6·내 앱 v10에 대응합니다.
+다국어 문자열은 `translations/en.json`, `ko.json`을 수정하고 `python3 scripts/generate_translations.py`로 Java 카탈로그를 갱신합니다. 빌더는 카탈로그 일치 여부를 검사하고 `res/values`, `res/values-ko`의 앱 이름 리소스도 컴파일합니다. 두 앱 소스에는 [v6/v10 이후 변경](NEMESIS_REVIEW.md#implemented-in-our-code-unreleased)이 포함됩니다. 배포 APK는 v6/v10 그대로입니다.
+
+## Experimental AVRCP Cover Art core / 실험용 앨범아트 수신 코어
+
+Implementation, native transport, private trial builds and validation details are now in [AVRCP Cover Art research](EXPERIMENTAL_AVRCP.md). The existing experimental notes have been preserved there. These components are outside the released APKs; see [current verification](STATUS.md) and the [experiment index](../experimental/README.md).
+
+앨범아트 구현·시험본 빌드의 기존 상세 내용은 [별도 연구 문서](EXPERIMENTAL_AVRCP.md)로 옮겼습니다. 일반 앱 빌드는 위 절차를 사용합니다.
+
+<a id="offline-oem-system-experiments--오프라인-시스템-수정본"></a>
+<a id="native-transport-and-private-trial-apks--native-전송부와-비공개-시험-apk"></a>

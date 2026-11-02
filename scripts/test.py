@@ -25,6 +25,7 @@ def main():
                ROOT / "apps/dashboard/src/com/veloster/dashboard/HscanFrameDecoder.java"]
     sources += [hub / (name + ".java") for name in ("RadioTrial", "BluetoothSession", "RebootRequest", "QuickEntryPolicy")]
     tests = sorted((ROOT / "tests").glob("*Test.java"))
+    sources += [ROOT / "shared/src/com/veloster/diagnostics/ErrorLog.java", ROOT / "shared/src/com/veloster/vehicle/DashboardPage.java"]
     sources += tests
     with tempfile.TemporaryDirectory(prefix="vn-public-tests-") as temporary:
         subprocess.run([str(javac), "-encoding", "UTF-8", "-d", temporary,

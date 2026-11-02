@@ -62,6 +62,7 @@ def main():
     else:
         sources.append(shared / "com/veloster/vehicle/UsbDebugControl.java")
         sources += sorted((shared / "com/veloster/i18n").rglob("*.java"))
+        sources += sorted((shared / "com/veloster/diagnostics").rglob("*.java"))
     run("javac", [javac, "-encoding", "UTF-8", "-source", "7", "-target", "7",
                   "-classpath", classpath, "-d", classes, *sources])
     # Only app classes enter D8; compile-only OEM declarations never enter the APK.

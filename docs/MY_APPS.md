@@ -1,5 +1,7 @@
 # My Apps — launcher and head-unit shortcuts
 
+[Documentation / 문서 안내](README.md) · [Status / 확인 범위](STATUS.md)
+
 See [Language settings](LANGUAGES.md) for Korean/English selection. Button labels follow the chosen app language.
 
 **English** | [한국어](MY_APPS_ko.md) | [Project](../README.md)
@@ -8,7 +10,7 @@ See [Language settings](LANGUAGES.md) for Korean/English selection. Button label
 
 [Download My Apps v10](../apks/My-Apps-v10-API17.apk) · [Installation guide](INSTALL_EN.md) · [Quick-entry setup](QUICK_ENTRY.md) · [Reopening after reboot](INSTALL_EN.md#after-reboot)
 
-**v10 is signed and host-checked, but has not been tested on a vehicle or emulator.** It adds an opt-in standard Android shortcut so that opening My Apps need not depend on a modified OEM menu. This design does not establish compatibility with every head unit.
+**v10 installation/readback and owner-observed HOME edge-button reopening were confirmed on 2026-10-27; full power-off restoration remains unverified.** [Current verification](STATUS.md). It adds an opt-in standard Android shortcut so that opening My Apps need not depend on a modified OEM menu. This design does not establish compatibility with every head unit.
 
 ## Layout reference — earlier v8
 

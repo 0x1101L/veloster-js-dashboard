@@ -12,8 +12,8 @@
       "version_name": "1.5-i18n",
       "sha256": "e2bf05c2fa955b7a60dc74705e48de67582956a9e3c4ee45473b88a9093830e2",
       "bytes": 61229,
-      "vehicle_install_observed": false,
-      "scope": "Korean/English UI, system-language default and per-app saved override. API16 build, API17 V1 signature and host tests passed; no vehicle or emulator test of this version."
+      "vehicle_install_observed": true,
+      "scope": "2026-10-27 guided installation and APK readback SHA256 matched. Full power-off restoration and extended operation unverified. Later private Cover Art trial is a separate artifact."
     },
     {
       "file": "apks/My-Apps-v10-API17.apk",
@@ -22,8 +22,8 @@
       "version_name": "1.9-i18n",
       "sha256": "6351e5d0806fecf2cf5e5901a67c33a7a5ab337513dce1a62b30c9318d352680",
       "bytes": 42487,
-      "vehicle_install_observed": false,
-      "scope": "Korean/English UI, system-language default and per-app saved override. API16 build, API17 V1 signature and host tests passed; no vehicle or emulator test of this version."
+      "vehicle_install_observed": true,
+      "scope": "2026-10-27 guided installation and APK readback SHA256 matched. Owner separately confirmed HOME edge-button reopening; receipt screen/reboot flags remain false. Full power-off restoration unverified."
     },
     {
       "file": "apks/N-Dashboard-v5-API17.apk",
@@ -70,5 +70,7 @@
   "languages": [
     "ko",
     "en"
-  ]
+  ],
+  "verification_updated": "2026-11-02",
+  "verification_document": "docs/STATUS.md"
 }

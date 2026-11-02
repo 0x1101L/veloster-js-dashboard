@@ -1,4 +1,12 @@
-# Current release: v2026.10.26-i18n — prerelease
+# Release history / 배포 기록
+
+[Documentation](README.md) · [Current verification / 현재 확인 범위](STATUS.md)
+
+**2026-11-02 documentation update:** v6/v10 installation and readback were confirmed on 10/27, with owner-observed HOME edge-button reopening. Full power-off restoration remains unverified. The APKs and dated ZIP are unchanged. Below are the original release-time observations, including their then-pending vehicle checks.
+
+**문서 정정:** 10/27 설치·해시 대조·사용자 바로가기 확인을 반영했습니다. 아래 미시험 표현은 배포 당시 기록입니다. 새 APK 배포나 냉간 재부팅 성공을 뜻하지 않습니다.
+
+## v2026.10.26-i18n — prerelease (release-time record)
 
 My Apps **v10 / 1.9-i18n** and N Dashboard **v6 / 1.5-i18n** add Korean/English display text, system-language defaults, per-app saved selection, localized launcher labels, and live language refresh for the edge shortcut/notification. [Language guide](LANGUAGES.md).
 

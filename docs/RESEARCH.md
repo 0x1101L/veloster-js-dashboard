@@ -1,5 +1,7 @@
 # From an OEM update download to a standalone dashboard
 
+[Documentation / 문서 안내](README.md) · [Status / 확인 범위](STATUS.md)
+
 **English** | [한국어](RESEARCH_ko.md) | [Project](../README.md)
 
 This project began with the Veloster N BlueLink update package. We identified its Android components, traced how N Mode receives vehicle data, compared the download against the actual head unit, and eventually built a separate app. This guide records that process and provides a `nudl` download procedure for researchers.

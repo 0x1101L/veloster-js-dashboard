@@ -29,7 +29,7 @@ public final class VehicleDash extends View implements Runnable {
     private final GraphEditor graphEditor;
     private final OverviewLayout overviewLayout=new OverviewLayout();
     private int overviewDown=-1;
-    private boolean cluster, media, gauges, graphs, touching;
+    private boolean cluster, media, gauges, graphs, performance, touching;
     private float downX,downY;
     private long lastDiagnostic;
     private long lastPolicyCheck;
@@ -53,7 +53,13 @@ public final class VehicleDash extends View implements Runnable {
             overviewLayout.style(i,a.getSharedPreferences("pit_vehicle_ui",0).getInt("overview_style_"+i,2));
         }catch(IllegalArgumentException e){/* Retain default for an invalid saved style. */}
         catch(ClassCastException e){/* Retain default for incompatible preferences. */}
+        try{setPage(a.getSharedPreferences("pit_vehicle_ui",0).getInt("dashboard_page",DashboardPage.OVERVIEW),false);}catch(ClassCastException ignored){setPage(DashboardPage.OVERVIEW,false);}
         shiftTarget=ShiftGuide.clamp(a.getSharedPreferences("pit_vehicle_ui",0).getInt("shift_target",ShiftGuide.DEFAULT)); setVisibility(GONE); }
+    private void setPage(int value,boolean save){
+        int page=DashboardPage.normalize(value);
+        cluster=page==DashboardPage.F1;gauges=page==DashboardPage.GAUGES;graphs=page==DashboardPage.GRAPHS;performance=page==DashboardPage.PERFORMANCE;
+        if(save)activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("dashboard_page",page).apply();
+    }
     public static void attach(Activity a) {
         try {
             FrameLayout parent=(FrameLayout)a.findViewById(android.R.id.content);
@@ -159,7 +165,7 @@ public final class VehicleDash extends View implements Runnable {
         if(getVisibility()==VISIBLE) {
             invalidate();long now=SystemClock.elapsedRealtime();
             if(graphs)delay=250;
-            else if(!(cluster&&media&&!gauges) && mediaState.snapshot(now).notice)delay=16;
+            else if(!performance&&!(cluster&&media&&!gauges) && mediaState.snapshot(now).notice)delay=16;
             if(now-lastDiagnostic>=5000) { lastDiagnostic=now;android.util.Log.i("VehicleDash",DATA.diagnostics(now)); }
         }
         postDelayed(this,delay);
@@ -167,6 +173,7 @@ public final class VehicleDash extends View implements Runnable {
     protected void onDraw(Canvas c) {
         long now=SystemClock.elapsedRealtime();
         MediaState.Snapshot track=mediaState.snapshot(now);artwork.request(track);
+        renderer.setPerformancePage(performance);
         renderer.setArtwork(artwork.bitmap());
         renderer.setGaugeLayout(gauges?gaugeLayout:null);
         renderer.setGraphLayout(graphs?graphLayout:null);
@@ -193,7 +200,7 @@ public final class VehicleDash extends View implements Runnable {
         float x=event.getX()*800/getWidth(), y=event.getY()*480/getHeight();
         if(event.getAction()==MotionEvent.ACTION_DOWN) {
             removeCallbacks(editHold);touching=true;downX=x;downY=y;
-            overviewDown=!cluster&&!gauges&&!graphs&&!blocked&&!overviewCovered(y)?overviewLayout.hit(x,y):-1;
+            overviewDown=!performance&&!cluster&&!gauges&&!graphs&&!blocked&&!overviewCovered(y)?overviewLayout.hit(x,y):-1;
             if(!blocked&&((gauges&&gaugeEditor.hit(x,y)>=0)||(graphs&&graphLayout.hit(x,y)>=0)))postDelayed(editHold,600);
             return true;
         }
@@ -204,7 +211,7 @@ public final class VehicleDash extends View implements Runnable {
         boolean tap=touching && Math.abs(x-downX)<16 && Math.abs(y-downY)<16;
         touching=false;
         if(standalone&&tap&&x>=666&&x<=782&&downX>=666&&downX<=782&&y>=8&&y<=46&&downY>=8&&downY<=46){activity.finish();return true;}
-        if(tap&&!blocked&&!cluster&&!gauges&&!graphs&&overviewDown>=0&&overviewLayout.hit(x,y)==overviewDown&&!overviewCovered(y)){
+        if(tap&&!blocked&&!performance&&!cluster&&!gauges&&!graphs&&overviewDown>=0&&overviewLayout.hit(x,y)==overviewDown&&!overviewCovered(y)){
             overviewLayout.cycle(overviewDown);
             activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("overview_style_"+overviewDown,overviewLayout.style(overviewDown)).apply();
             invalidate();return true;
@@ -234,10 +241,8 @@ public final class VehicleDash extends View implements Runnable {
         }
         if(!tap || blocked || y<8 || y>46 || downY<8 || downY>46)return true;
         gaugeEditor.dismiss();graphEditor.dismiss();
-        if(x>=144 && x<=244 && downX>=144 && downX<=244) { cluster=false;gauges=false;graphs=false;invalidate(); }
-        else if(x>=250 && x<=322 && downX>=250 && downX<=322) { cluster=true;gauges=false;graphs=false;invalidate(); }
-        else if(x>=328 && x<=412 && downX>=328 && downX<=412) { gauges=true;cluster=false;graphs=false;invalidate(); }
-        else if(x>=418 && x<=528 && downX>=418 && downX<=528) { graphs=true;gauges=false;cluster=false;invalidate(); }
+        int selected=DashboardPage.tap(downX,downY,x,y);
+        if(selected>=0){setPage(selected,true);invalidate();}
         else if(x>=534 && x<=582 && downX>=534 && downX<=582){LanguageSettings.show(activity,new Runnable(){public void run(){invalidate();}});}
         else if(x>=666 && x<=782 && downX>=666 && downX<=782)close();
         return true;

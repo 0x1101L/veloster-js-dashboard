@@ -1,5 +1,7 @@
 # Optional factory-menu entry — exact supported build only
 
+[Documentation / 문서 안내](README.md) · [Status / 확인 범위](STATUS.md)
+
 **English** | [한국어](MENU_ENTRY_ko.md) | [Installation](INSTALL_EN.md)
 
 **Try [My Apps v9 Quick entry](QUICK_ENTRY.md) first.** Its floating button and notification use standard Android APIs and do not need OEM menu modifications. This advanced alternative recreates the factory **HOME → All menus → page 2 → Information → My Apps** route previously checked on the research vehicle. It is not a universal menu patch.

@@ -27,9 +27,10 @@ import android.view.WindowManager;
 import android.widget.Button;
 import java.lang.ref.WeakReference;
 
-/** Opt-in standard Android shortcut. No OEM APIs, HOME replacement or full-screen boot launch. */
+/** Opt-in Android shortcut with OEM display-event handling; never opens an Activity on wake. */
 public final class QuickEntryService extends Service {
     private static final String PREFS="quick_entry",CHANNEL="vn_quick_entry",STOP="com.veloster.carplayhub.QUICK_ENTRY_OFF";
+    private static final String OEM_SCREEN_OFF="com.mobis.intent.action.SCREEN_OFF",OEM_SCREEN_ON="com.mobis.intent.action.SCREEN_ON";
     private static final int NOTICE=9117;
     private static WeakReference<Runnable> statusObserver=new WeakReference<Runnable>(null);
     private SharedPreferences prefs;
@@ -38,9 +39,18 @@ public final class QuickEntryService extends Service {
     private WindowManager.LayoutParams layout;
     private int width,height,size;
     private boolean registered,overlayFailed;
+    // Either event source can veto visibility until its own ON event arrives.
+    // Keep these across service starts/configuration changes within this instance.
+    private boolean androidScreenOff,oemScreenOff;
     private String renderedLanguage;
     private final BroadcastReceiver screen=new BroadcastReceiver(){public void onReceive(Context context,Intent intent){
-        if(Intent.ACTION_SCREEN_OFF.equals(intent.getAction()))removeOverlay();else refreshOverlay();
+        String action=intent==null?null:intent.getAction();
+        if(Intent.ACTION_SCREEN_OFF.equals(action))androidScreenOff=true;
+        else if(OEM_SCREEN_OFF.equals(action))oemScreenOff=true;
+        else if(Intent.ACTION_SCREEN_ON.equals(action))androidScreenOff=false;
+        else if(OEM_SCREEN_ON.equals(action))oemScreenOff=false;
+        else if(!Intent.ACTION_USER_PRESENT.equals(action))return;
+        refreshOverlay();
     }};
     private static SharedPreferences prefs(Context context){return context.getSharedPreferences(PREFS,Context.MODE_PRIVATE);}
     public static int mode(Context context){
@@ -78,7 +88,7 @@ public final class QuickEntryService extends Service {
             else if(context.startService(intent)==null)throw new IllegalStateException("Service unavailable");
             return true;
         }catch(Exception e){
-            Log.e("VNQuickEntry","Shortcut service start failed",e);
+            com.veloster.diagnostics.ErrorLog.record("shortcut_start",e);Log.e("VNQuickEntry","Shortcut service start failed",e);
             error(context,"바로가기 시작 실패. 내 앱을 다시 열어 설정을 확인하세요.");return false;
         }catch(LinkageError e){error(context,"이 시스템에서 바로가기 서비스를 시작할 수 없습니다.");return false;}
     }
@@ -94,9 +104,10 @@ public final class QuickEntryService extends Service {
         if(!QuickEntryPolicy.restore(mode(this))){stopForeground(true);stopSelf();return START_NOT_STICKY;}
         overlayFailed=false;error(this,"");
         try{startForeground(NOTICE,notification());}
-        catch(Exception e){Log.e("VNQuickEntry","Notification unavailable",e);error(this,"알림 바로가기를 만들지 못했습니다. 서비스가 중지되었습니다.");stopSelf();return START_NOT_STICKY;}
+        catch(Exception e){com.veloster.diagnostics.ErrorLog.record("shortcut_notification",e);Log.e("VNQuickEntry","Notification unavailable",e);error(this,"알림 바로가기를 만들지 못했습니다. 서비스가 중지되었습니다.");stopSelf();return START_NOT_STICKY;}
         if(!registered){
             IntentFilter filter=new IntentFilter();filter.addAction(Intent.ACTION_SCREEN_OFF);filter.addAction(Intent.ACTION_SCREEN_ON);filter.addAction(Intent.ACTION_USER_PRESENT);
+            filter.addAction(OEM_SCREEN_OFF);filter.addAction(OEM_SCREEN_ON);
             try{registerReceiver(screen,filter);registered=true;}
             catch(RuntimeException e){error(this,"화면 잠금 상태를 추적할 수 없어 알림만 표시합니다.");overlayFailed=true;}
         }
@@ -122,6 +133,7 @@ public final class QuickEntryService extends Service {
         return builder.build();
     }
     private boolean unlockedScreen(){
+        if(androidScreenOff||oemScreenOff)return false;
         try{
             PowerManager power=(PowerManager)getSystemService(POWER_SERVICE);
             KeyguardManager keyguard=(KeyguardManager)getSystemService(KEYGUARD_SERVICE);
@@ -176,7 +188,7 @@ public final class QuickEntryService extends Service {
             });
             windows.addView(created,layout);button=created;
         }catch(RuntimeException e){
-            Log.w("VNQuickEntry","Overlay unavailable; retaining notification",e);removeOverlay();overlayFailed=true;
+            com.veloster.diagnostics.ErrorLog.record("shortcut_overlay",e);Log.w("VNQuickEntry","Overlay unavailable; retaining notification",e);removeOverlay();overlayFailed=true;
             error(this,"가장자리 버튼을 표시할 수 없어 알림 바로가기를 유지합니다. 시스템의 다른 앱 위 표시 권한을 확인하세요.");
         }
     }

@@ -1,5 +1,7 @@
 # Korean and English UI
 
+[Documentation / 문서 안내](README.md) · [Status / 확인 범위](STATUS.md)
+
 My Apps **v10** and N Dashboard **v6** support Korean and English. The default is **System**: Korean when the head-unit system language is Korean, English for all other system languages. This changes only our apps' display text; it does not change the vehicle/system language, numeric formatting, data decoding, units, or stored gauge/graph layouts.
 
 - **My Apps:** open **Language / 언어** in the top bar. Select System, 한국어, or English, then Save. An enabled edge button and notification refresh in the selected language.
@@ -14,7 +16,7 @@ The ADB/engineering-mode entry and installation command are unchanged:
 python3 scripts/install.py --serial YOUR_DEVICE_SERIAL --parked
 ```
 
-Use the new complete `v2026.10.26-i18n` ZIP. The installer selects v6/v10, preserves existing APK backups and performs an in-place `-r` update; it does not uninstall the old apps or clear their settings. Exact target and known installed-file checks remain in force. Open My Apps and verify Quick entry on HOME before disconnecting; a language update does not establish the still-pending vehicle/reboot test.
+Use the new complete `v2026.10.26-i18n` ZIP. The installer selects v6/v10, preserves existing APK backups and performs an in-place `-r` update; it does not uninstall the old apps or clear their settings. Exact target and known installed-file checks remain in force. Open My Apps and verify Quick entry on HOME before disconnecting; a language update does not establish full power-off restoration. The later installation and screen observations are recorded in [current verification](STATUS.md).
 
 **Checks:** both API17 APKs build against API16, V1 signatures and packaged English/Korean labels are verified, 11 Java test programs and 43 Python tests pass. The service harness covers 16 scenarios including saved language, corrupt preference fallback, live overlay refresh and persisted error translation. Vehicle data/subscription/layout methods (137) are instruction-identical to v5; language choice leaves `Locale.getDefault()` untouched. These are offline/host checks, not emulator or vehicle execution.
 

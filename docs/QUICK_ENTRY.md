@@ -1,12 +1,16 @@
 # My Apps v10: reopen without modifying the factory home menu
 
+Unreleased source adds Mobis display off/on handling and opt-in QuickBoot restoration. The released v10 APK described here is unchanged. See [implementation and validation limits](NEMESIS_REVIEW.md#implemented-in-our-code-unreleased).
+
+[Documentation / 문서 안내](README.md) · [Status / 확인 범위](STATUS.md)
+
 See [Language settings](LANGUAGES.md) for Korean/English selection. Button labels follow the chosen app language.
 
 **English** | [한국어](QUICK_ENTRY_ko.md) | [Installation](INSTALL_EN.md)
 
 My Apps v10 adds an **optional edge button and persistent notification**. These use standard Android services/windows rather than vehicle-specific OEM menu hooks. They do not replace the factory home screen. “Generic entry” describes this design; it does **not** establish compatibility with every head unit or Android version.
 
-**v10 is a prerelease:** compilation, signatures and host lifecycle tests passed, but actual vehicle overlay visibility and delivery of the boot broadcast have not been checked for this version. Do not describe a host test as a successful vehicle installation. The dashboard's vehicle interfaces still have their own compatibility requirements.
+**v10 remains a prerelease.** On 2026-10-27, installation/readback hashes matched and the owner confirmed reopening My Apps from the HOME edge button. Restoration after full power-off remains unverified. [Current verification](STATUS.md). The dashboard's vehicle interfaces retain their own compatibility requirements.
 
 ## First installation — finish before disconnecting
 

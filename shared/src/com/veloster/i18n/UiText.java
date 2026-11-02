@@ -64,6 +64,7 @@ public final class UiText {
         EN.put("기기 페어링","Pair device");
         EN.put("기기 페어링 상태를 확인할 수 없습니다.","The pairing state could not be verified.");
         EN.put("기본 배치로 복원","Reset layout");
+        EN.put("기어","Gear");
         EN.put("기존 AP 설정 복원 요청 실패. 백업 보존.","Could not request restoration of the original AP settings. Backup retained.");
         EN.put("기존 AP 설정 읽기 검증 실패. 백업 보존.","Could not verify the restored AP settings. Backup retained.");
         EN.put("기존 AP 설정과 Wi-Fi 꺼짐 상태는 복구했습니다. AP 드라이버 실패 상태14가 남아 백업을 유지합니다. 다음 정상 시작 후 복구를 다시 확인하세요.","Original AP settings and Wi-Fi off state restored. AP driver failure state 14 remains, so the backup is retained. Check restoration after the next normal startup.");
@@ -87,8 +88,10 @@ public final class UiText {
         EN.put("다음","Next");
         EN.put("닫기","Close");
         EN.put("돌아가기","Back");
+        EN.put("뒤 오른쪽","Rear right");
         EN.put("뒤 오른쪽 공기압","Rear-right pressure");
         EN.put("뒤 오른쪽 휠","Rear-right wheel");
+        EN.put("뒤 왼쪽","Rear left");
         EN.put("뒤 왼쪽 공기압","Rear-left pressure");
         EN.put("뒤 왼쪽 휠","Rear-left wheel");
         EN.put("막대","Bar");
@@ -100,6 +103,7 @@ public final class UiText {
         EN.put("바로가기 시작 실패. 내 앱을 다시 열어 설정을 확인하세요.","Shortcut could not start. Reopen My Apps and check its settings.");
         EN.put("바로가기 시작 실패. 설정 상태와 시스템 권한을 확인하세요.","Shortcut could not start. Check its settings and system permissions.");
         EN.put("바로가기: ","Shortcut: ");
+        EN.put("배터리","Battery");
         EN.put("배터리 SOC","Battery SOC");
         EN.put("배터리 전압","Battery voltage");
         EN.put("백업 저장 실패. 무선 설정을 변경하지 않았습니다.","Backup could not be saved. Wireless settings were not changed.");
@@ -149,8 +153,10 @@ public final class UiText {
         EN.put("알림 바로가기를 만들지 못했습니다. 서비스가 중지되었습니다.","Could not create the shortcut notification. The service has stopped.");
         EN.put("알림만","Notification only");
         EN.put("알림만 / Notification only","Notification only");
+        EN.put("앞 오른쪽","Front right");
         EN.put("앞 오른쪽 공기압","Front-right pressure");
         EN.put("앞 오른쪽 휠","Front-right wheel");
+        EN.put("앞 왼쪽","Front left");
         EN.put("앞 왼쪽 공기압","Front-left pressure");
         EN.put("앞 왼쪽 휠","Front-left wheel");
         EN.put("앱","Apps");
@@ -211,6 +217,7 @@ public final class UiText {
         EN.put("켜면 재부팅 뒤에도 작은 바로가기만 복원합니다. 앱 화면은 자동으로 열지 않습니다. 가장자리 버튼은 끌어서 옮길 수 있습니다.\n\n시스템이 다른 앱 위 표시를 허용하지 않으면 알림만 유지합니다. 순정 화면에서 알림을 열 수 없는 경우에는 별도 메뉴 진입점이 필요합니다. 강제 종료하면 직접 앱을 다시 열 때까지 자동 복원이 중지될 수 있습니다.\n\nWhen enabled, reboot restores only the shortcut. Drag the edge button to move it. If overlays are denied, a notification remains. If the factory UI hides notifications too, use a separate menu entry. Force-stop may block restoration until My Apps is opened again.","When enabled, reboot restores only the shortcut, not the full app screen. Drag the edge button to move it.\n\nIf overlays are denied, the notification remains. If the factory UI also hides notifications, use another entry point. Force-stop may prevent restoration until My Apps is opened again.");
         EN.put("타이어 공기압","Tire pressure");
         EN.put("토크 (계산)","Torque (calc.)");
+        EN.put("퍼포먼스","Performance");
         EN.put("페어링","Pair");
         EN.put("페어링 요청 실패: ","Pairing request failed: ");
         EN.put("페어링 요청이 거부되었습니다.","The pairing request was denied.");
@@ -232,16 +239,23 @@ public final class UiText {
         EN.put("횡가속","Lateral G");
         EN.put("흡기 온도","Intake temperature");
         KO.put("가장자리 버튼 + 알림 / Floating + notification","가장자리 버튼 + 알림");
+        KO.put("기어","기어");
         KO.put("내 앱 / My Apps","내 앱");
         KO.put("내 앱 열기 · 길게 끌어서 위치 변경 / My Apps","내 앱 열기 · 끌어서 위치 변경");
+        KO.put("뒤 오른쪽","뒤 오른쪽");
+        KO.put("뒤 왼쪽","뒤 왼쪽");
+        KO.put("배터리","배터리");
         KO.put("사용 안 함 / Off","사용 안 함");
         KO.put("설명 / Help","설명");
         KO.put("설정으로 / Back","설정으로");
         KO.put("실행 바로가기 / Quick entry","실행 바로가기");
         KO.put("알림만 / Notification only","알림만");
+        KO.put("앞 오른쪽","앞 오른쪽");
+        KO.put("앞 왼쪽","앞 왼쪽");
         KO.put("저장 / Save","저장");
         KO.put("취소 / Cancel","취소");
         KO.put("켜면 재부팅 뒤에도 작은 바로가기만 복원합니다. 앱 화면은 자동으로 열지 않습니다. 가장자리 버튼은 끌어서 옮길 수 있습니다.\n\n시스템이 다른 앱 위 표시를 허용하지 않으면 알림만 유지합니다. 순정 화면에서 알림을 열 수 없는 경우에는 별도 메뉴 진입점이 필요합니다. 강제 종료하면 직접 앱을 다시 열 때까지 자동 복원이 중지될 수 있습니다.\n\nWhen enabled, reboot restores only the shortcut. Drag the edge button to move it. If overlays are denied, a notification remains. If the factory UI hides notifications too, use a separate menu entry. Force-stop may block restoration until My Apps is opened again.","켜면 재부팅 뒤에도 작은 바로가기만 복원합니다. 앱 화면은 자동으로 열지 않습니다. 가장자리 버튼은 끌어서 옮길 수 있습니다.\n\n시스템이 다른 앱 위 표시를 허용하지 않으면 알림만 유지합니다. 순정 화면에서 알림을 열 수 없는 경우에는 별도 메뉴 진입점이 필요합니다. 강제 종료하면 직접 앱을 다시 열 때까지 자동 복원이 중지될 수 있습니다.");
+        KO.put("퍼포먼스","퍼포먼스");
     }
     private UiText() {}
     public static String selection(String selected){return "ko".equals(selected)||"en".equals(selected)?selected:"auto";}

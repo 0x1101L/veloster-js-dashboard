@@ -1,5 +1,7 @@
 # 순정 업데이트 다운로드부터 독립 N 계기판까지
 
+[Documentation / 문서 안내](README.md) · [Status / 확인 범위](STATUS.md)
+
 [English](RESEARCH.md) | **한국어** | [프로젝트](../README_ko.md)
 
 이 프로젝트는 `Veloster_N_BlueLink` 순정 업데이트 패키지에서 시작했습니다. Android 앱·서비스를 분석하고, 실차 원본과 대조하고, 차량 값 수신을 확인한 뒤 독립 N 계기판을 만들었습니다. 아래는 **오픈소스 다운로더 `nudl`로 원본을 확보하는 방법**과 실제 연구 과정입니다.

@@ -1,5 +1,7 @@
 # ADB 진입과 USB 연결
 
+[Documentation / 문서 안내](README.md) · [Status / 확인 범위](STATUS.md)
+
 [English](ADB_EN.md) | **한국어**
 
 ## 무엇까지 확인했나

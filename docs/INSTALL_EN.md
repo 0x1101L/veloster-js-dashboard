@@ -1,5 +1,7 @@
 # Installation, launch, and recovery
 
+[Documentation / 문서 안내](README.md) · [Status / 확인 범위](STATUS.md)
+
 See [Language settings](LANGUAGES.md) for Korean/English selection. Button labels follow the chosen app language.
 
 **English** | [한국어](INSTALL.md)
@@ -8,7 +10,7 @@ See [Language settings](LANGUAGES.md) for Korean/English selection. Button label
 
 This procedure is limited to **product `jsn_kr`, Android API `17`, incremental `eng.vmadmin.20250902.081552`**. The new installation tool checks that identity; it does not provide a bypass for other builds. Factory-menu modification additionally requires matching original APK and ODEX files. Similar vehicle names, Android versions, or hardware do not establish compatibility.
 
-The installation tooling and documentation were revised on **2026-10-26**. This is not a new vehicle-installation or cold-boot test. N Dashboard v6 adds localized UI and is not vehicle-tested; its data-processing code is unchanged from the previously observed v5. My Apps v10 is a signed, host-checked prerelease with no vehicle or emulator test; see [release provenance (Korean)](RELEASE.md).
+On 2026-10-27, public v6/v10 installation and APK readback hashes were verified; the owner confirmed HOME edge-button reopening. Full power-off restoration and extended operation remain unverified. See [current verification](STATUS.md) and the separately dated [release history](RELEASE.md).
 
 ## 1. Prepare the computer and vehicle
 

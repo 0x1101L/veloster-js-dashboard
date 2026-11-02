@@ -13,6 +13,7 @@ import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 STUBS = {
+    "com/veloster/diagnostics/ErrorLog.java": "package com.veloster.diagnostics;public class ErrorLog {public static void record(String s,Throwable e){}}",
 "android/content/SharedPreferences.java": '''package android.content;
 public interface SharedPreferences {
  int getInt(String k,int d); String getString(String k,String d); float getFloat(String k,float d); boolean getBoolean(String k,boolean d);
@@ -39,7 +40,7 @@ public class Intent {
  public Intent setAction(String a){action=a;return this;}public String getAction(){return action;}
  public Intent addFlags(int f){flags|=f;return this;}
 }''',
-"android/content/IntentFilter.java": '''package android.content;public class IntentFilter {public void addAction(String a){}}''',
+"android/content/IntentFilter.java": '''package android.content;public class IntentFilter {public final java.util.Set<String> actions=new java.util.HashSet<String>();public void addAction(String a){actions.add(a);}}''',
 "android/content/BroadcastReceiver.java": '''package android.content;public abstract class BroadcastReceiver {public abstract void onReceive(Context c,Intent i);}''',
 "android/content/ComponentName.java": '''package android.content;public class ComponentName {}''',
 "android/content/Context.java": '''package android.content;
@@ -50,7 +51,7 @@ public class Context {
  public static class Env {
   public MemoryPreferences prefs=new MemoryPreferences();public WindowManager windows=new WindowManager();public PowerManager power=new PowerManager();public KeyguardManager keyguard=new KeyguardManager();public NotificationManager notifications=new NotificationManager();
   public int starts,foregroundStarts,stops,activities,stopSelf,unregisters;public boolean foreground,failForeground,failRegister,failStart;
-  public BroadcastReceiver receiver;public Service running;public Intent lastStarted,lastActivity;
+  public BroadcastReceiver receiver;public IntentFilter screenFilter;public Service running;public Intent lastStarted,lastActivity;
  }
  public SharedPreferences getSharedPreferences(String name,int mode){return env.prefs;}
  public Object getSystemService(String name){if(name.equals(WINDOW_SERVICE))return env.windows;if(name.equals(POWER_SERVICE))return env.power;if(name.equals(KEYGUARD_SERVICE))return env.keyguard;if(name.equals(NOTIFICATION_SERVICE))return env.notifications;return null;}
@@ -58,7 +59,7 @@ public class Context {
  public ComponentName startForegroundService(Intent i){env.foregroundStarts++;return startService(i);}
  public boolean stopService(Intent i){env.stops++;if(env.running!=null)env.running.onDestroy();return true;}
  public void startActivity(Intent i){env.activities++;env.lastActivity=i;}
- public Intent registerReceiver(BroadcastReceiver r,IntentFilter f){if(env.failRegister)throw new SecurityException("denied");env.receiver=r;return null;}
+ public Intent registerReceiver(BroadcastReceiver r,IntentFilter f){if(env.failRegister)throw new SecurityException("denied");env.receiver=r;env.screenFilter=f;return null;}
  public void unregisterReceiver(BroadcastReceiver r){env.unregisters++;if(env.receiver==r)env.receiver=null;}
 }''',
 "android/content/DialogInterface.java": '''package android.content;public interface DialogInterface {interface OnClickListener {void onClick(DialogInterface d,int n);}}''',
@@ -143,7 +144,7 @@ public final class QuickEntryRuntimeHarness {
  static Context reset(){Context.env=new Context.Env();Build.VERSION.SDK_INT=17;return new Context();}
  static void mode(int m){Context.env.prefs.edit().putInt("mode",m).commit();}
  static QuickEntryService start(int m){mode(m);QuickEntryService s=new QuickEntryService();s.onCreate();s.onStartCommand(null,0,1);return s;}
- static void broadcast(String a){check(Context.env.receiver!=null,"screen receiver registered");Context.env.receiver.onReceive(new Context(),new Intent(a));}
+ static void broadcast(String a){check(Context.env.receiver!=null,"screen receiver registered");check(Context.env.screenFilter.actions.contains(a),"action registered: "+a);Context.env.receiver.onReceive(new Context(),new Intent(a));}
  static void optedOutBoot(){
   Context c=reset();QuickEntryReceiver r=new QuickEntryReceiver();r.onReceive(c,new Intent(Intent.ACTION_BOOT_COMPLETED));
   check(Context.env.starts==0&&Context.env.activities==0,"default boot must remain off");
@@ -247,13 +248,66 @@ public final class QuickEntryRuntimeHarness {
   com.veloster.i18n.LanguageSettings.save(c,"ko");s.onStartCommand(null,0,3);
   check("앱".equals(((android.widget.Button)Context.env.windows.view).label),"Korean switch back");s.onDestroy();
  }
+ static final String OEM_OFF="com.mobis.intent.action.SCREEN_OFF",OEM_ON="com.mobis.intent.action.SCREEN_ON",QUICKBOOT="android.intent.action.QUICKBOOT_POWERON";
+ static void oemScreenLifecycle(){
+  reset();QuickEntryService s=start(2);View old=Context.env.windows.view;
+  broadcast(OEM_OFF);check(Context.env.windows.view==null&&Context.env.power.on,"OEM off hides even while PowerManager says on");
+  old.performClick();check(Context.env.activities==0,"stale button cannot launch while OEM screen off");
+  s.onStartCommand(null,0,2);check(Context.env.windows.view==null,"service restart request does not undo OEM off");
+  s.onConfigurationChanged(new Configuration());check(Context.env.windows.view==null,"configuration refresh does not undo OEM off");
+  broadcast(OEM_ON);check(Context.env.windows.view!=null&&Context.env.activities==0,"OEM wake restores shortcut only");s.onDestroy();
+ }
+ static void screenSourcesRemainIndependent(){
+  reset();QuickEntryService s=start(2);broadcast(OEM_OFF);broadcast(Intent.ACTION_SCREEN_OFF);
+  broadcast(Intent.ACTION_SCREEN_ON);broadcast(Intent.ACTION_USER_PRESENT);
+  check(Context.env.windows.view==null,"Android wake does not clear OEM off");
+  broadcast(OEM_ON);check(Context.env.windows.view!=null,"both sources awake restores");
+  broadcast(Intent.ACTION_SCREEN_OFF);broadcast(OEM_OFF);broadcast(OEM_ON);
+  check(Context.env.windows.view==null,"OEM wake does not clear Android off despite stale power state");
+  broadcast(Intent.ACTION_SCREEN_ON);check(Context.env.windows.view!=null,"reverse wake order restores");s.onDestroy();
+ }
+ static void duplicateWakeEvents(){
+  reset();QuickEntryService s=start(2);broadcast(OEM_ON);broadcast(OEM_ON);
+  check(Context.env.windows.adds==1,"unsolicited repeated ON does not duplicate shortcut");
+  broadcast(OEM_OFF);broadcast(OEM_OFF);broadcast(OEM_ON);broadcast(OEM_ON);broadcast(Intent.ACTION_SCREEN_ON);
+  check(Context.env.windows.adds==2&&Context.env.windows.removes==1&&Context.env.activities==0,"one visible shortcut per wake, never auto-open");
+  Context.env.receiver.onReceive(new Context(),null);Context.env.receiver.onReceive(new Context(),new Intent("external.ENABLE"));
+  check(Context.env.windows.adds==2,"null and unknown events ignored");s.onDestroy();
+ }
+ static void oemWakeRespectsVisibility(){
+  reset();QuickEntryService s=start(2);broadcast(OEM_OFF);Context.env.keyguard.locked=true;broadcast(OEM_ON);
+  check(Context.env.windows.view==null,"OEM wake cannot bypass keyguard");
+  Context.env.keyguard.locked=false;Context.env.power.on=false;broadcast(OEM_ON);
+  check(Context.env.windows.view==null,"OEM wake cannot bypass PowerManager");
+  Context.env.power.on=true;broadcast(Intent.ACTION_USER_PRESENT);check(Context.env.windows.view!=null,"unlock restores when both reports allow");s.onDestroy();
+ }
+ static void sleepingLanguageRefresh(){
+  Context c=reset();QuickEntryService s=start(2);broadcast(OEM_OFF);
+  com.veloster.i18n.LanguageSettings.save(c,"en");s.onStartCommand(null,0,2);
+  check(Context.env.windows.view==null,"language refresh does not show sleeping overlay");
+  broadcast(OEM_ON);check("Apps".equals(((android.widget.Button)Context.env.windows.view).label),"wake uses latest language");s.onDestroy();
+ }
+ static void notificationModeStaysNotification(){
+  reset();QuickEntryService s=start(1);broadcast(OEM_OFF);broadcast(OEM_ON);
+  check(Context.env.foreground&&Context.env.windows.adds==0&&Context.env.activities==0,"wake preserves notification-only choice");s.onDestroy();
+ }
+ static void quickBootIsOptIn(){
+  Context c=reset();QuickEntryReceiver r=new QuickEntryReceiver();r.onReceive(c,new Intent(QUICKBOOT));
+  check(Context.env.starts==0,"quickboot defaults off");
+  mode(99);r.onReceive(c,new Intent(QUICKBOOT));check(Context.env.starts==0,"quickboot rejects invalid mode");
+  mode(1);r.onReceive(c,new Intent(QUICKBOOT));check(Context.env.starts==1&&Context.env.activities==0,"quickboot restores selected notification service only");
+  mode(2);r.onReceive(c,new Intent(QUICKBOOT));check(Context.env.starts==2&&Context.env.lastStarted.component==QuickEntryService.class,"quickboot restores selected floating service");
+  r.onReceive(c,null);r.onReceive(c,new Intent("external.ENABLE"));check(Context.env.starts==2,"unknown boot inputs ignored");
+ }
  public static void main(String[] args){
   java.util.Locale.setDefault(java.util.Locale.KOREAN);
   optedOutBoot();enabledBoot();unknownStartCannotEnable();floatingAndScreenLifecycle();modeChangeAndOff();deniedOverlayFallsBack();
   missingWindowServiceFallsBack();receiverFailureFallsBack();notificationFailureStops();offActionAndStickyRestart();rotationAndDrag();
   updateFailureRemovesOverlay();modernReflectionPath();deniedServiceStart();
   languagePreferences();languageRefresh();
-  System.out.println("PASS: 16 actual service/receiver lifecycle scenarios under host Android stubs (not device runtime)");
+  oemScreenLifecycle();screenSourcesRemainIndependent();duplicateWakeEvents();oemWakeRespectsVisibility();
+  sleepingLanguageRefresh();notificationModeStaysNotification();quickBootIsOptIn();
+  System.out.println("PASS: 23 actual service/receiver lifecycle scenarios under host Android stubs (not device runtime)");
  }
 }
 '''
@@ -297,7 +351,7 @@ class QuickEntryRuntimeTests(unittest.TestCase):
             ran = subprocess.run([java, "-cp", str(classes), "com.veloster.carplayhub.QuickEntryRuntimeHarness"],
                                  capture_output=True, text=True)
             self.assertEqual(ran.returncode, 0, ran.stdout + ran.stderr)
-            self.assertIn("PASS: 16", ran.stdout)
+            self.assertIn("PASS: 23", ran.stdout)
 
     def test_manifest_keeps_controls_private_and_boot_scoped(self):
         manifest = ET.parse(ROOT / "apps/hub/AndroidManifest.xml").getroot()
@@ -308,7 +362,8 @@ class QuickEntryRuntimeTests(unittest.TestCase):
         self.assertEqual(service.get(a + "exported"), "false")
         self.assertEqual(receiver.get(a + "exported"), "false")
         actions = {item.get(a + "name") for item in receiver.findall("intent-filter/action")}
-        self.assertEqual(actions, {"android.intent.action.BOOT_COMPLETED", "android.intent.action.MY_PACKAGE_REPLACED"})
+        self.assertEqual(actions, {"android.intent.action.BOOT_COMPLETED", "android.intent.action.MY_PACKAGE_REPLACED",
+                                   "android.intent.action.QUICKBOOT_POWERON"})
         self.assertFalse(app.findall("activity/intent-filter/category[@" + a + "name='android.intent.category.HOME']"))
 
 
