@@ -54,7 +54,7 @@ public final class VehicleDash extends View implements Runnable {
         }catch(IllegalArgumentException e){/* Retain default for an invalid saved style. */}
         catch(ClassCastException e){/* Retain default for incompatible preferences. */}
         try{setPage(a.getSharedPreferences("pit_vehicle_ui",0).getInt("dashboard_page",DashboardPage.OVERVIEW),false);}catch(ClassCastException ignored){setPage(DashboardPage.OVERVIEW,false);}
-        shiftTarget=ShiftGuide.clamp(a.getSharedPreferences("pit_vehicle_ui",0).getInt("shift_target",ShiftGuide.DEFAULT)); setVisibility(GONE); }
+        shiftTarget=ShiftGuide.clamp(a.getSharedPreferences("pit_vehicle_ui",0).getInt("shift_target",ShiftGuide.DEFAULT),DATA.pdLayoutProfile()); setVisibility(GONE); }
     private void setPage(int value,boolean save){
         int page=DashboardPage.normalize(value);
         cluster=page==DashboardPage.F1;gauges=page==DashboardPage.GAUGES;graphs=page==DashboardPage.GRAPHS;performance=page==DashboardPage.PERFORMANCE;
@@ -142,6 +142,7 @@ public final class VehicleDash extends View implements Runnable {
         VehicleDash d=current.get();if(d!=null)regulation(d.activity,blocked);
     }
     public static void ignition(boolean on) { DATA.clear(); }
+    public static void profile(boolean pd,boolean js,boolean jsn){DATA.profile(pd,js,jsn);}
     public static void rpm(byte[] data) { DATA.rpm(data,SystemClock.elapsedRealtime()); }
     public static void beginComputed(float rpm,float tqi,float acor,float standard,float boost,float ambient) { DATA.beginComputed(rpm,tqi,acor,standard,boost,ambient); }
     public static void computed(float power,float torque,float boostKpa) { DATA.computed(power,torque,boostKpa); }
@@ -155,6 +156,8 @@ public final class VehicleDash extends View implements Runnable {
     public static void additional(byte[] data) { DATA.additional(data,SystemClock.elapsedRealtime()); }
     public static void hscanJsn(int cid,int funcLow,byte[] data){DATA.hscanJsn(cid,funcLow,data,SystemClock.elapsedRealtime());}
     public static void hscanJsn(int cid,int funcLow,byte[] data,long receivedAt){DATA.hscanJsn(cid,funcLow,data,receivedAt);}
+    public static void hscanPd(int cid,int function,byte[] data,long receivedAt){DATA.hscanPd(cid,function,data,receivedAt);}
+    public static void hscanJs(int cid,int function,byte[] data,long receivedAt){DATA.hscanJs(cid,function,data,receivedAt);}
     protected void onAttachedToWindow() { super.onAttachedToWindow(); artwork.open();mediaReceiver.start(activity); post(this); }
     protected void onDetachedFromWindow() { removeCallbacks(this);removeCallbacks(editHold);touching=false;gaugeEditor.dismiss();graphEditor.dismiss();mediaReceiver.stop();artwork.close();super.onDetachedFromWindow(); }
     public void run() {
@@ -235,7 +238,7 @@ public final class VehicleDash extends View implements Runnable {
             float minus=media?210:548,plus=media?440:740;
             if(x>=minus && x<=minus+42 && downX>=minus && downX<=minus+42)next-=100;
             if(x>=plus && x<=plus+42 && downX>=plus && downX<=plus+42)next+=100;
-            shiftTarget=ShiftGuide.clamp(next);
+            shiftTarget=ShiftGuide.clamp(next,DATA.pdLayoutProfile());
             activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("shift_target",shiftTarget).apply();
             invalidate();return true;
         }

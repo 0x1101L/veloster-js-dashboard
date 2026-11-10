@@ -21,8 +21,13 @@ def main():
     javac = java.with_name("javac.exe" if os.name == "nt" else "javac")
     hub = ROOT / "apps/hub/src/com/veloster/carplayhub"
     sources = [ROOT / "shared/src/com/veloster/vehicle/Telemetry.java",
+               ROOT / "shared/src/com/veloster/vehicle/PdPowertrain.java",
+               ROOT / "shared/src/com/veloster/vehicle/PdGearState.java",
+               ROOT / "shared/src/com/veloster/vehicle/ShiftGuide.java",
+               ROOT / "shared/src/com/veloster/vehicle/OverviewLayout.java",
                ROOT / "shared/src/com/veloster/i18n/UiText.java",
-               ROOT / "apps/dashboard/src/com/veloster/dashboard/HscanFrameDecoder.java"]
+               ROOT / "apps/dashboard/src/com/veloster/dashboard/HscanFrameDecoder.java",
+               ROOT / "apps/dashboard/src/com/veloster/dashboard/HscanProfile.java"]
     sources += [hub / (name + ".java") for name in ("RadioTrial", "BluetoothSession", "RebootRequest", "QuickEntryPolicy")]
     tests = sorted((ROOT / "tests").glob("*Test.java"))
     sources += [ROOT / "shared/src/com/veloster/diagnostics/ErrorLog.java", ROOT / "shared/src/com/veloster/vehicle/DashboardPage.java"]

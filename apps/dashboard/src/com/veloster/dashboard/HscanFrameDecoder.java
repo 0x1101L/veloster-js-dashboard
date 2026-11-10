@@ -1,13 +1,15 @@
 package com.veloster.dashboard;
 
-/** Exact captured250902 stream framing; never interprets arbitrary bytes as CAN IDs. */
+/** Validated HSCAN framing with separate JSN and PD-baseline JS allowlists. */
 final class HscanFrameDecoder {
     interface Sink { void record(int function, byte[] data, long receivedAt); }
     private static final int[] HEADER = {255, 11, 142, 1, 139, 199, 1, 0};
     private final byte[] frame = new byte[264];
     private final Sink sink;
+    private final HscanProfile.Kind profile;
     private int used;
-    HscanFrameDecoder(Sink sink) { this.sink = sink; }
+    HscanFrameDecoder(Sink sink) { this(sink,HscanProfile.Kind.JSN); }
+    HscanFrameDecoder(Sink sink,HscanProfile.Kind profile) { this.sink = sink; this.profile=profile; }
     void reset() { used = 0; }
 
     void accept(byte[] data, int offset, int length, long receivedAt) {
@@ -51,8 +53,17 @@ final class HscanFrameDecoder {
         offset = 11;
         for (int i = 0; i < count; i++) {
             int function = frame[offset++] & 255, size = frame[offset++] & 255;
-            if (((function == 7 || function == 0x23 || function == 0x5a || function == 0x6e) && size == 8)
-                || (function == 0x53 && size == 5)) {
+            boolean accepted;
+            if(profile==HscanProfile.Kind.JS||profile==HscanProfile.Kind.PD){
+                accepted=(size==8&&(function==0||function==8||function==9||function==0x0a||function==0x0b
+                        ||function==0x0d||function==0x13||function==0x14||function==0x1d||function==0x1e))
+                    ||((function==2||function==0x1c)&&size==4)||(function==0x19&&size==5)
+                    ||(function==0x20&&size==6);
+            }else{
+                accepted=((function==7||function==0x23||function==0x5a||function==0x6e)&&size==8)
+                    ||(function==0x53&&size==5);
+            }
+            if (accepted) {
                 byte[] value = new byte[size]; System.arraycopy(frame, offset, value, 0, size);
                 sink.record(function, value, receivedAt);
             }

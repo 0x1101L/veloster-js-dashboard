@@ -19,6 +19,11 @@ public final class HscanFrameDecoderTest {
         System.arraycopy(value, 0, b, 13, value.length); checksum(b); return b;
     }
     public static void main(String[] args) {
+        check(HscanProfile.identify("pd_kr","eng.vmadmin.20260114.084130")==HscanProfile.Kind.PD,"exact PD profile selected");
+        check(HscanProfile.identify("js_kr","eng.vmadmin.20260114.090656")==HscanProfile.Kind.JS,"exact JS profile selected");
+        check(HscanProfile.identify("jsn_kr","eng.vmadmin.20250902.081552")==HscanProfile.Kind.JSN,"exact JSN profile retained");
+        check(HscanProfile.identify("hyundaiB_kr","eng.vmadmin.20260114.090656")==HscanProfile.Kind.UNSUPPORTED
+            &&HscanProfile.identify("js_kr","eng.vmadmin.20260114.084130")==HscanProfile.Kind.UNSUPPORTED,"mismatched identities rejected");
         final int[] count = {0}; final long[] timestamp = {0};
         HscanFrameDecoder decoder = new HscanFrameDecoder(new HscanFrameDecoder.Sink() {
             public void record(int function, byte[] data, long at) {
@@ -66,6 +71,14 @@ public final class HscanFrameDecoderTest {
             decoder.accept(value, 0, 264, 2);
             check(count[0] == ++before, "allowlisted function " + function);
         }
+        final int[] pdCount={0},jsCount={0};
+        HscanFrameDecoder pd=new HscanFrameDecoder(new HscanFrameDecoder.Sink(){public void record(int f,byte[] d,long at){pdCount[0]++;}},HscanProfile.Kind.PD);
+        HscanFrameDecoder js=new HscanFrameDecoder(new HscanFrameDecoder.Sink(){public void record(int f,byte[] d,long at){jsCount[0]++;}},HscanProfile.Kind.JS);
+        for(int function:new int[]{0,8,9,0x0a,0x0b,0x0d,0x13,0x14,0x1d,0x1e}){byte[] f=frame(function,new byte[8]);pd.accept(f,0,f.length,3);js.accept(f,0,f.length,3);}
+        for(int[] item:new int[][]{{2,4},{0x19,5},{0x1c,4},{0x20,6}}){byte[] f=frame(item[0],new byte[item[1]]);pd.accept(f,0,f.length,3);js.accept(f,0,f.length,3);}
+        check(pdCount[0]==14&&jsCount[0]==14,"PD and JS use the full shared PD signal table");
+        js.accept(frame(0x5a,new byte[8]),0,264,4);js.accept(frame(0x6e,new byte[8]),0,264,4);
+        check(jsCount[0]==14,"JS does not inherit JSN-only functions");
         System.out.println("PASS " + checks + " synthetic HSCAN decoder checks");
     }
 }

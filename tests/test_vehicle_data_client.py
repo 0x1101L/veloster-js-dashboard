@@ -27,7 +27,7 @@ public class VehicleDash {public static int writes,clears;
  public static void speed(int s){writes++;}public static void rearView(int s){writes++;}
 }''',
     'com/veloster/dashboard/HscanDataClient.java': '''package com.veloster.dashboard;
-final class HscanDataClient {interface Gate {boolean accepts();}static int fail,creates,starts,stops;static Gate gate;
+final class HscanDataClient {interface Gate {boolean accepts();}static int fail,creates,starts,stops;static Gate gate;static boolean supported=true;static boolean pdProfile(){return false;}static boolean supportedProfile(){return supported;}
  boolean live;HscanDataClient(Gate g){creates++;if(fail-->0)throw new IllegalStateException("HSCAN unavailable");gate=g;}
  void start(){if(!live){live=true;starts++;}}void stop(){if(live){live=false;stops++;}}
 }''',
@@ -74,8 +74,9 @@ public class VehicleDataClientHarness {
  static void powerFailure(){VehicleDataClient c=fresh();BCMManager.failAdd=1;c.start();BCMPowerListener stale=BCMManager.current;check(!HscanDataClient.gate.accepts()&&HscanDataClient.starts==0,"failed BCM must not enable telemetry");stale.onIgnitionChanged(true);check(!HscanDataClient.gate.accepts(),"failed power callback ignored");Handler.next();check(HscanDataClient.starts==1&&HscanDataClient.gate.accepts(),"power registration recovered");c.stop();}
  static void stopInvalidates(){VehicleDataClient c=fresh();c.start();NModeListener n=NModeManager.current;VehicleInfoListener v=VehicleInfoManager.current;PgsStatusListener r=PgsManager.current;BCMPowerListener p=BCMManager.current;c.stop();c.start();n.onOilCoolantTemperature(new byte[0]);v.onVehicleSpeedChanged(42);r.onRVMViewStatusChanged(1);p.onIgnitionChanged(false);check(VehicleDash.writes==0&&HscanDataClient.gate.accepts(),"old generation cannot mutate resumed session");c.stop();}
  static void boundedRetry(){VehicleDataClient c=fresh();PgsManager.failCreate=100;c.start();for(int i=0;i<12;i++){c.run();check(Handler.jobs.size()==1&&Handler.delay<=30000,"bounded single retry");}check(Handler.delay==30000,"delay caps at 30 sec");c.stop();check(Handler.jobs.isEmpty(),"stop cancels retries");c.start();check(Handler.delay==2000,"fresh session resets backoff");c.stop();}
+ static void unsupportedProfile(){VehicleDataClient c=fresh();HscanDataClient.supported=false;c.start();check(!HscanDataClient.gate.accepts(),"unknown product/build blocks all telemetry callbacks");NModeManager.current.onOilCoolantTemperature(new byte[0]);check(VehicleDash.writes==0,"unknown profile cannot publish OEM data");c.stop();HscanDataClient.supported=true;}
  static void ignitionGate(){VehicleDataClient c=fresh();BCMManager.ignition=false;c.start();NModeManager.current.onOilCoolantTemperature(new byte[0]);check(VehicleDash.writes==0&&HscanDataClient.starts==0,"off gates receive");BCMManager.current.onIgnitionChanged(true);check(HscanDataClient.starts==1,"ignition starts receive");NModeManager.current.onOilCoolantTemperature(new byte[0]);check(VehicleDash.writes==1,"on delivers");BCMManager.current.onIgnitionChanged(false);check(HscanDataClient.stops==1&&!HscanDataClient.gate.accepts(),"off stops receive");c.stop();}
- public static void main(String[] a){ready();delayedRear();delayedHscan();failedRegistration();failedCleanup();powerFailure();stopInvalidates();boundedRetry();ignitionGate();System.out.println("PASS 9 vehicle subscription lifecycle scenarios");}
+ public static void main(String[] a){ready();delayedRear();delayedHscan();failedRegistration();failedCleanup();powerFailure();stopInvalidates();boundedRetry();unsupportedProfile();ignitionGate();System.out.println("PASS 10 vehicle subscription lifecycle scenarios");}
 }'''
 
 class VehicleDataClientTests(unittest.TestCase):
@@ -92,11 +93,11 @@ class VehicleDataClientTests(unittest.TestCase):
             harness = root / 'com/veloster/dashboard/VehicleDataClientHarness.java'
             harness.write_text(HARNESS)
             source = Path(os.environ.get('VN_VEHICLE_CLIENT_SOURCE', ROOT / 'apps/dashboard/src/com/veloster/dashboard/VehicleDataClient.java'))
-            result = subprocess.run([javac, '-source', '7', '-target', '7', '-d', str(root), *map(str, sources), str(harness), str(source)], capture_output=True, text=True)
+            result = subprocess.run([javac, '-source', '8', '-target', '8', '-d', str(root), *map(str, sources), str(harness), str(source)], capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             result = subprocess.run([java, '-cp', str(root), 'com.veloster.dashboard.VehicleDataClientHarness'], capture_output=True, text=True, timeout=20)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertIn('PASS 9', result.stdout)
+            self.assertIn('PASS 10', result.stdout)
 
 if __name__ == '__main__':
     unittest.main()

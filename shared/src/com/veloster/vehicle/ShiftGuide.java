@@ -2,8 +2,9 @@ package com.veloster.vehicle;
 
 /** Adjustable display advisory, NOT a measured optimal-shift map or ECU control. */
 public final class ShiftGuide {
-    public static final int MIN=6000, MAX=6700, DEFAULT=6000;
-    public static int clamp(int rpm) { return Math.max(MIN,Math.min(MAX,rpm/100*100)); }
+    public static final int MIN=6000, PD_MIN=3000, MAX=6700, DEFAULT=6000;
+    public static int clamp(int rpm) { return clamp(rpm,false); }
+    public static int clamp(int rpm,boolean pdBaseline) { return Math.max(pdBaseline?PD_MIN:MIN,Math.min(MAX,rpm/100*100)); }
     public static final class Cue {
         public final int leds;
         public final boolean shift;
