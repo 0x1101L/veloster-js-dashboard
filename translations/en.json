@@ -225,5 +225,12 @@
   "앞 오른쪽": "Front right",
   "뒤 왼쪽": "Rear left",
   "뒤 오른쪽": "Rear right",
-  "기어": "Gear"
+  "기어": "Gear",
+  "가속 페달": "Accelerator pedal",
+  "가속 페달 %": "Accelerator pedal %",
+  "가속 페달 / PEDAL": "Pedal",
+  "TCS 사용 상태": "TCS enabled",
+  "ESC 사용 상태": "ESC enabled",
+  "ABS 경고등": "ABS warning",
+  "TCS · ESC · ABS 상태": "TCS · ESC · ABS state"
 }

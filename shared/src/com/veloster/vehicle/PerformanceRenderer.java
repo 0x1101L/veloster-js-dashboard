@@ -12,6 +12,9 @@ public final class PerformanceRenderer {
     private static final int BG=0xff0c1820,PANEL=0xff10212b,LINE=0xff29424e,WHITE=0xffe4f1f6,BLUE=0xffa4d9ec,MUTED=0xff91aebb;
     private final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
     private Telemetry.Sample[] samples;
+    private boolean pd,js,jsn,supported;
+    public void profile(boolean isPd,boolean isJs,boolean isJsn,boolean isSupported){pd=isPd;js=isJs;jsn=isJsn;supported=isSupported;}
+    private String vehicleName(){return pd?"i30 N Line":js?"Veloster (WIP)":jsn?"VELOSTER N":supported?"Dashboard":"UNSUPPORTED";}
     private boolean valid(int i){return samples[i].valid&&!Float.isNaN(samples[i].value)&&!Float.isInfinite(samples[i].value);}
     private float number(int i){return Telemetry.displayValue(i,samples[i].value);}
     private String value(int i,String format){return valid(i)?String.format(Locale.US,format,number(i)):"—";}
@@ -35,9 +38,9 @@ public final class PerformanceRenderer {
     public void draw(Canvas c,Telemetry model,long now){
         samples=model.snapshot(now);
         p.setStyle(Paint.Style.FILL);p.setColor(BG);c.drawRect(0,52,800,480,p);
-        text(c,"N",16,82,25,BLUE,Paint.Align.LEFT,true);
+        text(c,pd?"PD":js?"JS":jsn?"N":"—",16,82,25,BLUE,Paint.Align.LEFT,true);
         text(c,"PERFORMANCE",42,80,19,WHITE,Paint.Align.LEFT,true);
-        text(c,"VELOSTER N",233,79,13,MUTED,Paint.Align.LEFT,false);
+        text(c,vehicleName(),233,79,13,MUTED,Paint.Align.LEFT,false);
         box(c,426,60,580,87);
         text(c,UiText.t("배터리"),438,78,13,MUTED,Paint.Align.LEFT,false);
         text(c,value(Telemetry.BAT_VOLTAGE,"%.2f")+" V",569,80,17,WHITE,Paint.Align.RIGHT,false);
@@ -59,7 +62,7 @@ public final class PerformanceRenderer {
     private void headline(Canvas c){
         line(c,293,106,293,281,LINE,1);line(c,389,106,389,281,LINE,1);
         text(c,"GEAR",341,115,14,MUTED,Paint.Align.CENTER,false);
-        text(c,valid(8)?Telemetry.gearLabel((int)number(8)):"—",341,227,67,BLUE,Paint.Align.CENTER,false);
+        text(c,valid(8)?Telemetry.gearLabel((int)samples[8].value):"—",341,227,67,BLUE,Paint.Align.CENTER,false);
         text(c,UiText.t("기어"),341,259,14,MUTED,Paint.Align.CENTER,false);
         text(c,"SPEED",406,115,14,MUTED,Paint.Align.LEFT,false);
         fit(c,value(7,"%.0f"),488,227,79,171,WHITE,Paint.Align.CENTER);
@@ -127,7 +130,7 @@ public final class PerformanceRenderer {
             fit(c,labels[n],x,y,12,60,MUTED,Paint.Align.CENTER);
             fit(c,value(Telemetry.TPMS_FL+n,"%.0f"),x,y+28,29,60,WHITE,Paint.Align.CENTER);
         }
-        text(c,"VELOSTER N",689,427,14,MUTED,Paint.Align.CENTER,false);
+        text(c,vehicleName(),689,427,14,MUTED,Paint.Align.CENTER,false);
         text(c,"TPMS",689,449,12,BLUE,Paint.Align.CENTER,false);
     }
 }

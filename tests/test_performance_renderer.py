@@ -11,7 +11,7 @@ HARNESS = '''import com.veloster.vehicle.*;import com.veloster.i18n.UiText;impor
 public class PerformancePreview {
  static void check(boolean v,String m){if(!v)throw new AssertionError(m);}
  static Telemetry fixture(){
-  Telemetry t=new Telemetry();t.speed(75,1000);t.units(new byte[]{2,60,108},1000);
+  Telemetry t=new Telemetry();t.profile(false,false,true);t.speed(75,1000);t.units(new byte[]{2,60,108},1000);
   t.rpm(new byte[]{0,0x22,0x38,0,0,0,0,0},1000);t.temperatures(new byte[]{(byte)176,(byte)185},1000);
   byte[] a=new byte[40];a[4]=3;a[7]=55;a[1]=10;a[20]=(byte)0xff;a[21]=(byte)0x79;a[22]=1;a[29]=35;a[31]=37;a[33]=36;a[35]=35;t.additional(a,1000);
   t.gforce(new byte[]{(byte)0x89,0x31,0,0,0x7d,0x1f,0,0},1000);
@@ -20,7 +20,7 @@ public class PerformancePreview {
  public static void main(String[] args)throws Exception{
   int rendered=0;
   for(String language:new String[]{"ko","en"})for(int height:new int[]{480,425})for(String state:new String[]{"received","waiting","stale","invalid"}){
-   UiText.configure(language,language);Telemetry t=state.equals("waiting")?new Telemetry():fixture();
+   UiText.configure(language,language);Telemetry t=state.equals("waiting")?new Telemetry():fixture();if(state.equals("waiting"))t.profile(false,false,true);
    if(state.equals("invalid")){t.additional(null,1000);t.rpm(null,1000);t.temperatures(null,1000);t.gforce(null,1000);}
    Canvas c=new Canvas(800,height);PitRenderer renderer=new PitRenderer();renderer.setPerformancePage(true);renderer.draw(c,800,height,false,t,state.equals("stale")?61000:1000);
    check(c.texts.contains("PERFORMANCE")&&c.texts.contains("TPMS"),"new page rendered");
@@ -55,7 +55,7 @@ def render(folder):
         p = root / 'PerformancePreview.java'
         p.write_text(HARNESS)
         sources.append(p)
-        sources += [ROOT / 'shared/src/com/veloster/vehicle' / (name + '.java') for name in ('Telemetry','PitRenderer','PerformanceRenderer','DashboardPage','ShiftGuide','MediaState','GaugeLayout','GaugeRenderer','OverviewLayout','GraphLayout','GraphRenderer')]
+        sources += [ROOT / 'shared/src/com/veloster/vehicle' / (name + '.java') for name in ('Telemetry','PdPowertrain','PdGearState','PitRenderer','PerformanceRenderer','DashboardPage','ShiftGuide','MediaState','GaugeLayout','GaugeRenderer','OverviewLayout','GraphLayout','GraphRenderer')]
         sources.append(ROOT / 'shared/src/com/veloster/i18n/UiText.java')
         result = subprocess.run([javac,'-encoding','UTF-8','-d',str(root),*map(str,sources)],capture_output=True,text=True)
         if result.returncode: raise AssertionError(result.stderr)

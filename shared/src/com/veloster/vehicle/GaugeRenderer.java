@@ -15,7 +15,7 @@ public final class GaugeRenderer {
     private void line(Canvas c,float x,float y,float xx,float yy,int color,float width){p.setColor(color);p.setStrokeWidth(width);c.drawLine(x,y,xx,yy,p);}
     static float min(int i,String u){return "G".equals(u)?-2:"°C".equals(u)?-40:i==Telemetry.STEERING?-540:0;}
     static float max(int i,String u){
-        if(i>=Telemetry.TCS&&i<=Telemetry.ABS)return 1;
+        if(i>=Telemetry.TCS&&i<=Telemetry.ABS||i>=Telemetry.PD_TCS_ENABLED&&i<=Telemetry.PD_ABS_WARNING)return 1;
         if(i==Telemetry.ELSD)return 6553.5f;
         if(i==Telemetry.BAT_VOLTAGE)return 18;if(i==Telemetry.STEERING_SPEED)return 1020;
         if("psi".equals(u))return 60;

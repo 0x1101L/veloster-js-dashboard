@@ -21,7 +21,7 @@ public final class PitRenderer {
     private int shiftTarget;
     private long frameTime;
     private ShiftGuide.Cue cue;
-    private boolean mediaPage;
+    private boolean mediaPage,pdProfile,jsProfile,jsnProfile,profileSupported;
     private MediaState.Snapshot music;
     private Bitmap artwork;
     private final GaugeRenderer gaugeRenderer=new GaugeRenderer();
@@ -44,7 +44,7 @@ public final class PitRenderer {
     public void setGaugeLayout(GaugeLayout value){gaugeLayout=value;}
     public void setGraphLayout(GraphLayout value){graphLayout=value;}
     public void setOverviewLayout(OverviewLayout value){if(value!=null)overviewLayout=value;}
-    private static final String[] PREFIX={"엔진 RPM","오일 온도","냉각수 온도","앞 왼쪽 휠","앞 오른쪽 휠","뒤 왼쪽 휠","뒤 오른쪽 휠","속도 km/h","현재 기어","스로틀 %","브레이크 압력 bar","횡가속","종가속","조향각","외기 온도","출력 (계산)","토크 (계산)","부스트 (계산)","앞 왼쪽 공기압","앞 오른쪽 공기압","뒤 왼쪽 공기압","뒤 오른쪽 공기압","TCS","ESC","ABS","배터리 SOC","배터리 전압","조향 속도","e-LSD 수치","흡기 온도"};
+    private static final String[] PREFIX={"엔진 RPM","오일 온도","냉각수 온도","앞 왼쪽 휠","앞 오른쪽 휠","뒤 왼쪽 휠","뒤 오른쪽 휠","속도 km/h","현재 기어","스로틀 %","브레이크 압력 bar","횡가속","종가속","조향각","외기 온도","출력 (계산)","토크 (계산)","부스트 (계산)","앞 왼쪽 공기압","앞 오른쪽 공기압","뒤 왼쪽 공기압","뒤 오른쪽 공기압","TCS","ESC","ABS","배터리 SOC","배터리 전압","조향 속도","e-LSD 수치","흡기 온도","가속 페달 %","TCS 사용 상태","ESC 사용 상태","ABS 경고등"};
     private int index(String prefix){for(int i=0;i<PREFIX.length;i++)if(PREFIX[i].equals(prefix))return i;return -1;}
     private String value(String prefix){int i=index(prefix);if(i<0||i>=samples.length||!samples[i].valid)return "—";
         if(i==8)return Telemetry.gearLabel((int)samples[i].value);
@@ -58,8 +58,9 @@ public final class PitRenderer {
         draw(c,width,height,cluster,model,now,target,false,null);
     }
     public void draw(Canvas c,int width,int height,boolean cluster,Telemetry model,long now,int target,boolean media,MediaState.Snapshot track){
-        mediaPage=cluster && media;music=track;
-        shiftTarget=ShiftGuide.clamp(target);frameTime=now;
+        mediaPage=cluster && media;music=track;pdProfile=model.pdProfile();jsProfile=model.jsProfile();jsnProfile=model.jsnProfile();profileSupported=model.supportedProfile();
+        overviewLayout.pdProfile(pdProfile||jsProfile);performanceRenderer.profile(pdProfile,jsProfile,model.jsnProfile(),model.supportedProfile());
+        shiftTarget=ShiftGuide.clamp(target,model.pdLayoutProfile());frameTime=now;
         samples=model.snapshot(now);cue=ShiftGuide.evaluate(samples,shiftTarget);
         c.save();c.scale(width/800f,height/480f);c.drawColor(BG);
         paint.setShader(background);c.drawRect(0,0,800,480,paint);paint.setShader(null);
@@ -156,9 +157,9 @@ public final class PitRenderer {
         float rpm=Math.max(0,Math.min(8000,numeric("엔진 RPM")));
         box(c,30,124,470,127,LINE);if(rpm>0)box(c,30,124,30+440*rpm/8000,127,BLUE);
         box(c,180,143,316,340,BLUE);
-        centered(c,"EMS GEAR",248,164,11,BG,true);
+        centered(c,pdProfile||jsProfile?"GEAR":"EMS GEAR",248,164,11,BG,true);
         centered(c,value("현재 기어"),248,290,130,BG,true);
-        centered(c,"VELOSTER N",248,324,10,BG,true);
+        centered(c,vehicleName(),248,324,13,BG,true);
         centered(c,"SPEED",98,177,12,MUTED,true);
         centered(c,value("속도 km/h"),98,253,57,WHITE,true);
         centered(c,"km/h",98,280,12,MUTED,false);
@@ -167,7 +168,7 @@ public final class PitRenderer {
         centered(c,"rpm",398,280,12,MUTED,false);
         text(c,"OIL",32,372,11,MUTED,true);text(c,value("오일 온도")+" °C",116,375,22,WHITE,true);
         text(c,"COOLANT",258,372,11,MUTED,true);text(c,value("냉각수 온도")+" °C",368,375,22,WHITE,true);
-        compactPedal(c,UiText.t("스로틀"),"스로틀 %","%",32,208,BLUE,100);
+        compactPedal(c,UiText.t(pdProfile||jsProfile?"가속 페달 / PEDAL":"스로틀"),pdProfile||jsProfile?"가속 페달 %":"스로틀 %","%",32,208,BLUE,100);
         compactPedal(c,UiText.t("브레이크"),"브레이크 압력 bar","bar",258,212,RED,100);
         panel(c,494,60,288,388,0xff12212a,LINE);
         cover(c,518,72,240);
@@ -225,10 +226,10 @@ public final class PitRenderer {
         if(rpm>0)box(c,18,105,18+764*rpm/8000,108,BLUE);
         // Central gear is the primary cue, like a single-seat race display.
         box(c,294,120,506,367,BLUE);
-        centered(c,"E M S  G E A R",400,148,15,BG,true);
+        centered(c,pdProfile||jsProfile?"G E A R":"E M S  G E A R",400,148,15,BG,true);
         String gear=value("현재 기어");
         centered(c,gear,400,321,184,BG,true);
-        centered(c,"V E L O S T E R  N",400,350,11,BG,true);
+        centered(c,vehicleName(),400,350,14,BG,true);
         text(c,"SPEED",22,148,14,MUTED,true);
         text(c,"km/h",229,148,12,MUTED,false);
         centered(c,value("속도 km/h"),150,253,88,WHITE,true);
@@ -243,14 +244,14 @@ public final class PitRenderer {
         text(c,"COOLANT",528,307,11,MUTED,true);
         text(c,value("냉각수 온도"),685,310,22,WHITE,true);
         text(c,"°C",760,310,11,MUTED,false);
-        pedal(c,"THROTTLE", "스로틀 %", "%",18,BLUE,100);
+        pedal(c,pdProfile||jsProfile?"PEDAL":"THROTTLE",pdProfile||jsProfile?"가속 페달 %":"스로틀 %","%",18,BLUE,100);
         pedal(c,"BRAKE PRESSURE", "브레이크 압력 bar", "bar",406,RED,100);
         button(c,"−",548,452,42,27,false,BLUE);
         text(c,UiText.t("목표 ")+shiftTarget+" rpm",604,471,12,BLUE,true);
         button(c,"+",740,452,42,27,false,BLUE);
     }
     private void drawDashboard(Canvas c){
-        String[] names={"SPEED / km/h","ENGINE / rpm","EMS GEAR","THROTTLE / %","BRAKE / bar"};
+        String[] names={"SPEED / km/h","ENGINE / rpm",pdProfile||jsProfile?"GEAR":"EMS GEAR",pdProfile||jsProfile?"ACCEL / %":"THROTTLE / %","BRAKE / bar"};
         for(int slot=0;slot<overviewLayout.count();slot++){
             int i=overviewLayout.signalAt(slot);boolean head=overviewLayout.headline(i);
             if(overviewLayout.grouped(i))groupCard(c,i);else overviewCard(c,i,head?names[slot]:UiText.t(Telemetry.LABELS[i]));
@@ -268,6 +269,12 @@ public final class PitRenderer {
                 text(c,value(PREFIX[i+n]),l+20,t,20,BLUE,true);
             }
             text(c,"psi",x+10,y+88,11,MUTED,false);
+        }else if(i==Telemetry.PD_TCS_ENABLED){
+            fitted(c,UiText.t("TCS · ESC · ABS 상태"),x+10,y+20,13,w-20,MUTED);
+            for(int n=0;n<3;n++){float t=y+43+n*22;Telemetry.Sample s=samples[i+n];boolean ok=s.valid&&(s.value==0||s.value==1);
+                String label=n==0?"TCS":n==1?"ESC":UiText.t("ABS 경고등");fitted(c,label,x+10,t,12,w-66,MUTED);
+                String state=!ok?"—":s.value==1?"ON":"OFF";boolean warning=ok&&(n<2?s.value==0:s.value==1);
+                fitted(c,state,x+w-43,t,16,33,warning?RED:BLUE);}
         }else{
             fitted(c,"TCS · ESC · ABS",x+10,y+20,13,w-20,MUTED);
             for(int n=0;n<3;n++){
@@ -277,6 +284,7 @@ public final class PitRenderer {
             }
         }
     }
+    private String vehicleName(){return pdProfile?"i30 N Line":jsProfile?"Veloster (WIP)":jsnProfile?"VELOSTER N":profileSupported?"Dashboard":"UNSUPPORTED";}
     private void overviewCard(Canvas c,int i,String title){
         float x=overviewLayout.left(i),y=overviewLayout.top(i),w=overviewLayout.width(i),h=overviewLayout.height(i);
         boolean head=overviewLayout.headline(i),ok=samples[i].valid&&!Float.isNaN(samples[i].value)&&!Float.isInfinite(samples[i].value);

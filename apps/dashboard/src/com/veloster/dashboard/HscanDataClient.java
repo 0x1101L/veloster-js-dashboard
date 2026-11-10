@@ -13,12 +13,16 @@ import java.util.ArrayDeque;
 final class HscanDataClient {
     interface Gate { boolean accepts(); }
     private final Gate gate;
+    private final HscanProfile.Kind profile;
     private Session session;
-    HscanDataClient(Gate gate) { this.gate = gate; }
+    static HscanProfile.Kind profile(){return HscanProfile.identify(android.os.Build.PRODUCT,android.os.Build.VERSION.INCREMENTAL);}
+    static boolean pdProfile(){return profile()==HscanProfile.Kind.PD;}
+    static boolean jsProfile(){return profile()==HscanProfile.Kind.JS;}
+    static boolean supportedProfile(){return profile()!=HscanProfile.Kind.UNSUPPORTED;}
+    HscanDataClient(Gate gate) { this.gate = gate; this.profile=profile(); }
 
     synchronized void start() {
-        if (session != null || !"jsn_kr".equals(android.os.Build.PRODUCT)
-            || !"eng.vmadmin.20250902.081552".equals(android.os.Build.VERSION.INCREMENTAL)) return;
+        if (session != null || profile==HscanProfile.Kind.UNSUPPORTED) return;
         session = new Session();
         session.decoder.start();
         session.reader.start();
@@ -108,10 +112,14 @@ final class HscanDataClient {
             HscanFrameDecoder parser = new HscanFrameDecoder(new HscanFrameDecoder.Sink() {
                 public void record(int function, byte[] data, long receivedAt) {
                     synchronized (delivery) {
-                        if (active && gate.accepts()) VehicleDash.hscanJsn(0xc7, function, data, receivedAt);
+                        if(active&&gate.accepts()){
+                            if(profile==HscanProfile.Kind.JS)VehicleDash.hscanJs(0xc7,function,data,receivedAt);
+                            else if(profile==HscanProfile.Kind.PD)VehicleDash.hscanPd(0xc7,function,data,receivedAt);
+                            else VehicleDash.hscanJsn(0xc7,function,data,receivedAt);
+                        }
                     }
                 }
-            });
+            },profile);
             long previous = -1;
             try {
                 while (active) {
