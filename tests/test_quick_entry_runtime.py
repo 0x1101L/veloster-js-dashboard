@@ -345,7 +345,7 @@ class QuickEntryRuntimeTests(unittest.TestCase):
             sources.extend(production / (name + ".java") for name in ("QuickEntryPolicy", "QuickEntryService", "QuickEntryReceiver"))
             classes = base / "classes"
             classes.mkdir()
-            compiled = subprocess.run([javac, "-encoding", "UTF-8", "-source", "7", "-target", "7", "-d", str(classes),
+            compiled = subprocess.run([javac, "-encoding", "UTF-8", "-source", "8", "-target", "8", "-d", str(classes),
                                        *map(str, sources)], capture_output=True, text=True)
             self.assertEqual(compiled.returncode, 0, compiled.stdout + compiled.stderr)
             ran = subprocess.run([java, "-cp", str(classes), "com.veloster.carplayhub.QuickEntryRuntimeHarness"],
