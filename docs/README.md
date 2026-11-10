@@ -27,6 +27,7 @@ For the existing JSN app, this guide covers compatibility, ADB, installation, an
 | [Research walkthrough](RESEARCH.md) · [한국어](RESEARCH_ko.md) | Firmware research and the standalone-app approach / 분석 과정 |
 | [Performance dashboard](PERFORMANCE.md) | Unreleased optional page and actual-code previews / 새 선택형 화면·미리보기 |
 | [Private error records](DIAGNOSTICS.md) | Bounded app diagnostics and read-only retrieval / 오류 기록·읽기 |
+| [JS telemetry capture handoff](JS_DEBUG_CAPTURE.md) | Structured sample format and offline extraction for a separate debugging agent / JS 값 추출·인계 |
 | [NEMESIS review](NEMESIS_REVIEW.md) | Platform differences and reusable ideas / 적용 가능성·참고 코드 |
 | [Experiments](../experimental/README.md) | AVRCP and SystemUI work outside released apps / 미배포 실험 |
 | [Installation audit, 2026-10-26](INSTALL_AUDIT.md) | Historical v9 entry-point findings / 당시 진입점 개선 기록 |
