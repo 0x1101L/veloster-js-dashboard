@@ -1,8 +1,10 @@
-# Veloster N Dashboard
+# Veloster Dashboard
+
+*from [Veloster N Dashboard](https://github.com/reikop/veloster-n-dashboard)*
 
 **English** | [한국어](README_ko.md)
 
-A standalone dashboard for the Veloster N factory head unit, with **My Apps** for opening your dashboard and installed apps. Korean and English included. Installs alongside factory N Mode.
+A standalone dashboard project for Veloster JS, JSN and i30 PD factory head units, with **My Apps** for opening the dashboard and installed apps. Korean and English included. The current public installer and release remain the JSN baseline; unified JS/JSN/PD installation is a project goal, not a released capability.
 
 [Download](#download) · [Install](docs/INSTALL_EN.md) · [Compatibility & status](docs/STATUS.md) · [Documentation](docs/README.md)
 
@@ -22,9 +24,23 @@ Owner-provided in-car photo. Missing readings display a dash. Location/camera me
 
 Vehicle telemetry uses existing receive paths without adding ECU diagnostic requests. Missing or expired readings stay unknown. Bluetooth album-art reception, exhaust temperature and e-LSD remain unresolved; wireless CarPlay and automatic updates are not implemented. [Full limitations](docs/LIMITATIONS.md)
 
+## Source profiles and references
+
+| Vehicle | Codename | `Build.PRODUCT` | Head-unit software version |
+| --- | --- | --- | --- |
+| Veloster N | JSN | `jsn_kr` | SOP V141 · 2026-01-14 · STD_H |
+| Veloster | JS | `js_kr` | SOP V141 · 2026-01-14 · STD_H |
+| i30 | PD | `pd_kr` | SOP V141 · 2026-01-14 · STD_H |
+
+The readable version above is abbreviated from the model-specific `*.KOR.SOP.V141.260114.STD_H` software identifier. Source profile gates use the exact incremental build values recorded in the project notes. JS is labeled **Veloster (WIP)** until its dashboard work is complete. These source branches have host/static verification only; they are not an installer compatibility claim.
+
+- **JSN app baseline:** [reikop/veloster-n-dashboard](https://github.com/reikop/veloster-n-dashboard).
+- **PD profile and signal-table reference (PD-1):** [Linuchan5468/i30-pd-dashboard](https://github.com/Linuchan5468/i30-pd-dashboard). Its PD decoder and signal table are the starting reference for the JS decoder.
+- **JS vehicle identification:** owner-provided head-unit photo and the matching local firmware catalog; firmware binaries are not included in this repository.
+
 ## Compatibility
 
-The guarded installer supports **Korean Veloster N JSN**, product `jsn_kr`, **Android 4.2.2 / API 17**, incremental build `eng.vmadmin.20250902.081552` (`250902`, `STD_H`). The dashboard requires the factory `automotive` library. Other models, regions, firmware and ordinary Android devices are not validated.
+The existing guarded installer supports **Korean Veloster N JSN**, product `jsn_kr`, **Android 4.2.2 / API 17**, incremental build `eng.vmadmin.20250902.081552` (`250902`, `STD_H`). The dashboard requires the factory `automotive` library. JS and PD source profiles do not yet mean their devices can be installed or used safely. Other models, regions, firmware and ordinary Android devices are not validated.
 
 **2026-10-27:** N Dashboard v6 and My Apps v10 were installed and their APKs read back with matching hashes. The owner confirmed reopening My Apps from the HOME edge button. **Restoration after full power-off and extended operation remain unverified.** Later private experimental builds are separate from these releases. [Evidence and current status](docs/STATUS.md)
 

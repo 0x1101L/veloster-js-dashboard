@@ -1,8 +1,10 @@
-# Veloster N Dashboard — 독립 N 계기판
+# Veloster Dashboard — 독립 차량 대시보드
+
+*from [Veloster N Dashboard](https://github.com/reikop/veloster-n-dashboard)*
 
 [English](README.md) | **한국어**
 
-벨로스터 N 순정 내비게이션용 독립 계기판과 앱 실행 도우미 **‘내 앱’**입니다. 한국어·영어를 지원하며 순정 N 모드와 별도로 설치합니다.
+Veloster JS·JSN과 i30 PD 순정 헤드유닛에서 사용할 대시보드 프로젝트입니다. 앱 실행 도우미 **‘내 앱’**도 포함합니다. 한국어·영어를 지원합니다. 현재 공개 설치기와 배포본은 JSN 기준이며, JS·JSN·PD 통합 설치는 목표이지 아직 제공되는 기능이 아닙니다.
 
 [다운로드](#다운로드) · [설치](docs/INSTALL.md) · [호환성·확인 범위](docs/STATUS.md#한국어) · [문서](docs/README.md)
 
@@ -22,9 +24,23 @@
 
 차량 데이터는 기존 수신 경로를 사용하며 ECU 진단 요청을 새로 보내지 않습니다. 미수신·만료 값은 알 수 없음으로 남깁니다. Bluetooth 앨범아트 수신·배기온·e-LSD는 미해결이며 무선 CarPlay·자동 업데이트는 구현하지 않았습니다. [상세 한계](docs/LIMITATIONS.md)
 
+## 차량 프로필과 출처
+
+| 차량 | 코드네임 | `Build.PRODUCT` | 헤드유닛 소프트웨어 버전 |
+| --- | --- | --- | --- |
+| Veloster N | JSN | `jsn_kr` | SOP V141 · 2026-01-14 · STD_H |
+| Veloster | JS | `js_kr` | SOP V141 · 2026-01-14 · STD_H |
+| i30 | PD | `pd_kr` | SOP V141 · 2026-01-14 · STD_H |
+
+표의 읽기 쉬운 버전은 차종별 `*.KOR.SOP.V141.260114.STD_H` 소프트웨어 식별자를 줄여 쓴 것입니다. 소스의 프로필 판별은 프로젝트 메모리에 기록한 정확한 incremental 빌드값을 사용합니다. JS 화면은 작업 완료 전까지 **Veloster (WIP)**로 표시합니다. 현재 소스 분기는 호스트·정적 검사만 했으며 설치 호환성을 보증하지 않습니다.
+
+- **JSN 앱 원본:** [reikop/veloster-n-dashboard](https://github.com/reikop/veloster-n-dashboard)
+- **PD 프로필·신호표 참고 (PD-1):** [Linuchan5468/i30-pd-dashboard](https://github.com/Linuchan5468/i30-pd-dashboard). JS 디코더도 이 PD 신호표를 출발점으로 삼습니다.
+- **JS 차량 식별 근거:** 사용자가 제공한 헤드유닛 사진과 일치하는 로컬 펌웨어 카탈로그입니다. 펌웨어 파일은 이 저장소에 포함하지 않습니다.
+
 ## 호환성
 
-설치기 지원 대상은 **국내 벨로스터 N JSN**, product `jsn_kr`, **Android 4.2.2 / API 17**, incremental `eng.vmadmin.20250902.081552` (`250902`, `STD_H`)입니다. 계기판 실행에는 순정 `automotive` 라이브러리가 필요합니다. 다른 차종·지역·펌웨어·일반 Android 기기의 호환성은 확인하지 않았습니다.
+기존 설치기 지원 대상은 **국내 벨로스터 N JSN**, product `jsn_kr`, **Android 4.2.2 / API 17**, incremental `eng.vmadmin.20250902.081552` (`250902`, `STD_H`)입니다. 계기판 실행에는 순정 `automotive` 라이브러리가 필요합니다. JS·PD 소스 분기가 있다는 사실은 해당 기기의 설치·실차 호환성 확인을 뜻하지 않습니다. 다른 차종·지역·펌웨어·일반 Android 기기의 호환성은 확인하지 않았습니다.
 
 **2026-10-27:** 공개 N 계기판 v6·내 앱 v10 설치 후 APK를 다시 읽어 해시 일치를 확인했습니다. 사용자는 HOME 가장자리 버튼으로 내 앱을 다시 여는 것도 확인했습니다. **완전 전원 종료 후 복원·장시간 동작은 미검증**입니다. 이후의 비공개 시험본은 이 배포본과 구분합니다. [근거·현재 확인 범위](docs/STATUS.md#한국어)
 
