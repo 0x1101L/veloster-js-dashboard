@@ -4,6 +4,10 @@
 
 Documentation reviewed **2026-11-02**. Vehicle evidence through **2026-10-28**. No new vehicle session was performed for this documentation update.
 
+## Current JS trial — 2026-11-11
+
+The JS repository now contains a signed versionCode 9 trial APK under `apks/JS-Dashboard-build-*.apk`. API17 V1 signature, ZIP alignment, 15 Java host programs and 55 Python tests passed. No installation or vehicle execution of this artifact was performed. The historical JSN Dashboard APKs were removed from this checkout; the following JSN observations describe the original upstream bundle.
+
 ## Supported target
 
 | Item | Target |
@@ -34,7 +38,7 @@ N Dashboard v6  e2bf05c2fa955b7a60dc74705e48de67582956a9e3c4ee45473b88a9093830e2
 My Apps v10     6351e5d0806fecf2cf5e5901a67c33a7a5ab337513dce1a62b30c9318d352680
 ```
 
-These match [release.json](../release.json). The `v2026.10.26-i18n` archive remains unchanged and retains its original prerelease status and documentation. Later vehicle observations do not certify every feature.
+These are the original bundle’s readback hashes. The [current manifest](../release.json) lists the JS trial separately; it has host validation only. The `v2026.10.26-i18n` archive remains unchanged and retains its original prerelease status and documentation. Later vehicle observations do not certify every feature.
 
 ## Unreleased source changes (2026-11-02)
 

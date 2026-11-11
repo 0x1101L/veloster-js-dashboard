@@ -6,6 +6,10 @@
 
 **문서 정정:** 10/27 설치·해시 대조·사용자 바로가기 확인을 반영했습니다. 아래 미시험 표현은 배포 당시 기록입니다. 새 APK 배포나 냉간 재부팅 성공을 뜻하지 않습니다.
 
+## JS trial build — 2026-11-11
+
+[JS-Dashboard-build-20261111-175521.apk](../apks/JS-Dashboard-build-20261111-175521.apk) is Dashboard versionCode 9, built for API 17 / DEX 035 and verified with the public AOSP V1 signer. It has no installation or vehicle test result. It is listed separately in [release.json](../release.json) and is not selected by the JSN installer. The previous `N-Dashboard-v*-API17.apk` files were removed from this checkout; use the [original JSN bundle](https://github.com/reikop/veloster-n-dashboard/releases/download/v2026.10.26-i18n/veloster-n-dashboard-v2026.10.26-i18n.zip) for the earlier installer and APKs.
+
 ## v2026.10.26-i18n — prerelease (release-time record)
 
 My Apps **v10 / 1.9-i18n** and N Dashboard **v6 / 1.5-i18n** add Korean/English display text, system-language defaults, per-app saved selection, localized launcher labels, and live language refresh for the edge shortcut/notification. [Language guide](LANGUAGES.md).
@@ -31,7 +35,7 @@ Both new APKs are API17/DEX035 with verified V1 signatures and payload preservat
 | My Apps v8 | `com.veloster.carplayhub` | 8 | Historical vehicle-installed APK without Quick entry; not the current hub source |
 | N Dashboard v3 | `com.veloster.dashboard` | 3 | Historical dashboard APK; not the current dashboard source |
 
-Hashes, sizes and version names are in [release.json](../release.json) and [SHA256SUMS](../SHA256SUMS). At that release, source corresponded to dashboard v5 and hub v9. The v8 source remains in repository history at commit `c00c650`; its original APK bytes have not changed. Restoring an older APK may be blocked by version checks and can require data loss; historical files are not an automatic rollback mechanism.
+Historical hashes, sizes and version names are in the original bundle’s release manifest and checksum list. At that release, source corresponded to dashboard v5 and hub v9. The v8 source remains in repository history at commit `c00c650`; its original APK bytes have not changed. Restoring an older APK may be blocked by version checks and can require data loss; historical files are not an automatic rollback mechanism.
 
 ## What changed
 

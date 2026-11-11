@@ -4,7 +4,7 @@
 
 **English** | [한국어](README_ko.md)
 
-A standalone dashboard project for Veloster JS, JSN and i30 PD factory head units, with **My Apps** for opening the dashboard and installed apps. Korean and English included. The current public installer and release remain the JSN baseline; unified JS/JSN/PD installation is a project goal, not a released capability.
+A standalone dashboard project for Veloster JS, JSN and i30 PD factory head units, with **My Apps** for opening the dashboard and installed apps. Korean and English included. This repository ships a JS trial APK. The historical JSN installer and its APKs are in the original upstream bundle; unified JS/JSN/PD installation is not yet available.
 
 [Download](#download) · [Install](docs/INSTALL_EN.md) · [Compatibility & status](docs/STATUS.md) · [Documentation](docs/README.md)
 
@@ -54,10 +54,10 @@ The existing guarded installer supports **Korean Veloster N JSN**, product `jsn_
 
 | Current APK | Version |
 | --- | --- |
-| [N Dashboard](apks/N-Dashboard-v6-API17.apk) | v6 · 1.5-i18n |
+| [JS Dashboard trial](apks/JS-Dashboard-build-20261111-175521.apk) | versionCode 9 · 1.5-i18n · host-verified only |
 | [My Apps](apks/My-Apps-v10-API17.apk) | v10 · 1.9-i18n |
 
-Use the complete ZIP or repository for installation. Copying an APK onto an SD card does not install it. The dated ZIP retains its original documentation; this repository records later verification. [Older versions and release history](docs/RELEASE.md) · [Hashes and package identities](release.json)
+Use the original upstream ZIP for JSN installation. The JS trial APK is separate from that installer. Copying an APK onto an SD card does not install it. The dated ZIP retains its original documentation; this repository records later verification. [Older versions and release history](docs/RELEASE.md) · [Hashes and package identities](release.json)
 
 ## Quick start
 

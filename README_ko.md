@@ -4,7 +4,7 @@
 
 [English](README.md) | **한국어**
 
-Veloster JS·JSN과 i30 PD 순정 헤드유닛에서 사용할 대시보드 프로젝트입니다. 앱 실행 도우미 **‘내 앱’**도 포함합니다. 한국어·영어를 지원합니다. 현재 공개 설치기와 배포본은 JSN 기준이며, JS·JSN·PD 통합 설치는 목표이지 아직 제공되는 기능이 아닙니다.
+Veloster JS·JSN과 i30 PD 순정 헤드유닛에서 사용할 대시보드 프로젝트입니다. 앱 실행 도우미 **‘내 앱’**도 포함합니다. 한국어·영어를 지원합니다. 이 저장소에는 JS 시험 APK를 올립니다. 기존 JSN 설치기와 APK는 원본 업스트림 ZIP에 있으며, JS·JSN·PD 통합 설치는 아직 제공하지 않습니다.
 
 [다운로드](#다운로드) · [설치](docs/INSTALL.md) · [호환성·확인 범위](docs/STATUS.md#한국어) · [문서](docs/README.md)
 
@@ -63,10 +63,10 @@ JS 시험 빌드 런타임에서 PD 기준 공용 개요 레이아웃의 리매�
 
 | 현재 APK | 버전 |
 | --- | --- |
-| [N 계기판](apks/N-Dashboard-v6-API17.apk) | v6 · 1.5-i18n |
+| [JS Dashboard 시험본](apks/JS-Dashboard-build-20261111-175521.apk) | versionCode 9 · 1.5-i18n · 호스트 검증만 완료 |
 | [내 앱](apks/My-Apps-v10-API17.apk) | v10 · 1.9-i18n |
 
-설치에는 전체 ZIP이나 저장소를 사용하세요. APK를 SD 카드에 복사하는 것만으로 설치되지 않습니다. 날짜가 붙은 ZIP의 문서는 배포 당시 상태이며 이후 검증은 이 저장소에 반영합니다. [이전 버전·배포 기록](docs/RELEASE.md) · [파일 해시·패키지 정보](release.json)
+JSN 설치는 원본 업스트림 ZIP을 사용하세요. JS 시험 APK는 그 설치기에서 사용하지 않습니다. APK를 SD 카드에 복사하는 것만으로 설치되지 않습니다. 날짜가 붙은 ZIP의 문서는 배포 당시 상태이며 이후 검증은 이 저장소에 반영합니다. [이전 버전·배포 기록](docs/RELEASE.md) · [파일 해시·패키지 정보](release.json)
 
 ## 빠른 시작
 

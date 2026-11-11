@@ -15,7 +15,7 @@
 ## 1. PC와 차량 준비
 
 1. 차량을 정차하고 화면을 확인할 수 있는 상태에서 [ADB 연결 안내](ADB.md)를 따릅니다.
-2. 개별 APK만 받지 말고 **최신 저장소 전체 또는 `v2026.10.26-i18n` 릴리스 묶음**을 내려받아 압축을 풉니다. PC 터미널의 현재 폴더를 `README.md`, `scripts/`, `apks/`가 있는 프로젝트 폴더로 옮깁니다. 최초 `v2026.10.23` 릴리스 ZIP에는 새 설치·메뉴 도구가 없습니다.
+2. 개별 APK만 받지 말고 [원본 `v2026.10.26-i18n` JSN 릴리스 묶음](https://github.com/reikop/veloster-n-dashboard/releases/download/v2026.10.26-i18n/veloster-n-dashboard-v2026.10.26-i18n.zip)을 내려받아 압축을 풉니다. PC 터미널의 현재 폴더를 `README.md`, `scripts/`, `apks/`가 있는 프로젝트 폴더로 옮깁니다. 최초 `v2026.10.23` 릴리스 ZIP에는 새 설치·메뉴 도구가 없습니다.
 3. Python 3.9 이상과 Android SDK Platform-Tools의 `adb`를 준비합니다. 다음 명령은 PC에서 실행합니다. 예시는 macOS/Linux의 bash/zsh 문법입니다. Windows에서는 Python 명령을 `py -3`으로 바꾸고 `"$VN_SERIAL"` 대신 실제 일련번호를 직접 적을 수 있습니다. POSIX 변수 대입을 PowerShell에 그대로 붙여 넣지 마세요.
 
 ```sh
@@ -132,6 +132,6 @@ adb -s "$VN_SERIAL" shell am force-stop com.veloster.dashboard
 
 v3는 v5보다 낮은 버전이므로 `pm install -r`로 거절될 수 있습니다. `-d` 옵션 지원 및 v5 설정을 유지한 v3 실행은 이 공개 패키지에서 실차 검증하지 않았습니다. 자동 다운그레이드를 제공하지 않습니다.
 
-**설정 소실을 받아들이고 독립 앱을 새로 설치하기로 선택한 경우에만**, 백업을 확보한 뒤 `adb -s "$VN_SERIAL" shell pm uninstall com.veloster.dashboard`로 제거하고 서명된 v3 APK(`apks/rollback/N-Dashboard-v3-API17.apk`)를 별도 수동 설치할 수 있습니다. 제거하면 저장한 게이지·그래프 설정이 지워집니다. v3 설치 후에도 홈 진입점과 동작 확인이 필요합니다.
+**설정 소실을 받아들이고 독립 앱을 새로 설치하기로 선택한 경우에만**, 백업을 확보한 뒤 `adb -s "$VN_SERIAL" shell pm uninstall com.veloster.dashboard`로 제거하고 원본 JSN ZIP에 포함된 서명된 v3 APK(`apks/rollback/N-Dashboard-v3-API17.apk`)를 별도 수동 설치할 수 있습니다. 제거하면 저장한 게이지·그래프 설정이 지워집니다. v3 설치 후에도 홈 진입점과 동작 확인이 필요합니다.
 
 프로젝트 제거 대상은 독립 패키지 `com.veloster.dashboard`, `com.veloster.carplayhub`입니다. 메뉴 추가 도구까지 사용했다면 먼저 해당 메뉴 복귀 절차를 확인하세요. ‘내 앱’을 지우기 전 필요한 USB/무선 상태를 복구합니다. 앱 제거가 기기 설정이나 과거 순정 N 모드 수정본까지 자동 복구하지는 않습니다.

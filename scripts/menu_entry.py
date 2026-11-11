@@ -113,6 +113,8 @@ def load_apps(root=ROOT):
     apps = {}
     for package in COMPANIONS:
         entries = [e for e in release["apks"] if e["package"] == package]
+        if not entries and package == "com.veloster.dashboard" and release.get("js_trial_apks"):
+            raise Stopped("The JS trial APK is not a JSN installer companion. Use the original v2026.10.26-i18n JSN bundle.")
         require(bool(entries), "Release is missing companion: " + package)
         current = max(entries, key=lambda item: int(item["version_code"]))
         path = contained(root, current["file"])

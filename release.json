@@ -6,16 +6,6 @@
   "signing_note": "Public AOSP platform test certificate; not a private publisher identity or OTA signing key. No private keys distributed.",
   "apks": [
     {
-      "file": "apks/N-Dashboard-v6-API17.apk",
-      "package": "com.veloster.dashboard",
-      "version_code": 6,
-      "version_name": "1.5-i18n",
-      "sha256": "e2bf05c2fa955b7a60dc74705e48de67582956a9e3c4ee45473b88a9093830e2",
-      "bytes": 61229,
-      "vehicle_install_observed": true,
-      "scope": "2026-10-27 guided installation and APK readback SHA256 matched. Full power-off restoration and extended operation unverified. Later private Cover Art trial is a separate artifact."
-    },
-    {
       "file": "apks/My-Apps-v10-API17.apk",
       "package": "com.veloster.carplayhub",
       "version_code": 10,
@@ -24,16 +14,6 @@
       "bytes": 42487,
       "vehicle_install_observed": true,
       "scope": "2026-10-27 guided installation and APK readback SHA256 matched. Owner separately confirmed HOME edge-button reopening; receipt screen/reboot flags remain false. Full power-off restoration unverified."
-    },
-    {
-      "file": "apks/N-Dashboard-v5-API17.apk",
-      "package": "com.veloster.dashboard",
-      "version_code": 5,
-      "version_name": "1.4-hscan-socket",
-      "sha256": "cd8678169e5d7c3bb8d7d7a5c13a30c7c0290ce02d721b54c9161c4f9cf71c7a",
-      "bytes": 51062,
-      "vehicle_install_observed": true,
-      "scope": "Initial launch/telemetry checked; cold boot and extended operation not established."
     },
     {
       "file": "apks/My-Apps-v9-API17.apk",
@@ -54,16 +34,6 @@
       "bytes": 27101,
       "vehicle_install_observed": true,
       "scope": "Historical installed release; no universal compatibility claim."
-    },
-    {
-      "file": "apks/rollback/N-Dashboard-v3-API17.apk",
-      "package": "com.veloster.dashboard",
-      "version_code": 3,
-      "version_name": "1.2-tire-pressure",
-      "sha256": "96dd7b8a7572bb6460b171203d9da40033839963a65baa8ae5c4e44934d5976f",
-      "bytes": 46227,
-      "vehicle_install_observed": true,
-      "scope": "Historical installed release; no universal compatibility claim."
     }
   ],
   "release_tag": "v2026.10.26-i18n",
@@ -71,6 +41,21 @@
     "ko",
     "en"
   ],
-  "verification_updated": "2026-11-02",
-  "verification_document": "docs/STATUS.md"
+  "verification_updated": "2026-11-11",
+  "verification_document": "docs/STATUS.md",
+  "js_trial_apks": [
+    {
+      "file": "apks/JS-Dashboard-build-20261111-175521.apk",
+      "package": "com.veloster.dashboard",
+      "version_code": 9,
+      "version_name": "1.5-i18n",
+      "sha256": "d03adf3759939d3123204f77cc25a663cb8201c77091e843ee6d598fe7e74fd6",
+      "bytes": 84152,
+      "source_commit": "3cd73e3bf467ffbdb52f6f886f3ebd937027cc94",
+      "scope": "JS development trial; host-built and signature-verified only. Not a JSN installer companion.",
+      "vehicle_install_observed": false,
+      "original_source_commit": "6448644",
+      "build_input_note": "Source tree plus AndroidManifest versionCode 9; packaging scripts and metadata are committed separately."
+    }
+  ]
 }

@@ -50,6 +50,23 @@ python3 scripts/build.py hub \
 
 배포 APK는 API 17, DEX 035, V1/JAR 서명 형식입니다. V2 전용 서명은 Android 4.2에 맞지 않습니다. 서명 배경은 [AOSP 앱 서명 문서](https://source.android.com/docs/security/features/apksigning)를 참고하세요. 새 서명본의 설치 성공과 차량 동작은 별도 검증해야 합니다.
 
+## JS 서명 시험본 규칙
+
+JS Dashboard 시험본은 외부의 공개 AOSP Android 4.2.2 platform 테스트 키로 V1 서명하며, `apks/JS-Dashboard-build-YYYYMMDD-HHMMSS.apk`에 저장합니다. 시각은 한국 시각입니다. 기본 `build.py`의 unsigned 빌드는 유지합니다. 서명 빌드는 다음 전용 래퍼를 사용합니다.
+
+```sh
+python3 scripts/build_js_apk.py \
+  --java /path/to/jdk17/bin/java \
+  --android-jar /path/to/android-17/android.jar \
+  --build-tools /path/to/android-sdk/build-tools/36.1.0 \
+  --key /outside/repository/platform.pk8 \
+  --cert /outside/repository/platform.x509.pem
+```
+
+키·인증서는 `menu-entry/tool-sources.json`의 고정 해시와 일치해야 하며 저장소 밖에 둡니다. 래퍼는 빌드·ZIP 정렬·API17 V1 서명·인증서 확인 후 APK만 `apks/`에 복사하고 기존 파일을 덮어쓰지 않습니다. `N-Dashboard-v*-API17.apk`는 rollback 폴더를 포함해 이 저장소에 두지 않습니다. 과거 JSN APK는 원본 업스트림 ZIP을 사용합니다.
+
+JS 시험본은 `release.json`의 `js_trial_apks`에 분리합니다. 기존 JSN 설치기는 이 APK를 선택하지 않으며 원본 JSN 묶음을 안내하고 중단합니다. 이 빌드에는 실차 설치·실행 결과가 없습니다. versionCode 9는 과거 별도 versionCode 8 시험본과도 구분합니다.
+
 ## 공개 폴더를 유지할 때
 
 개인키, 원본 차량 로그/스크린샷, VIN·기기 일련번호·페어링 주소, 순정 APK/ODEX/펌웨어, 개인 백업은 추가하지 않습니다. `build/`, `private-backups/`, 키 확장자는 `.gitignore`에 제외되어 있습니다. 새 바이너리를 배포하면 `release.json`, `SHA256SUMS`, `VALIDATION.json`과 확인 범위를 함께 갱신합니다.
@@ -60,7 +77,7 @@ python3 scripts/build.py hub \
 
 [단일 설치 명령](INSTALL.md)은 Python 표준 라이브러리와 ADB만 사용합니다. 빌드 도구나 키가 필요하지 않습니다. [선택형 OEM 메뉴 재구성](MENU_ENTRY_ko.md)에만 별도 JDK·Androguard·smali·개인 원본이 필요합니다. 관련 소스는 `menu-entry/`와 `scripts/build_menu_entry.py`이며, 외부 키를 받아 해당 로컬 메뉴 APK를 서명하는 경로입니다. OEM 코드가 포함된 생성물을 공개하지 않습니다.
 
-다국어 문자열은 `translations/en.json`, `ko.json`을 수정하고 `python3 scripts/generate_translations.py`로 Java 카탈로그를 갱신합니다. 빌더는 카탈로그 일치 여부를 검사하고 `res/values`, `res/values-ko`의 앱 이름 리소스도 컴파일합니다. 두 앱 소스에는 [v6/v10 이후 변경](NEMESIS_REVIEW.md#implemented-in-our-code-unreleased)이 포함됩니다. 배포 APK는 v6/v10 그대로입니다.
+다국어 문자열은 `translations/en.json`, `ko.json`을 수정하고 `python3 scripts/generate_translations.py`로 Java 카탈로그를 갱신합니다. 빌더는 카탈로그 일치 여부를 검사하고 `res/values`, `res/values-ko`의 앱 이름 리소스도 컴파일합니다. 두 앱 소스에는 [v6/v10 이후 변경](NEMESIS_REVIEW.md#implemented-in-our-code-unreleased)이 포함됩니다. 과거 JSN v6/v10은 원본 업스트림 ZIP 기준이며, 이 저장소의 JS 시험본과 구분합니다.
 
 ## Experimental AVRCP Cover Art core / 실험용 앨범아트 수신 코어
 

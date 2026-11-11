@@ -16,7 +16,7 @@ def require(ok, message):
 
 def main():
     manifest = json.loads((ROOT / "release.json").read_text(encoding="utf-8"))
-    for entry in manifest["apks"]:
+    for entry in manifest["apks"] + manifest.get("js_trial_apks", []):
         name = entry["file"]
         path = (ROOT / name).resolve()
         require(ROOT in path.parents, "Path outside release: " + name)

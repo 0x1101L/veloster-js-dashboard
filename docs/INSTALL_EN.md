@@ -15,7 +15,7 @@ On 2026-10-27, public v6/v10 installation and APK readback hashes were verified;
 ## 1. Prepare the computer and vehicle
 
 1. Park the vehicle where you can inspect its screen, and establish ADB using the [connection guide](ADB_EN.md). Initial debugging access cannot be enabled through My Apps before My Apps is installed and reachable.
-2. Download and extract the **complete latest repository or the `v2026.10.26-i18n` release bundle**, not only the APK files. Open a terminal in the project directory containing `README.md`, `scripts/`, and `apks/`. The original `v2026.10.23` ZIP predates the new installation/menu tooling.
+2. Download and extract the [original `v2026.10.26-i18n` JSN release bundle](https://github.com/reikop/veloster-n-dashboard/releases/download/v2026.10.26-i18n/veloster-n-dashboard-v2026.10.26-i18n.zip), not only the APK files. Open a terminal in the project directory containing `README.md`, `scripts/`, and `apks/`. The original `v2026.10.23` ZIP predates the new installation/menu tooling.
 3. Install Python 3.9+ and Android SDK Platform-Tools so that `adb` is available. Run these commands on the computer. Examples use macOS/Linux bash or zsh syntax. On Windows, you can use `py -3` instead of `python3` and replace `"$VN_SERIAL"` directly with your device serial. Do not paste POSIX variable assignments into PowerShell unchanged.
 
 ```sh
@@ -132,6 +132,6 @@ A personal backup APK with the same signer and the same or a higher version may 
 
 v3 has a lower version than v5, so ordinary `pm install -r` may reject it. Support for `-d` and retaining v5 preferences while running v3 have not been vehicle-validated for this public package. No automatic downgrade is provided.
 
-**Only if you deliberately accept losing the app's saved settings**, preserve a backup and use `adb -s "$VN_SERIAL" shell pm uninstall com.veloster.dashboard` before separately installing the signed v3 APK at `apks/rollback/N-Dashboard-v3-API17.apk`. Removing the dashboard deletes its saved gauge/graph preferences. Check its entry path and operation again after installing v3.
+**Only if you deliberately accept losing the app's saved settings**, preserve a backup and use `adb -s "$VN_SERIAL" shell pm uninstall com.veloster.dashboard` before separately installing the signed v3 APK from the original JSN bundle (`apks/rollback/N-Dashboard-v3-API17.apk` inside the ZIP). Removing the dashboard deletes its saved gauge/graph preferences. Check its entry path and operation again after installing v3.
 
 The independent packages are `com.veloster.dashboard` and `com.veloster.carplayhub`. If you used the menu tooling, review menu recovery before removing the project. Restore any needed USB/radio state before removing My Apps. Uninstalling an app does not automatically restore changed device settings or an older modified factory N Mode APK.

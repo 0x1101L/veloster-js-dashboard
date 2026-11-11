@@ -23,6 +23,16 @@ def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
+class TrialArtifactTests(unittest.TestCase):
+    def test_js_trial_is_never_selected_as_jsn_companion(self):
+        manifest = {"apks": [], "js_trial_apks": [{"package": "com.veloster.dashboard"}]}
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "release.json").write_text(json.dumps(manifest))
+            with self.assertRaisesRegex(m.Stopped, "JS trial APK is not a JSN installer companion"):
+                m.load_apps(root)
+
+
 def apk(label):
     output = io.BytesIO()
     with zipfile.ZipFile(output, "w") as archive:
