@@ -23,6 +23,7 @@ def main():
     sources = [ROOT / "shared/src/com/veloster/vehicle/Telemetry.java",
                ROOT / "shared/src/com/veloster/vehicle/PdPowertrain.java",
                ROOT / "shared/src/com/veloster/vehicle/PdGearState.java",
+               *[ROOT / "shared/src/com/veloster/vehicle" / (name + ".java") for name in ("JsPowertrain", "JsGearState", "JsTelemetryDecoder")],
                ROOT / "shared/src/com/veloster/vehicle/ShiftGuide.java",
                ROOT / "shared/src/com/veloster/vehicle/OverviewLayout.java",
                ROOT / "shared/src/com/veloster/i18n/UiText.java",
