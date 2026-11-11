@@ -61,8 +61,11 @@ public final class JsPerformanceRenderer {
     }
     private void headline(Canvas c){
         line(c,293,106,293,281,LINE,1);line(c,389,106,389,281,LINE,1);
-        text(c,"GEAR",341,115,14,MUTED,Paint.Align.CENTER,false);
-        text(c,valid(8)?Telemetry.gearLabel((int)samples[8].value):"—",341,227,67,BLUE,Paint.Align.CENTER,false);
+        boolean gearValid=valid(8);
+        int gear=(int)samples[8].value;
+        String mode=gearValid?JsGearState.modeLabel(gear):"";
+        text(c,mode.isEmpty()?"GEAR":"GEAR · "+mode,341,115,14,MUTED,Paint.Align.CENTER,false);
+        text(c,gearValid?JsGearState.valueLabel(gear):"—",341,227,67,BLUE,Paint.Align.CENTER,false);
         text(c,UiText.t("기어"),341,259,14,MUTED,Paint.Align.CENTER,false);
         text(c,"SPEED",406,115,14,MUTED,Paint.Align.LEFT,false);
         fit(c,value(7,"%.0f"),488,227,79,171,WHITE,Paint.Align.CENTER);

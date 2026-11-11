@@ -3,7 +3,21 @@ package com.veloster.vehicle;
 /** PD DCT7 selector and current-gear receipts; no Android, polling or inferred ratios. */
 public final class JsGearState {
     public static final int P=-1,R=-2,N=-3,D=-4,M=-5;
+    private static final int D_BASE=100,M_BASE=200;
     public static final long PAIR_MAX_AGE_MS=1000;
+
+    static String modeLabel(int value){
+        if(value>D_BASE&&value<=D_BASE+7)return "D";
+        if(value>M_BASE&&value<=M_BASE+7)return "M";
+        return "";
+    }
+    static int displayNumber(int value){
+        if(value>D_BASE&&value<=D_BASE+7)return value-D_BASE;
+        if(value>M_BASE&&value<=M_BASE+7)return value-M_BASE;
+        return value;
+    }
+    static String valueLabel(int value){return Telemetry.gearLabel(displayNumber(value));}
+
     public static final class Result {
         public final boolean updated,valid;
         public final float value;
@@ -44,7 +58,7 @@ public final class JsGearState {
         if(currentSeen&&currentTime>=selectorEpoch&&currentTime<=now
                 &&now-selectorTime<=PAIR_MAX_AGE_MS&&now-currentTime<=PAIR_MAX_AGE_MS
                 &&current>=1&&current<=7){
-            return new Result(true,true,100+current,Math.min(selectorTime,currentTime));
+            return new Result(true,true,(manual?M_BASE:D_BASE)+current,Math.min(selectorTime,currentTime));
         }
         // D/M is known from the selector alone; unrelated gear receipts cannot refresh it.
         return new Result(true,true,manual?M:D,selectorTime);

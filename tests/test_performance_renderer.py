@@ -17,6 +17,20 @@ public class PerformancePreview {
   t.gforce(new byte[]{(byte)0x89,0x31,0,0,0x7d,0x1f,0,0},1000);
   t.hscanJsn(0xc7,7,new byte[]{0,0,74,8,32,0,0,0},1000);t.hscanJsn(0xc7,0x23,new byte[]{0,0,100,0,0,0,0,0},1000);return t;
  }
+ static void gear(Telemetry t,int function,int value,long time){
+  t.hscanJs(0xc7,function,new byte[]{0,(byte)value,0,0,0,0,0,0},time);
+ }
+ static void jsGearPages(Telemetry t,long now,String mode,String number){
+  for(int page=0;page<6;page++){
+   Canvas c=new Canvas(800,480);JsPitRenderer r=new JsPitRenderer();
+   if(page==1)r.setPerformancePage(true);
+   if(page==2){GaugeLayout layout=new GaugeLayout();layout.set(0,8,2);r.setGaugeLayout(layout);}
+   if(page==3){GraphLayout layout=new GraphLayout();layout.signal(0,8);r.setGraphLayout(layout);}
+   r.draw(c,800,480,page>=4,t,now,6000,page==5,null);
+   boolean found=false;for(String text:c.texts)if(text.endsWith(" · "+mode))found=true;
+   check(found&&c.texts.contains(page==3?number+" ":number)&&!c.texts.contains(mode+number),"separate JS mode and received gear on page "+page+": "+c.texts);
+  }
+ }
  public static void main(String[] args)throws Exception{
   int rendered=0;
   for(String language:new String[]{"ko","en"})for(int height:new int[]{480,425})for(String state:new String[]{"received","waiting","stale","invalid"}){
@@ -41,6 +55,17 @@ public class PerformancePreview {
    Canvas c=new Canvas(800,480);JsPitRenderer r=new JsPitRenderer();if(page==1)r.setPerformancePage(true);if(page==2){GaugeLayout layout=new GaugeLayout();r.setGaugeLayout(layout);}if(page==3)r.setGraphLayout(new GraphLayout());r.draw(c,800,480,false,js,3000);
    if(page<2){boolean found=false;for(String text:c.texts)if(text.contains("LAST 2s"))found=true;check(found,"JS held value labeled on page "+page);}
   }
+  Telemetry gearbox=new Telemetry();gearbox.profile(false,true,false);
+  gear(gearbox,0x1d,5,4000);gear(gearbox,0x1e,3,4050);
+  jsGearPages(gearbox,4050,"D","3");
+  gear(gearbox,0x1d,4,4100);
+  Canvas fallback=new Canvas(800,480);JsPitRenderer r=new JsPitRenderer();r.setPerformancePage(true);r.draw(fallback,800,480,false,gearbox,4100);
+  check(fallback.texts.contains("M")&&!fallback.texts.contains("GEAR · M")&&!fallback.texts.contains("3"),"selector-only fallback keeps M without recycling the D gear");
+  gear(gearbox,0x1e,3,4150);jsGearPages(gearbox,4150,"M","3");
+  gear(gearbox,0x1e,4,4200);jsGearPages(gearbox,4200,"M","4");
+  gear(gearbox,0x1e,3,4250);jsGearPages(gearbox,4250,"M","3");
+  gear(gearbox,0x1e,7,4300);jsGearPages(gearbox,4300,"M","7");
+  gear(gearbox,0x1d,5,4350);gear(gearbox,0x1e,6,4400);jsGearPages(gearbox,4400,"D","6");
   System.out.println("PASS "+rendered+" performance renders and 4 existing page renders");
  }
 }'''

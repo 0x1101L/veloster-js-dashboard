@@ -17,6 +17,9 @@ public final class GraphRenderer {
     private void line(Canvas c,float x,float y,float xx,float yy,int color){p.setStyle(Paint.Style.STROKE);p.setColor(color);p.setStrokeWidth(1);c.drawLine(x,y,xx,yy,p);p.setStyle(Paint.Style.FILL);}
     private static String number(int i,float value){return String.format(Locale.US,i==0||i==7||i>=3&&i<=6||i==8?"%.0f":i==11||i==12||i==17?"%+.2f":i==13?"%+.1f":"%.1f",value);}
     private static float span(int signal){return signal==0?100:signal==11||signal==12?0.1f:signal==17?0.1f:signal==13?10:2;}
+    private static float displayValue(int signal,float value,boolean jsGear){
+        return jsGear?JsGearState.displayNumber((int)value):Telemetry.displayValue(signal,value);
+    }
     public void draw(Canvas c,Telemetry model,long now,GraphLayout layout){
         text(c,UiText.t("그래프를 길게 눌러 항목 변경"),22,72,13,MUTED);
         for(int i=0;i<2;i++){
@@ -29,13 +32,16 @@ public final class GraphRenderer {
     private void drawSeries(Canvas c,Telemetry model,long now,GraphLayout layout,int slot){
         int signal=layout.signal(slot);float top=GraphLayout.top(slot);
         p.setStyle(Paint.Style.FILL);p.setColor(0xff101920);c.drawRoundRect(new RectF(18,top,782,top+124),7,7,p);
-        text(c,UiText.t(Telemetry.LABELS[signal]),30,top+20,15,BLUE);
         Telemetry.Sample current=model.sample(signal,now);
-        String value=current.valid?number(signal,Telemetry.displayValue(signal,current.value)):"—";
+        boolean jsGear=signal==8&&model.jsProfile();
+        String mode=jsGear&&current.valid?JsGearState.modeLabel((int)current.value):"";
+        String title=UiText.t(Telemetry.LABELS[signal]);
+        text(c,mode.isEmpty()?title:title+" · "+mode,30,top+20,15,BLUE);
+        String value=current.valid?number(signal,displayValue(signal,current.value,jsGear)):"—";
         text(c,value+" "+Telemetry.UNITS[signal],622,top+20,16,WHITE);
         Telemetry.Series series=model.history(signal,now,layout.window());
         float lo=Float.POSITIVE_INFINITY,hi=Float.NEGATIVE_INFINITY;
-        for(int i=0;i<series.size();i++)if(series.valid[i]){float v=Telemetry.displayValue(signal,series.values[i]);lo=Math.min(lo,v);hi=Math.max(hi,v);}
+        for(int i=0;i<series.size();i++)if(series.valid[i]){float v=displayValue(signal,series.values[i],jsGear);lo=Math.min(lo,v);hi=Math.max(hi,v);}
         if(lo==Float.POSITIVE_INFINITY){lo=GaugeRenderer.min(signal,Telemetry.UNITS[signal]);hi=GaugeRenderer.max(signal,Telemetry.UNITS[signal]);}
         else{if(signal==Telemetry.STEERING||signal==11||signal==12){lo=Math.min(lo,0);hi=Math.max(hi,0);}float pad=Math.max(span(signal)/2,(hi-lo)*0.12f);lo-=pad;hi+=pad;}
         final float left=82,right=766,plotTop=top+30,bottom=top+103;
@@ -46,7 +52,7 @@ public final class GraphRenderer {
         int saved=c.save();c.clipRect(left,plotTop,right,bottom);
         for(int i=0;i<series.size();i++){
             if(!series.valid[i]){connected=false;continue;}
-            float v=Telemetry.displayValue(signal,series.values[i]);
+            float v=displayValue(signal,series.values[i],jsGear);
             float x=right-(now-series.times[i])*(right-left)/layout.window(),y=bottom-(v-lo)/(hi-lo)*(bottom-plotTop);
             if(!connected||series.breakBefore[i]||series.times[i]-previous>2000)path.moveTo(x,y);else path.lineTo(x,y);
             connected=true;previous=series.times[i];p.setStyle(Paint.Style.FILL);p.setColor(BLUE);c.drawCircle(x,y,1.4f,p);

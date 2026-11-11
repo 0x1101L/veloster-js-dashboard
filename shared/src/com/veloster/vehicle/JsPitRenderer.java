@@ -47,10 +47,14 @@ public final class JsPitRenderer {
     private static final String[] PREFIX={"엔진 RPM","오일 온도","냉각수 온도","앞 왼쪽 휠","앞 오른쪽 휠","뒤 왼쪽 휠","뒤 오른쪽 휠","속도 km/h","현재 기어","스로틀 %","브레이크 압력 bar","횡가속","종가속","조향각","외기 온도","출력 (계산)","토크 (계산)","부스트 (계산)","앞 왼쪽 공기압","앞 오른쪽 공기압","뒤 왼쪽 공기압","뒤 오른쪽 공기압","TCS","ESC","ABS","배터리 SOC","배터리 전압","조향 속도","e-LSD 수치","흡기 온도","가속 페달 %","TCS 사용 상태","ESC 사용 상태","ABS 경고등"};
     private int index(String prefix){for(int i=0;i<PREFIX.length;i++)if(PREFIX[i].equals(prefix))return i;return -1;}
     private String value(String prefix){int i=index(prefix);if(i<0||i>=samples.length||!(samples[i].valid||samples[i].held))return "—";
-        if(i==8)return Telemetry.gearLabel((int)samples[i].value);
+        if(i==8)return JsGearState.valueLabel((int)samples[i].value);
         return (samples[i].held?"LAST "+samples[i].lastValidAgeMs/1000+"s ":"")+String.format(Locale.US,i==0||i==7||(i>=Telemetry.TPMS_FL&&i<=Telemetry.BAT_SOC)||i==Telemetry.STEERING_SPEED?"%.0f":i==11||i==12?"%+.2f":i==13?"%+.1f":i==17||i==Telemetry.BAT_VOLTAGE?"%.2f":"%.1f",Telemetry.displayValue(i,samples[i].value));}
     private float numeric(String prefix){int i=index(prefix);return i>=0&&i<samples.length&&samples[i].valid?Telemetry.displayValue(i,samples[i].value):0;}
     private boolean changed(String prefix){int i=index(prefix);return i>=0&&i<samples.length&&samples[i].changed;}
+    private String gearTitle(String title){
+        String mode=samples[8].valid?JsGearState.modeLabel((int)samples[8].value):"";
+        return mode.isEmpty()?title:title+" · "+mode;
+    }
     public void draw(Canvas c,int width,int height,boolean cluster,Telemetry model,long now){
         draw(c,width,height,cluster,model,now,ShiftGuide.DEFAULT);
     }
@@ -157,7 +161,7 @@ public final class JsPitRenderer {
         float rpm=Math.max(0,Math.min(8000,numeric("엔진 RPM")));
         box(c,30,124,470,127,LINE);if(rpm>0)box(c,30,124,30+440*rpm/8000,127,BLUE);
         box(c,180,143,316,340,BLUE);
-        centered(c,pdProfile||jsProfile?"GEAR":"EMS GEAR",248,164,11,BG,true);
+        centered(c,gearTitle(pdProfile||jsProfile?"GEAR":"EMS GEAR"),248,164,11,BG,true);
         centered(c,value("현재 기어"),248,290,130,BG,true);
         centered(c,vehicleName(),248,324,13,BG,true);
         centered(c,"SPEED",98,177,12,MUTED,true);
@@ -226,7 +230,7 @@ public final class JsPitRenderer {
         if(rpm>0)box(c,18,105,18+764*rpm/8000,108,BLUE);
         // Central gear is the primary cue, like a single-seat race display.
         box(c,294,120,506,367,BLUE);
-        centered(c,pdProfile||jsProfile?"G E A R":"E M S  G E A R",400,148,15,BG,true);
+        centered(c,gearTitle(pdProfile||jsProfile?"G E A R":"E M S  G E A R"),400,148,15,BG,true);
         String gear=value("현재 기어");
         centered(c,gear,400,321,184,BG,true);
         centered(c,vehicleName(),400,350,14,BG,true);
@@ -290,7 +294,7 @@ public final class JsPitRenderer {
         boolean head=overviewLayout.headline(i),ok=samples[i].valid&&!Float.isNaN(samples[i].value)&&!Float.isInfinite(samples[i].value);
         int style=overviewLayout.style(i),color=samples[i].changed?0xffe9f7ff:BLUE;
         panel(c,x,y,w,h,PANEL,LINE);box(c,x+10,y,x+53,y+2,head&&i==0?RED:BLUE);
-        fitted(c,title,x+10,y+(head?18:22),head?11:13,w-20,MUTED);
+        fitted(c,i==8?gearTitle(title):title,x+10,y+(head?18:22),head?11:13,w-20,MUTED);
         String number=(ok||samples[i].held)?value(PREFIX[i]):"—";
         float lo=JsGaugeRenderer.min(i,Telemetry.UNITS[i]),hi=JsGaugeRenderer.max(i,Telemetry.UNITS[i]);
         // Unsupported gears keep the existing dash and have no gauge position.

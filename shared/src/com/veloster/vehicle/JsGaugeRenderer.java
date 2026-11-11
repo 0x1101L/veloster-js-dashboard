@@ -40,10 +40,12 @@ public final class JsGaugeRenderer {
             c.translate(cx-126*scale,t);c.scale(scale,scale);l=0;t=0;cx=126;
             p.setStyle(Paint.Style.FILL);p.setColor(0xff101920);c.drawRoundRect(new RectF(l,t,l+252,t+190),10,10,p);
             p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1);p.setColor(LINE);c.drawRoundRect(new RectF(l,t,l+252,t+190),10,10,p);p.setStyle(Paint.Style.FILL);
-            text(c,UiText.t(Telemetry.LABELS[i]),cx,t+25,17,BLUE);
             boolean ok=s.valid&&!Float.isNaN(s.value)&&!Float.isInfinite(s.value);
+            String mode=i==8&&ok?JsGearState.modeLabel((int)s.value):"";
+            String title=UiText.t(Telemetry.LABELS[i]);
+            text(c,mode.isEmpty()?title:title+" · "+mode,cx,t+25,17,BLUE);
             float displayed=Telemetry.displayValue(i,s.value);
-            String value=(ok||s.held)?(i==8?Telemetry.gearLabel((int)s.value):String.format(Locale.US,"rpm".equals(u)||"km/h".equals(u)?"%.0f":"G".equals(u)?"%+.2f":i==Telemetry.STEERING?"%+.1f":"%.1f",displayed)):"—";
+            String value=(ok||s.held)?(i==8?JsGearState.valueLabel((int)s.value):String.format(Locale.US,"rpm".equals(u)||"km/h".equals(u)?"%.0f":"G".equals(u)?"%+.2f":i==Telemetry.STEERING?"%+.1f":"%.1f",displayed)):"—";
             if(s.held)value="LAST "+(s.lastValidAgeMs/1000)+"s "+value;
             float lo=min(i,u),hi=max(i,u),f=ok?Math.max(0,Math.min(1,(displayed-lo)/(hi-lo))):0;
             if(style==0){
