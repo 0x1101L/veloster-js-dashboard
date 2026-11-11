@@ -36,6 +36,11 @@ public class PerformancePreview {
    Canvas c=new Canvas(800,480);PitRenderer r=new PitRenderer();if(page==2)r.setGaugeLayout(new GaugeLayout());if(page==3)r.setGraphLayout(new GraphLayout());r.draw(c,800,480,page==1,fixture(),1000);
    check(!c.texts.contains("PERFORMANCE"),"existing page remains selectable");c.write(args[0]+"/existing-page-"+page+".png");
   }
+  Telemetry js=new Telemetry();js.profile(false,true,false);js.temperatures(new byte[]{100,120},1000);js.temperatures(new byte[]{(byte)255,(byte)255},2000);
+  for(int page=0;page<4;page++){
+   Canvas c=new Canvas(800,480);JsPitRenderer r=new JsPitRenderer();if(page==1)r.setPerformancePage(true);if(page==2){GaugeLayout layout=new GaugeLayout();r.setGaugeLayout(layout);}if(page==3)r.setGraphLayout(new GraphLayout());r.draw(c,800,480,false,js,3000);
+   if(page<2){boolean found=false;for(String text:c.texts)if(text.contains("LAST 2s"))found=true;check(found,"JS held value labeled on page "+page);}
+  }
   System.out.println("PASS "+rendered+" performance renders and 4 existing page renders");
  }
 }'''
@@ -55,7 +60,7 @@ def render(folder):
         p = root / 'PerformancePreview.java'
         p.write_text(HARNESS)
         sources.append(p)
-        sources += [ROOT / 'shared/src/com/veloster/vehicle' / (name + '.java') for name in ('Telemetry','PdPowertrain','PdGearState','PitRenderer','PerformanceRenderer','DashboardPage','ShiftGuide','MediaState','GaugeLayout','GaugeRenderer','OverviewLayout','GraphLayout','GraphRenderer')]
+        sources += [ROOT / 'shared/src/com/veloster/vehicle' / (name + '.java') for name in ('Telemetry','PdPowertrain','PdGearState','JsPowertrain','JsGearState','JsTelemetryDecoder','JsPitRenderer','JsGaugeRenderer','JsPerformanceRenderer','PitRenderer','PerformanceRenderer','DashboardPage','ShiftGuide','MediaState','GaugeLayout','GaugeRenderer','OverviewLayout','GraphLayout','GraphRenderer')]
         sources.append(ROOT / 'shared/src/com/veloster/i18n/UiText.java')
         result = subprocess.run([javac,'-encoding','UTF-8','-d',str(root),*map(str,sources)],capture_output=True,text=True)
         if result.returncode: raise AssertionError(result.stderr)
