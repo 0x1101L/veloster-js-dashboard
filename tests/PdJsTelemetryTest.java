@@ -22,6 +22,8 @@ public final class PdJsTelemetryTest {
         check(layout.signalAt(3)==Telemetry.ACCEL_PEDAL&&layout.signalAt(10)==9
             &&layout.signalAt(16)==Telemetry.PD_TCS_ENABLED&&layout.grouped(Telemetry.PD_TCS_ENABLED),
             "PD overview branches select pedal/throttle and PD stability semantics");
+        check(!layout.headline(Telemetry.PD_TCS_ENABLED)&&layout.left(Telemetry.PD_TCS_ENABLED)==18+155*1,
+            "PD-only overview signal resolves its remapped slot for drawing");
 
         Telemetry js=new Telemetry();js.profile(false,true,false);
         js.hscanJs(0xc7,8,new byte[]{0,0,100,0,0,0,0,0},2000);

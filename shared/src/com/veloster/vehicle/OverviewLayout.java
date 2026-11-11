@@ -10,7 +10,7 @@ public final class OverviewLayout {
     public void pdProfile(boolean value){pd=value;}
     public int count(){return ORDER.length;}
     public int signalAt(int slot){if(slot<0||slot>=ORDER.length)throw new IllegalArgumentException("overview slot");return pd&&slot==3?Telemetry.ACCEL_PEDAL:pd&&slot==10?9:pd&&slot==16?Telemetry.PD_TCS_ENABLED:ORDER[slot];}
-    private int slot(int signal){check(signal);for(int i=0;i<ORDER.length;i++)if(ORDER[i]==signal)return i;throw new IllegalArgumentException("overview signal");}
+    private int slot(int signal){check(signal);for(int i=0;i<ORDER.length;i++)if(signalAt(i)==signal)return i;throw new IllegalArgumentException("overview signal");}
     public int style(int signal){check(signal);return styles[signal];}
     public void style(int signal,int value){check(signal);if(value<0||value>2)throw new IllegalArgumentException("overview style");styles[signal]=value;}
     /** Number -> bar -> arc -> number; style IDs match the gauge renderer. */
