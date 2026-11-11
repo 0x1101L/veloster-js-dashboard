@@ -97,6 +97,8 @@ When a valid gear is received on JS, the gear display shows the reported number 
 
 The JS overview replaces its oil temperature card with odd/even DCT clutch temperatures and two vertical bars. The display and response decoder are available in source; live diagnostic collection is disabled pending JS vehicle verification. Missing temperatures display as dashes.
 
+The JS overview RPM card uses the standard accent in Normal and Smart, red in Sport, and green in Eco. Unknown or expired drive mode returns to the standard accent.
+
 <a id="source-and-tests"></a>
 
 ## Development

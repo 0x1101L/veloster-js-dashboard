@@ -79,6 +79,11 @@ public final class HscanFrameDecoderTest {
         check(pdCount[0]==14&&jsCount[0]==14,"PD and JS use the full shared PD signal table");
         js.accept(frame(0x5a,new byte[8]),0,264,4);js.accept(frame(0x6e,new byte[8]),0,264,4);
         check(jsCount[0]==14,"JS does not inherit JSN-only functions");
+        byte[] mode=frame(0x04,new byte[]{0,0,0,0,0,0x30,0,0});
+        js.accept(frame(0x04,new byte[7]),0,264,5);
+        check(jsCount[0]==14,"wrong drive mode length rejected");
+        js.accept(mode,0,264,6);pd.accept(mode,0,264,6);decoder.accept(mode,0,264,6);
+        check(jsCount[0]==15&&pdCount[0]==14&&count[0]==before,"eight-byte drive mode frame is JS only");
         System.out.println("PASS " + checks + " synthetic HSCAN decoder checks");
     }
 }

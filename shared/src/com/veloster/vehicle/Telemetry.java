@@ -64,6 +64,8 @@ public final class Telemetry {
     private final boolean[] jsHasValue=new boolean[LABELS.length];
     // Application policy, not an OEM timeout; fast readings disappear promptly.
     public static final long JS_FAST_STALE_MS=2000;
+    public enum JsDriveMode { UNKNOWN, NORMAL, SPORT, ECO, SMART }
+    public synchronized JsDriveMode jsDriveMode(long now){return js?jsDecoder.driveMode(now):JsDriveMode.UNKNOWN;}
     private static final long JS_DCT_STALE_MS=5000;
     private DctTemperatures dctTemperatures=DctTemperatures.UNKNOWN;
     public static final class DctTemperatures {

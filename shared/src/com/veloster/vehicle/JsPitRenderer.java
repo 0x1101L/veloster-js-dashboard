@@ -17,6 +17,7 @@ public final class JsPitRenderer {
     private final Path shape=new Path();
     private final Shader background=new LinearGradient(0,0,800,480,0xff111315,0xff030405,Shader.TileMode.CLAMP);
     private static final int BG=0xff040506,PANEL=0xff101315,LINE=0xff303638,BLUE=0xffa4d9ef,WHITE=0xffe1edf2,MUTED=0xff91a5ae,RED=0xffff4059;
+    private static final int ECO_GREEN=0xff70d991;
     private Telemetry.Sample[] samples;
     private int shiftTarget;
     private long frameTime;
@@ -81,7 +82,7 @@ public final class JsPitRenderer {
         if(performancePage)performanceRenderer.draw(c,model,now);
         else if(graphLayout!=null)graphRenderer.draw(c,model,now,graphLayout);
         else if(gaugeLayout!=null)gaugeRenderer.draw(c,model,now,gaugeLayout);
-        else if(mediaPage)drawCombined(c);else if(cluster)drawCluster(c);else drawDashboard(c,model.dctTemperatures(now));
+        else if(mediaPage)drawCombined(c);else if(cluster)drawCluster(c);else drawDashboard(c,model.dctTemperatures(now),model.jsDriveMode(now));
         if(!performancePage&&graphLayout==null&&!mediaPage && music!=null && music.notice)drawMedia(c,true);
         if(cluster&&gaugeLayout==null&&graphLayout==null)drawArtworkToggle(c);
         c.restore();
@@ -254,13 +255,18 @@ public final class JsPitRenderer {
         text(c,UiText.t("목표 ")+shiftTarget+" rpm",604,471,12,BLUE,true);
         button(c,"+",740,452,42,27,false,BLUE);
     }
-    private void drawDashboard(Canvas c,Telemetry.DctTemperatures dct){
+    private void drawDashboard(Canvas c,Telemetry.DctTemperatures dct,Telemetry.JsDriveMode mode){
         String[] names={"SPEED / km/h","ENGINE / rpm",pdProfile||jsProfile?"GEAR":"EMS GEAR",pdProfile||jsProfile?"ACCEL / %":"THROTTLE / %","BRAKE / bar"};
         for(int slot=0;slot<overviewLayout.count();slot++){
             int i=overviewLayout.signalAt(slot);boolean head=overviewLayout.headline(i);
             if(OverviewLayout.dctCard(i,jsProfile))dctCard(c,i,dct);
-            else if(overviewLayout.grouped(i))groupCard(c,i);else overviewCard(c,i,head?names[slot]:UiText.t(Telemetry.LABELS[i]));
+            else if(overviewLayout.grouped(i))groupCard(c,i);
+            else overviewCard(c,i,head?names[slot]:UiText.t(Telemetry.LABELS[i]),head&&i==0?rpmAccent(mode):BLUE);
         }
+    }
+    private int rpmAccent(Telemetry.JsDriveMode mode){
+        if(!jsProfile||mode==Telemetry.JsDriveMode.SPORT)return RED;
+        return mode==Telemetry.JsDriveMode.ECO?ECO_GREEN:BLUE;
     }
     private void overviewFrame(Canvas c,float x,float y,float w,float h,int accent){
         panel(c,x,y,w,h,PANEL,LINE);box(c,x+10,y,x+53,y+2,accent);
@@ -314,11 +320,11 @@ public final class JsPitRenderer {
         }
     }
     private String vehicleName(){return pdProfile?"i30 N Line":jsProfile?"Veloster (WIP)":jsnProfile?"VELOSTER N":profileSupported?"Dashboard":"UNSUPPORTED";}
-    private void overviewCard(Canvas c,int i,String title){
+    private void overviewCard(Canvas c,int i,String title,int accent){
         float x=overviewLayout.left(i),y=overviewLayout.top(i),w=overviewLayout.width(i),h=overviewLayout.height(i);
         boolean head=overviewLayout.headline(i),ok=samples[i].valid&&!Float.isNaN(samples[i].value)&&!Float.isInfinite(samples[i].value);
         int style=overviewLayout.style(i),color=samples[i].changed?0xffe9f7ff:BLUE;
-        overviewFrame(c,x,y,w,h,head&&i==0?RED:BLUE);
+        overviewFrame(c,x,y,w,h,accent);
         fitted(c,i==8?gearTitle(title):title,x+10,y+(head?18:22),head?11:13,w-20,MUTED);
         String number=(ok||samples[i].held)?value(PREFIX[i]):"—";
         float lo=JsGaugeRenderer.min(i,Telemetry.UNITS[i]),hi=JsGaugeRenderer.max(i,Telemetry.UNITS[i]);

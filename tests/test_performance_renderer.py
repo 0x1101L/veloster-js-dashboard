@@ -20,6 +20,21 @@ public class PerformancePreview {
  static void gear(Telemetry t,int function,int value,long time){
   t.hscanJs(0xc7,function,new byte[]{0,(byte)value,0,0,0,0,0,0},time);
  }
+ static void jsRpmAccent(String folder)throws Exception{
+  Telemetry t=new Telemetry();t.profile(false,true,false);
+  int[][] cases={{0x10,0xffa4d9ef},{0x30,0xffff4059},{0x20,0xff70d991},{0x50,0xffa4d9ef},{0x30,0xffff4059},{0xff,0xffa4d9ef}};
+  long now=1000;
+  for(int[] mode:cases){
+   t.hscanJs(0xc7,0x04,new byte[]{0,0,0,0,0,(byte)mode[0],0,0},now);
+   Canvas c=new Canvas(800,480);new JsPitRenderer().draw(c,800,480,false,t,now++);
+   check(c.pixel(200,59)==mode[1]&&c.pixel(45,59)==0xffa4d9ef,"RPM accent only, mode="+mode[0]);
+   c.write(folder+"/js-rpm-mode-"+Integer.toHexString(mode[0])+".png");
+  }
+  t.hscanJs(0xc7,0x04,new byte[]{0,0,0,0,0,0x30,0,0},now);
+  Canvas stale=new Canvas(800,480);new JsPitRenderer().draw(stale,800,480,false,t,now+2000);
+  check(stale.pixel(200,59)==stale.pixel(45,59),"expired SPORT falls back to standard accent");
+  t.clear();check(t.jsDriveMode(now)==Telemetry.JsDriveMode.UNKNOWN,"ignition clears mode");
+ }
  static void jsDctOverview(String folder)throws Exception{
   Telemetry t=new Telemetry();t.profile(false,true,false);
   t.temperatures(new byte[]{(byte)170,(byte)174},1000);t.units(new byte[]{2,63,0},1000);
@@ -88,6 +103,7 @@ public class PerformancePreview {
   gear(gearbox,0x1e,7,4300);jsGearPages(gearbox,4300,"M","7");
   gear(gearbox,0x1d,5,4350);gear(gearbox,0x1e,6,4400);jsGearPages(gearbox,4400,"D","6");
   jsDctOverview(args[0]);
+  jsRpmAccent(args[0]);
   System.out.println("PASS "+rendered+" performance renders and 4 existing page renders");
  }
 }'''

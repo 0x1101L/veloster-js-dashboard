@@ -9,11 +9,29 @@ final class JsTelemetryDecoder {
     private final JsPowertrain jsPowertrain=new JsPowertrain();
     private final JsGearState jsGear=new JsGearState();
     private int speedUnit;
+    private JsDriveMode driveMode=JsDriveMode.UNKNOWN;
+    private long driveModeAt=-1;
     JsTelemetryDecoder(Sink sink){this.sink=sink;}
     private void put(int i,float v,boolean valid,long at){sink.put(i,v,valid,at);}
-    void clear(){jsPowertrain.clear();jsGear.clear();speedUnit=0;}
+    void clear(){jsPowertrain.clear();jsGear.clear();speedUnit=0;driveMode=JsDriveMode.UNKNOWN;driveModeAt=-1;}
+    JsDriveMode driveMode(long now){
+        return driveModeAt>=0&&now-driveModeAt<JS_FAST_STALE_MS?driveMode:JsDriveMode.UNKNOWN;
+    }
     void receive(int cid,int function,byte[] b,long now){
         if(cid!=0xc7||b==null||function==2||function==8||function==0x14)return;
+        if(function==0x04){
+            if(b.length!=8||now<0||now<driveModeAt)return;
+            // JS 1.6T DCT captures distinguish NORMAL from SMART at b5, not at b2.
+            switch(b[5]&255){
+                case 0x10: driveMode=JsDriveMode.NORMAL;break;
+                case 0x30: driveMode=JsDriveMode.SPORT;break;
+                case 0x20: driveMode=JsDriveMode.ECO;break;
+                case 0x50: driveMode=JsDriveMode.SMART;break;
+                default: driveMode=JsDriveMode.UNKNOWN;
+            }
+            driveModeAt=now;
+            return;
+        }
         if(function==8&&b.length==8){
             int raw=(b[2]&255)|((b[3]&255)<<8);put(0,raw*0.25f,raw!=65535,now);
         }else if(function==2&&b.length==4){

@@ -56,7 +56,8 @@ final class HscanFrameDecoder {
             boolean accepted;
             if(profile==HscanProfile.Kind.JS||profile==HscanProfile.Kind.PD){
                 accepted=(size==8&&(function==0||function==8||function==9||function==0x0a||function==0x0b
-                        ||function==0x0d||function==0x13||function==0x14||function==0x1d||function==0x1e))
+                        ||function==0x0d||function==0x13||function==0x14||function==0x1d||function==0x1e
+                        ||(profile==HscanProfile.Kind.JS&&function==0x04)))
                     ||((function==2||function==0x1c)&&size==4)||(function==0x19&&size==5)
                     ||(function==0x20&&size==6);
             }else{
