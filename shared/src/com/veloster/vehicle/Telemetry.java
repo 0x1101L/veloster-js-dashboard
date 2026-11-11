@@ -57,6 +57,16 @@ public final class Telemetry {
     private boolean pd,js,jsn,supported;
     private final PdPowertrain pdPowertrain=new PdPowertrain();
     private final PdGearState pdGear=new PdGearState();
+    private final JsTelemetryDecoder jsDecoder=new JsTelemetryDecoder(new JsTelemetryDecoder.Sink(){
+        public void put(int i,float v,boolean ok,long now){Telemetry.this.put(i,v,ok,now);}
+    });
+    private final long[] jsValidAt=new long[LABELS.length],jsChangedAt=new long[LABELS.length];
+    private final boolean[] jsHasValue=new boolean[LABELS.length];
+    // Application policy, not an OEM timeout; fast readings disappear promptly.
+    public static final long JS_FAST_STALE_MS=2000;
+    private static boolean jsNoTimeExpiry(int i){return i==AMBIENT||i>=TPMS_FL&&i<=TPMS_RR;}
+    public static boolean jsFast(int i){return !(i==1||i==2||i==AMBIENT||i>=TPMS_FL&&i<=TPMS_RR||i==BAT_SOC||i==BAT_VOLTAGE||i==INTAKE);}
+
     public synchronized boolean pdProfile(){return pd;}
     public synchronized boolean jsProfile(){return js;}
     public synchronized boolean jsnProfile(){return jsn;}
@@ -81,28 +91,42 @@ public final class Telemetry {
     public static final class Sample {
         public final float value;
         public final long ageMs;
-        public final boolean valid, changed, seen, stale;
-        Sample(float v, boolean ok, boolean diff, boolean received, boolean old,long age) {
+        public final boolean valid, changed, seen, stale, held;
+        public final long lastValidAgeMs,lastChangedAgeMs;
+        Sample(float v, boolean ok, boolean diff, boolean received, boolean old,long age,boolean heldValue,long validAge,long changedAge) {
             ageMs=age;value=v; valid=ok; changed=diff; seen=received; stale=old;
+            held=heldValue;lastValidAgeMs=validAge;lastChangedAgeMs=changedAge;
         }
     }
     private void put(int i, float v, boolean ok, long now) {
-        changed[i] = ok && valid[i] && seen[i] && now-times[i] <= STALE_MS && values[i] != v;
-        counts[i]++; values[i]=v; valid[i]=ok; seen[i]=true; times[i]=now;
+        if(js){
+            ok=ok&&!Float.isNaN(v)&&!Float.isInfinite(v);
+            changed[i]=ok&&jsHasValue[i]&&values[i]!=v;
+            if(ok){if(!jsHasValue[i]||changed[i])jsChangedAt[i]=now;jsValidAt[i]=now;jsHasValue[i]=true;values[i]=v;}
+            counts[i]++;valid[i]=ok;seen[i]=true;times[i]=now;
+        }else{
+            changed[i] = ok && valid[i] && seen[i] && now-times[i] <= STALE_MS && values[i] != v;
+            counts[i]++; values[i]=v; valid[i]=ok; seen[i]=true; times[i]=now;
+        }
         if(history[i]==null)history[i]=new History();
         history[i].add(v,ok,now);
     }
     public synchronized void clear() {
         speedUnit=-1; rearView=0; rawSpeed=0;
-        pdPowertrain.clear();pdGear.clear();
+        pdPowertrain.clear();pdGear.clear();jsDecoder.clear();
         epoch++;ptValid=false;gfValid=false;stdSeen=false;lastComputedPt=-1;lastComputedGf=-1;
         calculation.remove();
         observedPreviousRpm=-1;observedTorqueValid=false;
-        for(int i=0;i<LABELS.length;i++) { counts[i]=0; valid[i]=false; changed[i]=false; seen[i]=false; history[i]=null; }
+        for(int i=0;i<LABELS.length;i++) { counts[i]=0; valid[i]=false; changed[i]=false; seen[i]=false;jsHasValue[i]=false;jsValidAt[i]=0;jsChangedAt[i]=0; history[i]=null; }
     }
     public synchronized Sample sample(int i, long now) {
-        boolean stale=seen[i] && now-times[i]>=STALE_MS;
-        return new Sample(values[i], valid[i] && !stale, changed[i] && !stale, seen[i], stale,seen[i]?Math.max(0,now-times[i]):Long.MAX_VALUE);
+        long age=seen[i]?Math.max(0,now-times[i]):Long.MAX_VALUE;
+        long validAge=js&&jsHasValue[i]?Math.max(0,now-jsValidAt[i]):Long.MAX_VALUE;
+        long changedAge=js&&jsHasValue[i]?Math.max(0,now-jsChangedAt[i]):Long.MAX_VALUE;
+        boolean stale=js?jsHasValue[i]&&!jsNoTimeExpiry(i)&&validAge>=(jsFast(i)?JS_FAST_STALE_MS:STALE_MS):seen[i]&&age>=STALE_MS;
+        boolean current=valid[i]&&!stale;
+        boolean held=js&&jsHasValue[i]&&!current&&!stale&&!jsFast(i);
+        return new Sample(values[i],current,changed[i]&&current,seen[i],stale,age,held,validAge,changedAge);
     }
     public synchronized Sample[] snapshot(long now) {
         Sample[] result=new Sample[LABELS.length];
@@ -111,7 +135,7 @@ public final class Telemetry {
     }
     public static String gearLabel(int raw) {if(raw>=101&&raw<=107)return "D"+(raw-100);if(raw==-1)return "P";if(raw==-2)return "R";if(raw==-3)return "N";if(raw==-4)return "D";if(raw==-5)return "M";return raw>=1&&raw<=7?String.valueOf(raw):"—";}
     public synchronized void speed(int raw,long now) {
-        rawSpeed=raw;
+        if(!js||raw>=0&&raw<511)rawSpeed=raw;
         put(7,speedUnit==1?raw*1.609344f:raw,speedUnit>=0 && raw>=0 && raw<511,now);
     }
     public synchronized void units(byte[] b,long now) {
@@ -123,8 +147,10 @@ public final class Telemetry {
         put(AMBIENT,unit==2?(raw-40-32)*5f/9:raw-40,ok,now);
         if(seen[7]) {
             // Unit events must not refresh the timestamp or reception count of old speed.
-            values[7]=speedUnit==1?rawSpeed*1.609344f:rawSpeed;
-            valid[7]=speedUnit>=0 && rawSpeed>=0 && rawSpeed<511;
+            if(!js||valid[7]){
+                values[7]=speedUnit==1?rawSpeed*1.609344f:rawSpeed;
+                valid[7]=speedUnit>=0 && rawSpeed>=0 && rawSpeed<511;
+            }
             changed[7]=false;
         }
     }
@@ -200,8 +226,8 @@ public final class Telemetry {
     /** JS uses the PD table as a baseline while confirmed OEM values stay authoritative. */
     public synchronized void hscanJs(int cid,int function,byte[] b,long now){
         if(cid!=0xc7||b==null)return;
-        if(function!=2&&function!=8&&function!=0x14)hscanPd(cid,function,b,now);
         pd=false;js=true;
+        jsDecoder.receive(cid,function,b,now);
     }
     /** Only new IL frames from the verified JSN HSCAN bridge. No cached getter polling. */
     public synchronized void hscanJsn(int cid,int funcLow,byte[] b,long now){

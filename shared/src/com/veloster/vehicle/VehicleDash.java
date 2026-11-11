@@ -20,6 +20,7 @@ public final class VehicleDash extends View implements Runnable {
     private static WeakReference<VehicleDash> current=new WeakReference<VehicleDash>(null);
     private final Activity activity;
     private final PitRenderer renderer=new PitRenderer();
+    private final JsPitRenderer jsRenderer=new JsPitRenderer();
     private final MediaState mediaState=new MediaState();
     private final MediaReceiver mediaReceiver=new MediaReceiver(mediaState);
     private final ArtworkLoader artwork;
@@ -176,12 +177,21 @@ public final class VehicleDash extends View implements Runnable {
     protected void onDraw(Canvas c) {
         long now=SystemClock.elapsedRealtime();
         MediaState.Snapshot track=mediaState.snapshot(now);artwork.request(track);
+        if(DATA.jsProfile()){
+        jsRenderer.setPerformancePage(performance);
+        jsRenderer.setArtwork(artwork.bitmap());
+        jsRenderer.setGaugeLayout(gauges?gaugeLayout:null);
+        jsRenderer.setGraphLayout(graphs?graphLayout:null);
+        jsRenderer.setOverviewLayout(overviewLayout);
+        jsRenderer.draw(c,getWidth(),getHeight(),cluster,DATA,now,shiftTarget,media,track);
+        }else{
         renderer.setPerformancePage(performance);
         renderer.setArtwork(artwork.bitmap());
         renderer.setGaugeLayout(gauges?gaugeLayout:null);
         renderer.setGraphLayout(graphs?graphLayout:null);
         renderer.setOverviewLayout(overviewLayout);
         renderer.draw(c,getWidth(),getHeight(),cluster,DATA,now,shiftTarget,media,track);
+        }
     }
     private void requestMedia(final int command){
         if(blocked||!mediaPending.compareAndSet(false,true))return;

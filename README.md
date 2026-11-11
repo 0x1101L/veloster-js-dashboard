@@ -40,6 +40,8 @@ The readable version above is abbreviated from the model-specific `*.KOR.SOP.V14
 
 Current evidence and decisions are in the [project memory index](@memory/_index.md), available through the local project memory link.
 
+A JS trial-build runtime crash caused by reverse lookup of a PD-baseline overview signal remapping has been fixed. The versionCode 7 candidate was installed on the matching JS head unit and remained active during a brief launch check; longer operation and signal accuracy remain unverified.
+
 ## Compatibility
 
 The existing guarded installer supports **Korean Veloster N JSN**, product `jsn_kr`, **Android 4.2.2 / API 17**, incremental build `eng.vmadmin.20250902.081552` (`250902`, `STD_H`). The dashboard requires the factory `automotive` library. JS and PD source profiles do not yet mean their devices can be installed or used safely. Other models, regions, firmware and ordinary Android devices are not validated.
@@ -87,6 +89,9 @@ Once installed, normal use does not require a PC. If neither the edge button nor
 | 04 · My Apps and shortcuts | [My Apps](docs/MY_APPS.md) · [Quick entry](docs/QUICK_ENTRY.md) | [내 앱](docs/MY_APPS_ko.md) · [바로가기](docs/QUICK_ENTRY_ko.md) |
 | 05 · Language settings | [Languages](docs/LANGUAGES.md) | [언어](docs/LANGUAGES.md#한국어) |
 | 06 · Development and research | [Documentation index](docs/README.md#development-and-research) | [개발·연구 색인](docs/README.md#development-and-research) |
+
+
+JS source now uses a separate copy of the PD decoder and separate JS rendering. Invalid readings retain the last valid slow-changing value with a `LAST` age label for up to 60 seconds, except ambient temperature and TPMS, which have no time expiry within an ignition session; fast-changing readings expire after 2 seconds and are not displayed as retained. These are application policies, not validated OEM timeouts. JSN and PD retain their existing behavior. This is uninstalled source; vehicle validation is pending.
 
 <a id="source-and-tests"></a>
 
