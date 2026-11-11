@@ -95,6 +95,8 @@ JS source now uses a separate copy of the PD decoder and separate JS rendering. 
 
 When a valid gear is received on JS, the gear display shows the reported number and labels the selector mode separately as D (automatic) or M (sequential). The JS sequential signal mapping still needs vehicle verification.
 
+The JS overview replaces its oil temperature card with odd/even DCT clutch temperatures and two vertical bars. The display and response decoder are available in source; live diagnostic collection is disabled pending JS vehicle verification. Missing temperatures display as dashes.
+
 <a id="source-and-tests"></a>
 
 ## Development

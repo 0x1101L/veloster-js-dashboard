@@ -13,6 +13,8 @@ public final class OverviewLayout {
     private int slot(int signal){check(signal);for(int i=0;i<ORDER.length;i++)if(signalAt(i)==signal)return i;throw new IllegalArgumentException("overview signal");}
     public int style(int signal){check(signal);return styles[signal];}
     public void style(int signal,int value){check(signal);if(value<0||value>2)throw new IllegalArgumentException("overview style");styles[signal]=value;}
+    /** JS reuses the oil card's geometry, while oil telemetry and its preferences keep their own ID. */
+    static boolean dctCard(int signal,boolean js){return js&&signal==1;}
     /** Number -> bar -> arc -> number; style IDs match the gauge renderer. */
     public boolean grouped(int signal){return signal==Telemetry.TPMS_FL||signal==Telemetry.TCS||signal==Telemetry.PD_TCS_ENABLED;}
     public void cycle(int signal){if(grouped(signal))return;style(signal,style(signal)==2?1:style(signal)==1?0:2);}

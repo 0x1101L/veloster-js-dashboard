@@ -81,7 +81,7 @@ public final class JsPitRenderer {
         if(performancePage)performanceRenderer.draw(c,model,now);
         else if(graphLayout!=null)graphRenderer.draw(c,model,now,graphLayout);
         else if(gaugeLayout!=null)gaugeRenderer.draw(c,model,now,gaugeLayout);
-        else if(mediaPage)drawCombined(c);else if(cluster)drawCluster(c);else drawDashboard(c);
+        else if(mediaPage)drawCombined(c);else if(cluster)drawCluster(c);else drawDashboard(c,model.dctTemperatures(now));
         if(!performancePage&&graphLayout==null&&!mediaPage && music!=null && music.notice)drawMedia(c,true);
         if(cluster&&gaugeLayout==null&&graphLayout==null)drawArtworkToggle(c);
         c.restore();
@@ -254,16 +254,41 @@ public final class JsPitRenderer {
         text(c,UiText.t("목표 ")+shiftTarget+" rpm",604,471,12,BLUE,true);
         button(c,"+",740,452,42,27,false,BLUE);
     }
-    private void drawDashboard(Canvas c){
+    private void drawDashboard(Canvas c,Telemetry.DctTemperatures dct){
         String[] names={"SPEED / km/h","ENGINE / rpm",pdProfile||jsProfile?"GEAR":"EMS GEAR",pdProfile||jsProfile?"ACCEL / %":"THROTTLE / %","BRAKE / bar"};
         for(int slot=0;slot<overviewLayout.count();slot++){
             int i=overviewLayout.signalAt(slot);boolean head=overviewLayout.headline(i);
-            if(overviewLayout.grouped(i))groupCard(c,i);else overviewCard(c,i,head?names[slot]:UiText.t(Telemetry.LABELS[i]));
+            if(OverviewLayout.dctCard(i,jsProfile))dctCard(c,i,dct);
+            else if(overviewLayout.grouped(i))groupCard(c,i);else overviewCard(c,i,head?names[slot]:UiText.t(Telemetry.LABELS[i]));
+        }
+    }
+    private void overviewFrame(Canvas c,float x,float y,float w,float h,int accent){
+        panel(c,x,y,w,h,PANEL,LINE);box(c,x+10,y,x+53,y+2,accent);
+    }
+    private void dctCard(Canvas c,int i,Telemetry.DctTemperatures dct){
+        float x=overviewLayout.left(i),y=overviewLayout.top(i),w=overviewLayout.width(i);
+        overviewFrame(c,x,y,w,overviewLayout.height(i),BLUE);
+        fitted(c,UiText.t("DCT 온도"),x+10,y+22,13,w-20,MUTED);
+        float left=x+w-51,right=x+w-10,top=y+44,bottom=y+86;
+        box(c,left,top,right,bottom,LINE);
+        box(c,left+1,top+1,right-1,bottom-1,PANEL);
+        dctLane(c,UiText.t("홀수단"),"L",dct.oddC,x,y+51,left+7,top,bottom);
+        dctLane(c,UiText.t("짝수단"),"R",dct.evenC,x,y+78,right-17,top,bottom);
+    }
+    private void dctLane(Canvas c,String label,String lane,float temperature,float x,float baseline,float bar,float top,float bottom){
+        boolean valid=!Float.isNaN(temperature);
+        fitted(c,label,x+10,baseline,11,36,MUTED);
+        fitted(c,valid?String.format(Locale.US,"%.0f °C",temperature):"—",x+48,baseline,16,44,valid?BLUE:MUTED);
+        centered(c,lane,bar+5,top-5,10,MUTED,false);
+        if(valid){
+            float fraction=(temperature-Telemetry.DctTemperatures.MIN_C)/(Telemetry.DctTemperatures.MAX_C-Telemetry.DctTemperatures.MIN_C);
+            float fill=Math.max(1,fraction*(bottom-top-2));
+            box(c,bar,bottom-1-fill,bar+10,bottom-1,BLUE);
         }
     }
     private void groupCard(Canvas c,int i){
         float x=overviewLayout.left(i),y=overviewLayout.top(i),w=overviewLayout.width(i);
-        panel(c,x,y,w,overviewLayout.height(i),PANEL,LINE);box(c,x+10,y,x+53,y+2,BLUE);
+        overviewFrame(c,x,y,w,overviewLayout.height(i),BLUE);
         if(i==Telemetry.TPMS_FL){
             fitted(c,UiText.t("타이어 공기압"),x+10,y+20,13,w-20,MUTED);
             String[] corners={"FL","FR","RL","RR"};
@@ -293,7 +318,7 @@ public final class JsPitRenderer {
         float x=overviewLayout.left(i),y=overviewLayout.top(i),w=overviewLayout.width(i),h=overviewLayout.height(i);
         boolean head=overviewLayout.headline(i),ok=samples[i].valid&&!Float.isNaN(samples[i].value)&&!Float.isInfinite(samples[i].value);
         int style=overviewLayout.style(i),color=samples[i].changed?0xffe9f7ff:BLUE;
-        panel(c,x,y,w,h,PANEL,LINE);box(c,x+10,y,x+53,y+2,head&&i==0?RED:BLUE);
+        overviewFrame(c,x,y,w,h,head&&i==0?RED:BLUE);
         fitted(c,i==8?gearTitle(title):title,x+10,y+(head?18:22),head?11:13,w-20,MUTED);
         String number=(ok||samples[i].held)?value(PREFIX[i]):"—";
         float lo=JsGaugeRenderer.min(i,Telemetry.UNITS[i]),hi=JsGaugeRenderer.max(i,Telemetry.UNITS[i]);

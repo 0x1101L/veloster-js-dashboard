@@ -27,6 +27,7 @@ public final class UiText {
         EN.put("5분","5 min");
         EN.put("ABS 경고등","ABS warning");
         EN.put("AP 상태 13 확인. IP 주소와 iPhone의 SSID 검색을 다음으로 확인하세요.","AP state 13 confirmed. Next check the IP address and whether the iPhone sees the SSID.");
+        EN.put("DCT 온도","DCT temperature");
         EN.put("DiPlay 연결을 먼저 종료하세요. 시험 AP를 끄고 백업한 AP 설정과 Wi-Fi 켜짐 상태를 복원합니다.","Disconnect DiPlay first. The test AP will be turned off and the backed-up AP settings and Wi-Fi state restored.");
         EN.put("DiPlay와 iPhone에 입력","Enter in DiPlay and iPhone");
         EN.put("EMS 기어","EMS gear");
@@ -212,6 +213,7 @@ public final class UiText {
         EN.put("주변 기기 검색을 누르고 연결할 기기를 페어링 모드로 켜주세요.","Tap Find nearby devices and put the device into pairing mode.");
         EN.put("주변 기기를 검색합니다.","Searching for nearby devices.");
         EN.put("지금","Now");
+        EN.put("짝수단","Even");
         EN.put("차량 속도","Vehicle speed");
         EN.put("차량 표시 상태를 확인하지 못했습니다. N 계기판 버튼으로 다시 열어주세요.","Could not confirm vehicle display status. Try the N Dashboard button again.");
         EN.put("처리 실패: ","Operation failed: ");
@@ -240,6 +242,7 @@ public final class UiText {
         EN.put("현재 기어","Current gear");
         EN.put("현재 재생 소스에서 음악을 제어할 수 없습니다","Playback control is unavailable for this source");
         EN.put("현재 차량 표시 제한으로 N 계기판을 열 수 없습니다.","N Dashboard is unavailable under the current vehicle display restriction.");
+        EN.put("홀수단","Odd");
         EN.put("화면 잠금 상태를 추적할 수 없어 알림만 표시합니다.","Screen lock state cannot be tracked. Only the notification is shown.");
         EN.put("확인","OK");
         EN.put("활성 시험 백업이 없습니다. 기존 핫스팟 접속정보는 차량 설정에서 확인하세요.","No active test backup. Check existing hotspot credentials in the vehicle settings.");

@@ -159,6 +159,7 @@ public final class VehicleDash extends View implements Runnable {
     public static void hscanJsn(int cid,int funcLow,byte[] data,long receivedAt){DATA.hscanJsn(cid,funcLow,data,receivedAt);}
     public static void hscanPd(int cid,int function,byte[] data,long receivedAt){DATA.hscanPd(cid,function,data,receivedAt);}
     public static void hscanJs(int cid,int function,byte[] data,long receivedAt){DATA.hscanJs(cid,function,data,receivedAt);}
+    public static void jsDctTemperatureReply(byte[] reply,long receivedAt){DATA.jsDctTemperatureReply(reply,receivedAt);}
     protected void onAttachedToWindow() { super.onAttachedToWindow(); artwork.open();mediaReceiver.start(activity); post(this); }
     protected void onDetachedFromWindow() { removeCallbacks(this);removeCallbacks(editHold);touching=false;gaugeEditor.dismiss();graphEditor.dismiss();mediaReceiver.stop();artwork.close();super.onDetachedFromWindow(); }
     public void run() {
@@ -225,6 +226,7 @@ public final class VehicleDash extends View implements Runnable {
         touching=false;
         if(standalone&&tap&&x>=666&&x<=782&&downX>=666&&downX<=782&&y>=8&&y<=46&&downY>=8&&downY<=46){activity.finish();return true;}
         if(tap&&!blocked&&!performance&&!cluster&&!gauges&&!graphs&&overviewDown>=0&&overviewLayout.hit(x,y)==overviewDown&&!overviewCovered(y)){
+            if(OverviewLayout.dctCard(overviewDown,DATA.jsProfile()))return true;
             overviewLayout.cycle(overviewDown);
             activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("overview_style_"+overviewDown,overviewLayout.style(overviewDown)).apply();
             invalidate();return true;

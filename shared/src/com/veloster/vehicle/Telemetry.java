@@ -64,6 +64,29 @@ public final class Telemetry {
     private final boolean[] jsHasValue=new boolean[LABELS.length];
     // Application policy, not an OEM timeout; fast readings disappear promptly.
     public static final long JS_FAST_STALE_MS=2000;
+    private static final long JS_DCT_STALE_MS=5000;
+    private DctTemperatures dctTemperatures=DctTemperatures.UNKNOWN;
+    public static final class DctTemperatures {
+        public static final float MIN_C=-40,MAX_C=300;
+        static final DctTemperatures UNKNOWN=new DctTemperatures(Float.NaN,Float.NaN,-1);
+        public final float oddC,evenC;
+        private final long at;
+        private DctTemperatures(float oddC,float evenC,long at){this.oddC=oddC;this.evenC=evenC;this.at=at;}
+        private static float temperature(byte[] reply,int offset){
+            int raw=((reply[offset]&255)<<8)|(reply[offset+1]&255);
+            float c=raw*2+MIN_C;
+            return c<=MAX_C?c:Float.NaN;
+        }
+    }
+    /** Complete positive TCU reply, including 62 01 A4. PD-2/OBDb mapping; JS transport not enabled. */
+    public synchronized void jsDctTemperatureReply(byte[] reply,long now){
+        if(!js||now<0||now<dctTemperatures.at||reply==null||reply.length<36
+            ||reply[0]!=0x62||reply[1]!=0x01||(reply[2]&255)!=0xa4)return;
+        dctTemperatures=new DctTemperatures(DctTemperatures.temperature(reply,32),DctTemperatures.temperature(reply,34),now);
+    }
+    public synchronized DctTemperatures dctTemperatures(long now){
+        return js&&now-dctTemperatures.at<JS_DCT_STALE_MS?dctTemperatures:DctTemperatures.UNKNOWN;
+    }
     private static boolean jsNoTimeExpiry(int i){return i==AMBIENT||i>=TPMS_FL&&i<=TPMS_RR;}
     public static boolean jsFast(int i){return !(i==1||i==2||i==AMBIENT||i>=TPMS_FL&&i<=TPMS_RR||i==BAT_SOC||i==BAT_VOLTAGE||i==INTAKE);}
 
@@ -113,6 +136,7 @@ public final class Telemetry {
     }
     public synchronized void clear() {
         speedUnit=-1; rearView=0; rawSpeed=0;
+        dctTemperatures=DctTemperatures.UNKNOWN;
         pdPowertrain.clear();pdGear.clear();jsDecoder.clear();
         epoch++;ptValid=false;gfValid=false;stdSeen=false;lastComputedPt=-1;lastComputedGf=-1;
         calculation.remove();

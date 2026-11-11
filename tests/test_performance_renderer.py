@@ -20,6 +20,27 @@ public class PerformancePreview {
  static void gear(Telemetry t,int function,int value,long time){
   t.hscanJs(0xc7,function,new byte[]{0,(byte)value,0,0,0,0,0,0},time);
  }
+ static void jsDctOverview(String folder)throws Exception{
+  Telemetry t=new Telemetry();t.profile(false,true,false);
+  t.temperatures(new byte[]{(byte)170,(byte)174},1000);t.units(new byte[]{2,63,0},1000);
+  t.hscanJs(0xc7,0x0b,new byte[]{0,0,108,0,0,0,0,0},1000);
+  byte[] reply=new byte[37];reply[0]=0x62;reply[1]=1;reply[2]=(byte)0xa4;reply[33]=68;reply[35]=49;
+  t.jsDctTemperatureReply(reply,1000);
+  t.jsDctTemperatureReply(new byte[]{0x62,1,(byte)0xa4},1200);
+  UiText.configure("ko","ko");Canvas ko=new Canvas(800,425);new JsPitRenderer().draw(ko,800,425,false,t,1500);
+  check(ko.texts.contains("DCT 온도")&&ko.texts.contains("홀수단")&&ko.texts.contains("짝수단"),"Korean DCT overview");
+  ko.write(folder+"/js-dct-ko.png");UiText.configure("en","en");
+  for(String state:new String[]{"received","one-missing","stale"}){
+   if(state.equals("one-missing")){reply[34]=(byte)0xff;reply[35]=(byte)0xff;t.jsDctTemperatureReply(reply,1500);}
+   Canvas c=new Canvas(800,480);new JsPitRenderer().draw(c,800,480,false,t,state.equals("stale")?6500:1500);
+   check(c.texts.contains("DCT temperature")&&c.texts.contains("Odd")&&c.texts.contains("Even")&&!c.texts.contains("Oil temperature"),"DCT replaces only JS overview oil card");
+   check(c.texts.contains("96 °C")==!state.equals("stale")&&c.texts.contains("58 °C")==state.equals("received"),"DCT reply, independent invalid channel and expiry: "+state);
+   c.write(folder+"/js-dct-"+state+".png");
+  }
+  t.clear();check(Float.isNaN(t.dctTemperatures(1600).oddC),"no DCT values across ignition reset");
+  Telemetry pd=new Telemetry();pd.profile(true,false,false);pd.jsDctTemperatureReply(reply,1000);
+  check(Float.isNaN(pd.dctTemperatures(1000).oddC),"PD does not accept JS DCT reply");
+ }
  static void jsGearPages(Telemetry t,long now,String mode,String number){
   for(int page=0;page<6;page++){
    Canvas c=new Canvas(800,480);JsPitRenderer r=new JsPitRenderer();
@@ -66,6 +87,7 @@ public class PerformancePreview {
   gear(gearbox,0x1e,3,4250);jsGearPages(gearbox,4250,"M","3");
   gear(gearbox,0x1e,7,4300);jsGearPages(gearbox,4300,"M","7");
   gear(gearbox,0x1d,5,4350);gear(gearbox,0x1e,6,4400);jsGearPages(gearbox,4400,"D","6");
+  jsDctOverview(args[0]);
   System.out.println("PASS "+rendered+" performance renders and 4 existing page renders");
  }
 }'''
