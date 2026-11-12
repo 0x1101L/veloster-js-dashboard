@@ -1,4 +1,4 @@
-package com.veloster.dashboard;
+package com.veloster.dashboard.vehicle;
 
 /** Synthetic framing tests only; no private vehicle capture is required. */
 public final class HscanFrameDecoderTest {

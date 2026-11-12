@@ -1,4 +1,4 @@
-import com.veloster.vehicle.Telemetry;
+import com.veloster.dashboard.vehicle.Telemetry;
 
 public class TelemetryHistoryTest {
     static void check(boolean value,String message){if(!value)throw new AssertionError(message);}

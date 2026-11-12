@@ -1,5 +1,5 @@
 import com.veloster.i18n.UiText;
-import com.veloster.vehicle.Telemetry;
+import com.veloster.dashboard.vehicle.Telemetry;
 import java.util.Arrays;
 import java.util.Locale;
 

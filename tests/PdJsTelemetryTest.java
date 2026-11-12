@@ -1,4 +1,4 @@
-import com.veloster.vehicle.Telemetry;
+import com.veloster.dashboard.vehicle.Telemetry;
 
 public final class PdJsTelemetryTest {
     private static int checks;
@@ -14,10 +14,42 @@ public final class PdJsTelemetryTest {
         pd.hscanPd(0xc7,0x1d,new byte[]{0,5,0,0,0,0,0,0},1200);
         pd.hscanPd(0xc7,0x1e,new byte[]{0,3,0,0,0,0,0,0},1250);
         check(pd.sample(8,1250).valid&&pd.sample(8,1250).value==103,"PD DCT selector/current gear pairing");
+        pd.hscanPd(0xc7,0x1d,new byte[]{0,8,0,0,0,0,0,0},1260);
+        check("M".equals(Telemetry.gearLabel((int)pd.sample(8,1260).value)),"PD manual selector without gear shows M");
+        pd.hscanPd(0xc7,0x1e,new byte[]{0,7,0,0,0,0,0,0},1270);
+        check("D7".equals(Telemetry.gearLabel((int)pd.sample(8,1270).value)),"PD retains its existing selector/current gear encoding");
+        check("D1".equals(Telemetry.gearLabel(101))&&"M1".equals(Telemetry.gearLabel(201))
+            &&"P".equals(Telemetry.gearLabel(-1))&&"R".equals(Telemetry.gearLabel(-2))
+            &&"N".equals(Telemetry.gearLabel(-3))&&"D".equals(Telemetry.gearLabel(-4))
+            &&"M".equals(Telemetry.gearLabel(-5))&&"6".equals(Telemetry.gearLabel(6)),
+            "combined DCT labels and existing selector/manual labels");
         check(pd.pdProfile()&&!pd.jsProfile()&&pd.pdLayoutProfile(),"PD profile selection");
-        check(com.veloster.vehicle.ShiftGuide.clamp(3500,true)==3500&&com.veloster.vehicle.ShiftGuide.clamp(3500,false)==6000,
+        check(com.veloster.dashboard.vehicle.ShiftGuide.clamp(3500,true)==3500&&com.veloster.dashboard.vehicle.ShiftGuide.clamp(3500,false)==6000,
             "PD-derived RPM range is profile-specific and leaves JSN default intact");
-        com.veloster.vehicle.OverviewLayout layout=new com.veloster.vehicle.OverviewLayout();
+        Telemetry cueInput=new Telemetry();cueInput.profile(true,false,false);
+        cueInput.hscanPd(0xc7,8,new byte[]{0,0,(byte)0xb0,0x36,0,0,0,0},1000); // 3500 rpm
+        cueInput.hscanPd(0xc7,2,new byte[]{0,20,0,0},1000);
+        byte[] nadd=new byte[19];nadd[4]=3;cueInput.additional(nadd,1000);
+        Telemetry.Sample[] cueSamples=cueInput.snapshot(1000);
+        check(com.veloster.dashboard.vehicle.ShiftGuide.evaluate(cueSamples,3500,true).shift,
+            "PD/JS shift cue uses the configured 3500 rpm target");
+        check(!com.veloster.dashboard.vehicle.ShiftGuide.evaluate(cueSamples,3500,false).shift,
+            "JSN shift cue retains its 6000 rpm minimum");
+        cueInput.hscanPd(0xc7,0x1d,new byte[]{0,5,0,0,0,0,0,0},1001);
+        cueInput.hscanPd(0xc7,0x1e,new byte[]{0,3,0,0,0,0,0,0},1002);
+        check(com.veloster.dashboard.vehicle.ShiftGuide.evaluate(cueInput.snapshot(1002),3500,true).shift,
+            "DCT drive gear enables the configured shift cue");
+        cueInput.hscanPd(0xc7,0x1e,new byte[]{0,7,0,0,0,0,0,0},1003);
+        check(!com.veloster.dashboard.vehicle.ShiftGuide.evaluate(cueInput.snapshot(1003),3500,true).shift,
+            "DCT seventh gear has no higher shift cue");
+        Telemetry manualCue=new Telemetry();manualCue.profile(false,true,false);
+        manualCue.rpm(new byte[]{0,0x36,(byte)0xb0,0,0,0,0,0},1000);
+        manualCue.units(new byte[]{0,0,0},1000);manualCue.speed(10,1000);
+        manualCue.hscanJs(0xc7,0x1d,new byte[]{0,8,0,0,0,0,0,0},1000);
+        manualCue.hscanJs(0xc7,0x1e,new byte[]{0,3,0,0,0,0,0,0},1001);
+        check(com.veloster.dashboard.vehicle.ShiftGuide.evaluate(manualCue.snapshot(1001),3500,true).shift,
+            "DCT manual gear enables the configured shift cue");
+        com.veloster.dashboard.view.overview.OverviewLayout layout=new com.veloster.dashboard.view.overview.OverviewLayout();
         check(layout.signalAt(3)==9,"JSN retains its original throttle overview mapping");layout.pdProfile(true);
         check(layout.signalAt(3)==Telemetry.ACCEL_PEDAL&&layout.signalAt(10)==9
             &&layout.signalAt(16)==Telemetry.PD_TCS_ENABLED&&layout.grouped(Telemetry.PD_TCS_ENABLED),

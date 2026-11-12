@@ -1,4 +1,4 @@
-import com.veloster.vehicle.Telemetry;
+import com.veloster.dashboard.vehicle.Telemetry;
 
 /** Packet fixtures exercise the documented layout; not claimed as new vehicle observations. */
 public final class HscanTelemetryTest {

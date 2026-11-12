@@ -1,4 +1,4 @@
-import com.veloster.vehicle.Telemetry;
+import com.veloster.dashboard.vehicle.Telemetry;
 
 public class JsRetainedTelemetryTest {
     private static void check(boolean ok,String message){if(!ok)throw new AssertionError(message);}

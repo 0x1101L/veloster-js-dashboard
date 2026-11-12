@@ -1,4 +1,4 @@
-import com.veloster.vehicle.Telemetry;
+import com.veloster.dashboard.vehicle.Telemetry;
 
 /** Uses synthetic TPMS data and checks unknown/freshness boundaries. */
 public class TirePressureTest {

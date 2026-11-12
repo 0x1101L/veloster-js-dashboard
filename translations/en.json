@@ -257,6 +257,7 @@
   "이전 확인": "Previously confirmed",
   "클래스 확인": "Class found",
   "조회 실패": "Check failed",
+  "해제 실패": "Detach failed",
   "메서드 확인": "Method found",
   "등록됨": "Registered",
   "미등록": "Not registered",

@@ -8,7 +8,16 @@ from graphics_test_support import GRAPHICS
 from test_quick_entry_runtime import java_tools
 
 ROOT = Path(__file__).resolve().parents[1]
-HARNESS = '''import com.veloster.vehicle.*;import com.veloster.i18n.UiText;import android.graphics.Canvas;
+UI_SOURCES = ('ArtworkLoader', 'ClusterRenderer', 'DashboardPage', 'GaugeEditor', 'GaugeLayout', 'GaugeRenderer', 'GraphEditor', 'GraphLayout', 'GraphRenderer', 'JsDiagnosticsRenderer', 'JsGaugeRenderer', 'JsOverviewRenderer', 'JsPerformanceRenderer', 'JsPitRenderer', 'OverviewLayout', 'OverviewRenderer', 'PerformanceRenderer', 'PitRenderer', 'DashboardView')
+HARNESS = '''import com.veloster.dashboard.vehicle.*;
+import com.veloster.dashboard.view.*;
+import com.veloster.dashboard.view.performance.*;
+import com.veloster.dashboard.debugger.*;
+import com.veloster.dashboard.debugger.view.*;
+import com.veloster.dashboard.view.f1.*;
+import com.veloster.dashboard.view.graph.*;
+import com.veloster.dashboard.view.gauge.*;
+import com.veloster.dashboard.view.overview.*;import com.veloster.i18n.UiText;import android.graphics.Canvas;
 public class JsDiagnosticsPreview {
  static void check(boolean ok,String message){if(!ok)throw new AssertionError(message);}
  static Telemetry fixture(String state){
@@ -34,18 +43,18 @@ public class JsDiagnosticsPreview {
   d.event("navigation.route.observer","registered");d.event("navigation.observer","registered");
   d.event("navigation.state_destination","-1",1300);d.event("navigation.notification","notice",1500);
   d.event("cluster.service","present; matching descriptor");d.event("class","com.hkmc.cluster.NavigationCluster");
-  d.event("method","updateTBTInfo");d.event("micom.service","present");d.wifi(1,1,1,1);d.hscan(1);
+  d.event("method","updateTBTInfo");d.event("micom.service","present");d.wifi(1,1,1,1);d.hscan(1);d.event("binding.bcm","registered",1000);d.event("binding.bcm","received",1500);
   if(state.equals("invalid")){d.event("navigation.route.invalid","bad payload");d.event("navigation.state.error","SecurityException");}
   return d;
  }
  public static void main(String[] args)throws Exception{
   int rendered=0;
   for(String language:new String[]{"ko","en"})for(int height:new int[]{480,425})
-   for(String state:new String[]{"waiting","received","invalid","held","expired"})for(int tab=0;tab<3;tab++){
+   for(String state:new String[]{"waiting","received","invalid","held","expired"})for(int tab=0;tab<4;tab++){
     UiText.configure(language,language);Telemetry t=fixture(state);JsDiagState d=observations(state);
     long now=state.equals("expired")?62000:2000;
     JsPitRenderer r=new JsPitRenderer();r.setDiagnosticPage(true,d.snapshot(now));
-    check(r.selectDiagnosticTab(40+tab*252,80,40+tab*252,80),"tab selected");
+    check(r.selectDiagnosticTab(40+tab*194,80,40+tab*194,80),"tab selected");
     check(!r.selectDiagnosticTab(40,80,292,80)&&!r.selectDiagnosticTab(40,50,40,80),"cross-tab drag and header press rejected");
     Canvas c=new Canvas(800,height);r.draw(c,800,height,false,t,now);
     for(String text:c.texts){
@@ -63,6 +72,9 @@ public class JsDiagnosticsPreview {
      if(state.equals("invalid"))check(!c.texts.contains("14.20 V")&&t.sample(Telemetry.BAT_VOLTAGE,now).receivedCount==1,"invalid-only reception is counted without a fabricated value");
      if(state.equals("held"))check(c.texts.contains("14.20 V")&&c.texts.contains("0.0s / 1.0s")&&t.sample(Telemetry.BAT_VOLTAGE,now).receivedCount==2,"held value keeps separate reception and valid ages");
      if(state.equals("expired"))check(!c.texts.contains("14.20 V"),"expired battery value hidden");
+    }else if(tab==3){
+     check(c.texts.contains("bcm")&&c.texts.contains("media.4"),"binding sources rendered");
+     if(!state.equals("waiting"))check(c.texts.contains("registered / 1 / 0.5s")||state.equals("expired"),"binding status and reception age rendered");
     }else{
      check(c.texts.contains(UiText.t("미연결"))&&c.texts.contains(UiText.t("응답 해석만 구현 · 자동 진단 요청 없음")),"DCT transport boundary explicit");
      if(!state.equals("waiting"))check(c.texts.contains(UiText.t("꺼짐")),"Wi-Fi state 1 means disabled");
@@ -98,10 +110,19 @@ def render(folder):
         harness.write_text(HARNESS)
         sources.append(harness)
         names = ("Telemetry", "PdPowertrain", "PdGearState", "JsPowertrain", "JsGearState",
-                 "JsTelemetryDecoder", "JsDiagState", "JsPitRenderer", "JsGaugeRenderer",
+                 "JsTelemetryDecoder", "JsDiagState", "JsPitRenderer", "ClusterRenderer", "JsOverviewRenderer", "JsDiagnosticsRenderer", "JsGaugeRenderer",
                  "JsPerformanceRenderer", "DashboardPage", "ShiftGuide", "MediaState",
                  "GaugeLayout", "GaugeRenderer", "OverviewLayout", "GraphLayout", "GraphRenderer")
-        sources += [ROOT / "shared/src/com/veloster/vehicle" / (name + ".java") for name in names]
+        groups = {'OverviewLayout': 'overview', 'OverviewRenderer': 'overview', 'JsOverviewRenderer': 'overview', 'GaugeEditor': 'gauge', 'GaugeLayout': 'gauge', 'GaugeRenderer': 'gauge', 'JsGaugeRenderer': 'gauge', 'GraphEditor': 'graph', 'GraphLayout': 'graph', 'GraphRenderer': 'graph', 'ClusterRenderer': 'cluster', 'JsDiagnosticsRenderer': 'diagnostics', 'PerformanceRenderer': 'performance', 'JsPerformanceRenderer': 'performance'}
+        def source_path(name):
+            if name in ("JsDiagState", "JsLogger", "JsDiagnosticsRenderer"): return ROOT / ("apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/view" if name == "JsDiagnosticsRenderer" else "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger") / (name + ".java")
+            if name in groups: return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view" / ("f1" if groups[name] == "cluster" else groups[name]) / (name + ".java")
+            if name in UI_SOURCES: return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view" / (name + ".java")
+            if name in ("JsPowertrain", "JsGearState", "JsTelemetryDecoder"): return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/js" / (name + ".java")
+            if name in ("PdPowertrain", "PdGearState"): return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd" / (name + ".java")
+            return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle" / (name + ".java")
+        sources += [source_path(name) for name in names]
+        sources += [ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd/PdTelemetryDecoder.java", ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/jsn/JsnTelemetryDecoder.java"]
         sources.append(ROOT / "shared/src/com/veloster/i18n/UiText.java")
         result = subprocess.run([javac, "-encoding", "UTF-8", "-d", str(root), *map(str, sources)],
                                 capture_output=True, text=True)
@@ -118,7 +139,7 @@ def render(folder):
 class JsDiagnosticsRendererTests(unittest.TestCase):
     def test_observed_states(self):
         with tempfile.TemporaryDirectory() as folder:
-            self.assertIn("PASS 60", render(folder))
+            self.assertIn("PASS 80", render(folder))
 
 
 if __name__ == "__main__":

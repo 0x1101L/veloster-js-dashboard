@@ -7,7 +7,16 @@ from graphics_test_support import GRAPHICS
 from test_quick_entry_runtime import java_tools
 
 ROOT = Path(__file__).resolve().parents[1]
-HARNESS = '''import com.veloster.vehicle.*;import com.veloster.i18n.UiText;import android.graphics.Canvas;
+UI_SOURCES = ('ArtworkLoader', 'ClusterRenderer', 'DashboardPage', 'GaugeEditor', 'GaugeLayout', 'GaugeRenderer', 'GraphEditor', 'GraphLayout', 'GraphRenderer', 'JsDiagnosticsRenderer', 'JsGaugeRenderer', 'JsOverviewRenderer', 'JsPerformanceRenderer', 'JsPitRenderer', 'OverviewLayout', 'OverviewRenderer', 'PerformanceRenderer', 'PitRenderer', 'DashboardView')
+HARNESS = '''import com.veloster.dashboard.vehicle.*;
+import com.veloster.dashboard.view.*;
+import com.veloster.dashboard.view.performance.*;
+import com.veloster.dashboard.debugger.*;
+import com.veloster.dashboard.debugger.view.*;
+import com.veloster.dashboard.view.f1.*;
+import com.veloster.dashboard.view.graph.*;
+import com.veloster.dashboard.view.gauge.*;
+import com.veloster.dashboard.view.overview.*;import com.veloster.i18n.UiText;import android.graphics.Canvas;
 public class PerformancePreview {
  static void check(boolean v,String m){if(!v)throw new AssertionError(m);}
  static Telemetry fixture(){
@@ -66,8 +75,7 @@ public class PerformancePreview {
    if(page==2){GaugeLayout layout=new GaugeLayout();layout.set(0,8,2);r.setGaugeLayout(layout);}
    if(page==3){GraphLayout layout=new GraphLayout();layout.signal(0,8);r.setGraphLayout(layout);}
    r.draw(c,800,480,page>=4,t,now,6000,page==5,null);
-   boolean found=false;for(String text:c.texts)if(text.endsWith(" · "+mode))found=true;
-   check(found&&c.texts.contains(page==3?number+" ":number)&&!c.texts.contains(mode+number),"separate JS mode and received gear on page "+page+": "+c.texts);
+   check(c.texts.contains(page==3?mode+number+" ":mode+number),"combined JS mode and gear on page "+page+": "+c.texts);
   }
  }
  public static void main(String[] args)throws Exception{
@@ -126,7 +134,16 @@ def render(folder):
         p = root / 'PerformancePreview.java'
         p.write_text(HARNESS)
         sources.append(p)
-        sources += [ROOT / 'shared/src/com/veloster/vehicle' / (name + '.java') for name in ('Telemetry','PdPowertrain','PdGearState','JsPowertrain','JsGearState','JsTelemetryDecoder','JsDiagState','JsPitRenderer','JsGaugeRenderer','JsPerformanceRenderer','PitRenderer','PerformanceRenderer','DashboardPage','ShiftGuide','MediaState','GaugeLayout','GaugeRenderer','OverviewLayout','GraphLayout','GraphRenderer')]
+        groups = {'OverviewLayout': 'overview', 'OverviewRenderer': 'overview', 'JsOverviewRenderer': 'overview', 'GaugeEditor': 'gauge', 'GaugeLayout': 'gauge', 'GaugeRenderer': 'gauge', 'JsGaugeRenderer': 'gauge', 'GraphEditor': 'graph', 'GraphLayout': 'graph', 'GraphRenderer': 'graph', 'ClusterRenderer': 'cluster', 'JsDiagnosticsRenderer': 'diagnostics', 'PerformanceRenderer': 'performance', 'JsPerformanceRenderer': 'performance'}
+        def source_path(name):
+            if name in ("JsDiagState", "JsLogger", "JsDiagnosticsRenderer"): return ROOT / ("apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/view" if name == "JsDiagnosticsRenderer" else "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger") / (name + ".java")
+            if name in groups: return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view" / ("f1" if groups[name] == "cluster" else groups[name]) / (name + ".java")
+            if name in UI_SOURCES: return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view" / (name + ".java")
+            if name in ("JsPowertrain", "JsGearState", "JsTelemetryDecoder"): return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/js" / (name + ".java")
+            if name in ("PdPowertrain", "PdGearState"): return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd" / (name + ".java")
+            return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle" / (name + ".java")
+        sources += [source_path(name) for name in ('Telemetry','PdPowertrain','PdGearState','JsPowertrain','JsGearState','JsTelemetryDecoder','JsDiagState','JsPitRenderer','ClusterRenderer','OverviewRenderer','JsOverviewRenderer','JsDiagnosticsRenderer','JsGaugeRenderer','JsPerformanceRenderer','PitRenderer','PerformanceRenderer','DashboardPage','ShiftGuide','MediaState','GaugeLayout','GaugeRenderer','OverviewLayout','GraphLayout','GraphRenderer')]
+        sources += [ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd/PdTelemetryDecoder.java", ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/jsn/JsnTelemetryDecoder.java"]
         sources.append(ROOT / 'shared/src/com/veloster/i18n/UiText.java')
         result = subprocess.run([javac,'-encoding','UTF-8','-d',str(root),*map(str,sources)],capture_output=True,text=True)
         if result.returncode: raise AssertionError(result.stderr)

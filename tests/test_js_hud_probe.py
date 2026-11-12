@@ -16,7 +16,7 @@ STUBS = {
     'android/os/Bundle.java': 'package android.os;public class Bundle extends java.util.HashMap<String,Object> {}',
     'android/os/Looper.java': 'package android.os;public class Looper {public static Looper myLooper(){return null;}public static Looper getMainLooper(){return new Looper();}}',
     'android/os/Handler.java': '''package android.os;public class Handler {
- public Handler(Looper l){}public boolean post(Runnable r){return true;}public boolean postDelayed(Runnable r,long ms){return true;}}''',
+ public static Runnable pending;public Handler(Looper l){}public boolean post(Runnable r){pending=r;return true;}public boolean postDelayed(Runnable r,long ms){return true;}}''',
     'android/os/HandlerThread.java': '''package android.os;public class HandlerThread {
  public HandlerThread(String s){}public void start(){}public Looper getLooper(){return new Looper();}public boolean quit(){return true;}}''',
     'android/net/Uri.java': 'package android.net;public class Uri {public static Uri parse(String s){return new Uri();}}',
@@ -25,10 +25,10 @@ STUBS = {
     'android/database/Cursor.java': '''package android.database;public interface Cursor {
  int getColumnIndex(String n);boolean moveToFirst();boolean isNull(int c);String getString(int c);void close();}''',
     'android/content/ContentResolver.java': '''package android.content;import android.net.Uri;import android.database.*;
- public class ContentResolver {public boolean fail;public int adds,removes;
- public void registerContentObserver(Uri u,boolean b,ContentObserver o){adds++;if(fail)throw new SecurityException();}
- public void unregisterContentObserver(ContentObserver o){removes++;}
- public Cursor query(Uri u,String[] p,String s,String[] a,String order){return null;}}''',
+ public class ContentResolver {public boolean fail,failRemove;public int adds,removes;public ContentObserver observer;public java.util.concurrent.CountDownLatch entered,release;
+ public void registerContentObserver(Uri u,boolean b,ContentObserver o){adds++;observer=o;if(fail)throw new SecurityException();}
+ public void unregisterContentObserver(ContentObserver o){removes++;if(failRemove)throw new IllegalStateException();}
+ public Cursor query(Uri u,String[] p,String s,String[] a,String order){if(entered!=null){entered.countDown();try{release.await();}catch(InterruptedException e){throw new RuntimeException(e);}}return null;}}''',
     'android/content/Intent.java': '''package android.content;import android.os.Bundle;public class Intent {
  private String action;private Bundle extras=new Bundle();public Intent(String a){action=a;}
  public String getAction(){return action;}public Bundle getExtras(){return extras;}
@@ -43,7 +43,9 @@ STUBS = {
 }
 
 HARNESS = '''package com.veloster.dashboard;
-import android.content.*;import android.os.*;import com.veloster.vehicle.JsDiagState;
+import android.content.*;import android.os.*;import com.veloster.dashboard.debugger.JsDiagState;
+import com.veloster.dashboard.debugger.JsHudProbe;
+import com.veloster.dashboard.listener.JsRouteStatusObserver;
 public class JsHudProbeHarness {
  static void check(boolean b,String m){if(!b)throw new AssertionError(m);}
  static class Output implements JsHudProbe.Sink {JsDiagState state=new JsDiagState();int values;
@@ -62,9 +64,10 @@ public class JsHudProbeHarness {
   check(o.values==2,"other broadcasts ignored");
   old.onReceive(c,route("1"));check(o.state.snapshot().routeNotice==-1,"string never coerced into a route state");
   old.onReceive(c,new Intent(JsRouteStatusObserver.ACTION));check(o.values==2,"missing extra never defaults to zero");
-  p.close();p.close();check(c.removes==1&&o.state.snapshot().routeWatch==0,"idempotent cleanup");
+  android.database.ContentObserver oldProvider=c.resolver.observer;oldProvider.onChange(false);check(o.state.snapshot().navNoticeCount==1,"provider notification counted");
+  p.close();p.close();oldProvider.onChange(false);check(o.state.snapshot().navNoticeCount==1,"stopped provider callback ignored");check(c.removes==1&&o.state.snapshot().routeWatch==0,"idempotent cleanup");
   old.onReceive(c,route(1));check(o.values==2,"late callback ignored");
-  p.startNavigationObservation();old.onReceive(c,route(3));check(o.values==2,"old generation ignored after restart");
+  p.startNavigationObservation();oldProvider.onChange(false);check(o.state.snapshot().navNoticeCount==1,"old provider generation ignored");old.onReceive(c,route(3));check(o.values==2,"old generation ignored after restart");
   c.receiver.onReceive(c,route(3));check(o.values==3&&o.state.snapshot().routeValue==3,"new receiver live");p.close();
  }
  static void independent(){
@@ -78,8 +81,19 @@ public class JsHudProbeHarness {
  }
  static void failedCleanup(){
   Context c=new Context();Output o=new Output();JsHudProbe p=new JsHudProbe(c,o);p.startNavigationObservation();
-  BroadcastReceiver old=c.receiver;c.failRemove=true;p.close();p.startNavigationObservation();
+  BroadcastReceiver old=c.receiver;android.database.ContentObserver provider=c.resolver.observer;
+  c.failRemove=true;c.resolver.failRemove=true;p.close();
+  check(o.state.snapshot().routeDetachFailed&&o.state.snapshot().navDetachFailed,"detach failures retained independently");
+  check(o.state.snapshot().routeWatch==0&&o.state.snapshot().nav==0,"local observation stops even if detach fails");
+  provider.onChange(false);check(o.state.snapshot().navNoticeCount==0,"failed provider detach cannot deliver old notice");
+  c.resolver.failRemove=false;p.startNavigationObservation();
   old.onReceive(c,route(1));check(o.values==0,"unregister exception cannot revive old receiver");c.failRemove=false;p.close();
+ }
+ static void queryAfterStop() throws Exception {
+  Context c=new Context();Output o=new Output();c.resolver.entered=new java.util.concurrent.CountDownLatch(1);c.resolver.release=new java.util.concurrent.CountDownLatch(1);
+  JsHudProbe p=new JsHudProbe(c,o);p.startNavigationObservation();final Runnable read=Handler.pending;Thread t=new Thread(read);t.start();
+  check(c.resolver.entered.await(2,java.util.concurrent.TimeUnit.SECONDS),"query entered");p.close();c.resolver.release.countDown();t.join(2000);
+  check(!t.isAlive()&&o.state.snapshot().nav==0,"query result after stop ignored");
  }
  static void sticky(){
   Context c=new Context();c.sticky=route(3);Output o=new Output();JsHudProbe p=new JsHudProbe(c,o);p.startNavigationObservation();
@@ -96,7 +110,7 @@ public class JsHudProbeHarness {
   ServiceManager.binder=new IBinder(){public String getInterfaceDescriptor(){throw new SecurityException();}};p.inspect();check(o.state.snapshot().clusterService==2,"descriptor failure contained");
  }
  static void profile(){Build.PRODUCT="hyundaiB_kr";try{new JsHudProbe(new Context(),new Output());throw new AssertionError("profile gate");}catch(IllegalStateException expected){}finally{Build.PRODUCT="js_kr";}}
- public static void main(String[] args){lifecycle();independent();failedCleanup();sticky();service();profile();System.out.println("PASS passive HUD observation scenarios");}
+ public static void main(String[] args) throws Exception {queryAfterStop();lifecycle();independent();failedCleanup();sticky();service();profile();System.out.println("PASS passive HUD observation scenarios");}
 }'''
 
 
@@ -113,9 +127,9 @@ class JsHudProbeTests(unittest.TestCase):
                 sources.append(p)
             harness = root / 'JsHudProbeHarness.java'
             harness.write_text(HARNESS)
-            app = ROOT / 'apps/dashboard/src/com/veloster/dashboard'
-            sources += [harness, app / 'JsHudProbe.java', app / 'JsRouteStatusObserver.java',
-                        ROOT / 'shared/src/com/veloster/vehicle/JsDiagState.java']
+            app = ROOT / 'apps/dashboard/src/main/java/com/veloster/dashboard'
+            sources += [harness, ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/JsHudProbe.java', ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/listener/JsRouteStatusObserver.java',
+                        ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/JsDiagState.java']
             result = subprocess.run([javac, '-source', '8', '-target', '8', '-d', str(root),
                                      *map(str, sources)], capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)

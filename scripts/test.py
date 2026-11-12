@@ -20,24 +20,28 @@ def main():
     java = Path(found).resolve()
     javac = java.with_name("javac.exe" if os.name == "nt" else "javac")
     hub = ROOT / "apps/hub/src/com/veloster/carplayhub"
-    sources = [ROOT / "shared/src/com/veloster/vehicle/Telemetry.java",
-               ROOT / "shared/src/com/veloster/vehicle/PdPowertrain.java",
-               ROOT / "shared/src/com/veloster/vehicle/PdGearState.java",
-               *[ROOT / "shared/src/com/veloster/vehicle" / (name + ".java") for name in ("JsPowertrain", "JsGearState", "JsTelemetryDecoder")],
-               ROOT / "shared/src/com/veloster/vehicle/ShiftGuide.java",
-               ROOT / "shared/src/com/veloster/vehicle/OverviewLayout.java",
+    sources = [ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/Telemetry.java",
+               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd/PdTelemetryDecoder.java",
+               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/jsn/JsnTelemetryDecoder.java",
+               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd/PdPowertrain.java",
+               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd/PdGearState.java",
+               *[ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/js" / (name + ".java") for name in ("JsPowertrain", "JsGearState", "JsTelemetryDecoder")],
+               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/ShiftGuide.java",
+               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view/overview/OverviewLayout.java",
                ROOT / "shared/src/com/veloster/i18n/UiText.java",
-               ROOT / "apps/dashboard/src/com/veloster/dashboard/HscanFrameDecoder.java",
-               ROOT / "apps/dashboard/src/com/veloster/dashboard/HscanProfile.java"]
+               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/HscanFrameDecoder.java",
+               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/HscanProfile.java"]
     sources += [hub / (name + ".java") for name in ("RadioTrial", "BluetoothSession", "RebootRequest", "QuickEntryPolicy")]
     tests = sorted((ROOT / "tests").glob("*Test.java"))
-    sources += [ROOT / "shared/src/com/veloster/diagnostics/ErrorLog.java", ROOT / "shared/src/com/veloster/vehicle/DashboardPage.java", ROOT / "shared/src/com/veloster/vehicle/JsDiagState.java"]
+    sources += [ROOT / "shared/src/com/veloster/diagnostics/ErrorLog.java", ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view/DashboardPage.java", ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/JsDiagState.java"]
+    sources += [ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/JsLogger.java",
+                ROOT / "tests/java_stubs/android/util/Log.java", ROOT / "tests/JsLoggerTest.java"]
     sources += tests
     with tempfile.TemporaryDirectory(prefix="vn-public-tests-") as temporary:
         subprocess.run([str(javac), "-encoding", "UTF-8", "-d", temporary,
                         *map(str, sources)], check=True)
         for test in tests:
-            cls = ("com.veloster.dashboard." if test.stem == "HscanFrameDecoderTest" else "") + test.stem
+            cls = ("com.veloster.dashboard.vehicle." if test.stem == "HscanFrameDecoderTest" else "") + test.stem
             subprocess.run([str(java), "-ea", "-cp", temporary, cls], check=True)
     print("PASS: " + str(len(tests)) + " synthetic host test programs. Vehicle operation is outside this scope.")
 

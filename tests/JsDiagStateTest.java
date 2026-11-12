@@ -1,4 +1,4 @@
-import com.veloster.vehicle.JsDiagState;
+import com.veloster.dashboard.debugger.JsDiagState;
 public class JsDiagStateTest {
  static void check(boolean value,String message){if(!value)throw new AssertionError(message);}
  public static void main(String[] args){
@@ -9,7 +9,7 @@ public class JsDiagStateTest {
   s.event("navigation.notification","received");s.event("navigation.state_destination","12");
   check(s.snapshot().navNotice==1&&s.snapshot().navValue==12,"received state");
   s.event("navigation.state.error","SecurityException");
-  check(s.snapshot().nav==2&&s.snapshot().navValue==-1,"error clears old value");
+  check(s.snapshot().nav==1&&s.snapshot().navValue==-1&&s.snapshot().navError==1,"query denial clears value without implying registration failure");
   s.event("navigation.observer.stopped","stopped");
   check(s.snapshot().nav==0&&s.snapshot().navNotice==-1,"stop clears notification");
   s.wifi(1,1,3,1);s.hscan(2);
@@ -34,7 +34,15 @@ public class JsDiagStateTest {
   s.event("navigation.route.invalid","bad");check(s.snapshot(9000).routeAgeMs==-1&&s.snapshot().routeInvalidCount>0,"invalid input cannot retain a received value age");
   s.event("navigation.state_destination","-1",2000);s.event("navigation.notification","received",2200);
   check(s.snapshot(2500).navValueKnown&&s.snapshot().navValue==-1&&s.snapshot(2500).navAgeMs==500&&s.snapshot(2500).navNoticeAgeMs==300,"provider raw integer and notification ages kept separately");
-  s.reset();check(s.snapshot().wifiState==-1&&s.snapshot().hscan==-1&&s.snapshot().routeWatch==-1&&s.snapshot().clusterService==-1,"reset");
+  s.event("binding.bcm","registered",100);s.event("binding.nmode","registered",100);
+  s.event("binding.bcm","received",200);s.event("binding.bcm","received",300);
+  check(s.source("bcm",500).count==2&&s.source("bcm",500).ageMs==200,"source-specific receive count and age");
+  check(s.source("nmode",500).count==0&&s.source("nmode",500).ageMs==-1,"registration is independent of reception");
+  s.event("binding.media.0","received",100);s.event("binding.media.0","invalid",100);s.event("binding.media.0","received",200);s.event("binding.media.0","processed",200);
+  check(s.source("media.0",500).count==2&&s.source("media.0",500).processed==1&&s.source("media.0",500).invalid==1&&s.source("media.0",500).processedAgeMs==300,"arrival and processing kept independently");
+  s.event("binding.bcm","stopped",600);check(s.source("bcm",700).status.equals("stopped"),"stop retained separately from reception");
+  s.reset();check(s.source("bcm",700).status.equals("unknown"),"reset clears source states");
+  check(s.snapshot().wifiState==-1&&s.snapshot().hscan==-1&&s.snapshot().routeWatch==-1&&s.snapshot().clusterService==-1,"reset");
   check(s.snapshot().routeCount==0&&s.snapshot().navQueryCount==0&&s.snapshot().routeAgeMs==-1,"reset clears diagnostic counts and ages");
   System.out.println("PASS: diagnostic observation states");
  }

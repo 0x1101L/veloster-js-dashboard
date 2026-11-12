@@ -1,4 +1,4 @@
-import com.veloster.vehicle.Telemetry;
+import com.veloster.dashboard.vehicle.Telemetry;
 
 /** Independent frame calculation must match the retained OEM formula and reject stale inputs. */
 public class StandaloneTelemetryTest {
