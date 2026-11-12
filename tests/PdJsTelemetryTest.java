@@ -36,6 +36,17 @@ public final class PdJsTelemetryTest {
         value(js,Telemetry.AMBIENT,40,2120,"JS OEM ambient callback retained");
         byte[] coolant=new byte[8];coolant[1]=(byte)176;js.hscanJs(0xc7,9,coolant,2200);
         value(js,2,84,2200,"JS uses PD-baseline coolant mapping");
+        byte[] battery=new byte[8];battery[3]=(byte)142;js.hscanJs(0xc7,0x0a,battery,2250);
+        value(js,Telemetry.BAT_VOLTAGE,14.2f,2250,"JS EMS14 voltage candidate");
+        js.hscanJs(0xc7,0,new byte[]{0,0,75,0,0,0,0,0},2251);
+        value(js,Telemetry.BAT_VOLTAGE,14.2f,2251,"other frame cannot overwrite EMS14 voltage");
+        battery[3]=(byte)255;js.hscanJs(0xc7,0x0a,battery,2252);
+        check(!js.sample(Telemetry.BAT_VOLTAGE,2252).valid,"invalid battery value is not current");
+        byte[] tcu=new byte[8];tcu[4]=100;
+        js.jsTcu11Frame(0x112,tcu,2260);check(Float.isNaN(js.dctTemperatures(2260).oddC),"other CAN ID ignored");
+        js.jsTcu11Frame(0x111,tcu,2261);check(js.dctTemperatures(2261).single&&js.dctTemperatures(2261).oddC==60&&Float.isNaN(js.dctTemperatures(2261).evenC),"TCU11 candidate is a single value");
+        check(Float.isNaN(js.dctTemperatures(7261).oddC),"single temperature expires");
+        tcu[4]=(byte)255;js.jsTcu11Frame(0x111,tcu,7300);check(Float.isNaN(js.dctTemperatures(7300).oddC),"TCU11 unavailable value rejected");
         js.hscanJs(0xc7,0x5a,new byte[8],2300);
         check(!js.sample(Telemetry.TCS,2300).seen,"JS does not inherit JSN stability decoder");
         check(js.jsProfile()&&!js.pdProfile()&&js.pdLayoutProfile(),"JS has a separate profile with PD layout baseline");

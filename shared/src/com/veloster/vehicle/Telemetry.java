@@ -70,10 +70,11 @@ public final class Telemetry {
     private DctTemperatures dctTemperatures=DctTemperatures.UNKNOWN;
     public static final class DctTemperatures {
         public static final float MIN_C=-40,MAX_C=300;
-        static final DctTemperatures UNKNOWN=new DctTemperatures(Float.NaN,Float.NaN,-1);
+        static final DctTemperatures UNKNOWN=new DctTemperatures(Float.NaN,Float.NaN,-1,true);
         public final float oddC,evenC;
+        public final boolean single;
         private final long at;
-        private DctTemperatures(float oddC,float evenC,long at){this.oddC=oddC;this.evenC=evenC;this.at=at;}
+        private DctTemperatures(float oddC,float evenC,long at,boolean single){this.oddC=oddC;this.evenC=evenC;this.at=at;this.single=single;}
         private static float temperature(byte[] reply,int offset){
             int raw=((reply[offset]&255)<<8)|(reply[offset+1]&255);
             float c=raw*2+MIN_C;
@@ -84,10 +85,18 @@ public final class Telemetry {
     public synchronized void jsDctTemperatureReply(byte[] reply,long now){
         if(!js||now<0||now<dctTemperatures.at||reply==null||reply.length<36
             ||reply[0]!=0x62||reply[1]!=0x01||(reply[2]&255)!=0xa4)return;
-        dctTemperatures=new DctTemperatures(DctTemperatures.temperature(reply,32),DctTemperatures.temperature(reply,34),now);
+        dctTemperatures=new DctTemperatures(DctTemperatures.temperature(reply,32),DctTemperatures.temperature(reply,34),now,false);
+    }
+    /** Candidate opendbc hyundai_can.dbc TCU11 TEMP_AT; no JS HSCAN slot is assumed. */
+    public synchronized void jsTcu11Frame(int canId,byte[] frame,long now){
+        if(!js||canId!=0x111||frame==null||frame.length!=8||now<0||now<dctTemperatures.at)return;
+        int raw=frame[4]&255;
+        dctTemperatures=new DctTemperatures(raw==255?Float.NaN:raw-40,Float.NaN,now,true);
     }
     public synchronized DctTemperatures dctTemperatures(long now){
-        return js&&now-dctTemperatures.at<JS_DCT_STALE_MS?dctTemperatures:DctTemperatures.UNKNOWN;
+        if(!js)return DctTemperatures.UNKNOWN;
+        return dctTemperatures.at>=0&&now>=dctTemperatures.at&&now-dctTemperatures.at<JS_DCT_STALE_MS
+            ?dctTemperatures:new DctTemperatures(Float.NaN,Float.NaN,-1,dctTemperatures.single);
     }
     private static boolean jsNoTimeExpiry(int i){return i==AMBIENT||i>=TPMS_FL&&i<=TPMS_RR;}
     public static boolean jsFast(int i){return !(i==1||i==2||i==AMBIENT||i>=TPMS_FL&&i<=TPMS_RR||i==BAT_SOC||i==BAT_VOLTAGE||i==INTAKE);}

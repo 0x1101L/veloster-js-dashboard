@@ -45,8 +45,11 @@ final class JsTelemetryDecoder {
         }else if(function==0x0d&&b.length==8){int raw=b[4]&255;put(1,raw*0.75f-40,raw>0&&raw<255,now);
         }else if(function==0x14&&b.length==8){int raw=b[3]&255;put(AMBIENT,raw*0.5f-40,raw<255,now);
         }else if(function==0&&b.length==8){
-            int soc=b[2]&255,voltage=(b[3]&255)|((b[4]&63)<<8);boolean sensorOk=(b[6]&0x80)==0&&(b[7]&0x80)==0;
-            put(BAT_SOC,soc,sensorOk&&soc<=100,now);put(BAT_VOLTAGE,voltage*0.001f+6,sensorOk&&voltage<=12000,now);
+            int soc=b[2]&255;boolean sensorOk=(b[6]&0x80)==0&&(b[7]&0x80)==0;
+            put(BAT_SOC,soc,sensorOk&&soc<=100,now);
+        }else if(function==0x0a&&b.length==8){
+            // PD-2 da14ad53632f216d04042645958c9cfaafed1731, EMS14: candidate pending JS comparison.
+            int raw=b[3]&255;put(BAT_VOLTAGE,raw*0.1f,raw>=60&&raw<=200,now);
         }else if(function==0x19&&b.length==5){
             int angle=(short)((b[0]&255)|((b[1]&255)<<8)),rate=b[2]&255;boolean stateOk=(b[3]&255)==7;
             put(STEERING,angle*0.1f,stateOk&&Math.abs(angle)<=10800,now);put(STEERING_SPEED,rate*4,stateOk&&rate<255,now);

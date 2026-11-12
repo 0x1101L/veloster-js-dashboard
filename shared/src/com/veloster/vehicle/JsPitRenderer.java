@@ -31,6 +31,8 @@ public final class JsPitRenderer {
     private GaugeLayout gaugeLayout;
     private OverviewLayout overviewLayout=new OverviewLayout();
     private boolean performancePage;
+    private boolean diagnosticPage;
+    private JsDiagState.Snapshot diagnostic=new JsDiagState().snapshot();
     private final JsPerformanceRenderer performanceRenderer=new JsPerformanceRenderer();
     private final java.text.SimpleDateFormat clockFormat=new java.text.SimpleDateFormat("HH:mm",Locale.US);
     private long clockMinute=Long.MIN_VALUE;
@@ -41,6 +43,7 @@ public final class JsPitRenderer {
         return clockText;
     }
     public void setPerformancePage(boolean value){performancePage=value;}
+    public void setDiagnosticPage(boolean value,JsDiagState.Snapshot status){diagnosticPage=value;if(status!=null)diagnostic=status;}
     public void setArtwork(Bitmap value){artwork=value;}
     public void setGaugeLayout(GaugeLayout value){gaugeLayout=value;}
     public void setGraphLayout(GraphLayout value){graphLayout=value;}
@@ -79,11 +82,12 @@ public final class JsPitRenderer {
         button(c,UiText.language().toUpperCase(Locale.US),534,8,48,38,false,BLUE);
         centered(c,clock(),620,33,22,WHITE,true);
         button(c,UiText.t("돌아가기"),666,8,116,38,false,BLUE);
-        if(performancePage)performanceRenderer.draw(c,model,now);
+        if(diagnosticPage)drawDiagnostics(c,model.dctTemperatures(now));
+        else if(performancePage)performanceRenderer.draw(c,model,now);
         else if(graphLayout!=null)graphRenderer.draw(c,model,now,graphLayout);
         else if(gaugeLayout!=null)gaugeRenderer.draw(c,model,now,gaugeLayout);
         else if(mediaPage)drawCombined(c);else if(cluster)drawCluster(c);else drawDashboard(c,model.dctTemperatures(now),model.jsDriveMode(now));
-        if(!performancePage&&graphLayout==null&&!mediaPage && music!=null && music.notice)drawMedia(c,true);
+        if(!diagnosticPage&&!performancePage&&graphLayout==null&&!mediaPage && music!=null && music.notice)drawMedia(c,true);
         if(cluster&&gaugeLayout==null&&graphLayout==null)drawArtworkToggle(c);
         c.restore();
     }
@@ -96,6 +100,46 @@ public final class JsPitRenderer {
     }
     private void stroke(Canvas c,float x,float y,float x2,float y2,int color,float width){
         paint.setColor(color);paint.setStrokeWidth(width);c.drawLine(x,y,x2,y2,paint);
+    }
+    private String observed(int state,String yes,String no){return UiText.t(state==1?yes:state==0?no:"미확인");}
+    private String wifiRadio(int state){
+        switch(state){case 0:return UiText.t("꺼지는 중");case 1:return UiText.t("꺼짐");case 2:return UiText.t("켜지는 중");
+            case 3:return UiText.t("켜짐");case -2:return UiText.t("권한 오류");default:return UiText.t("미확인");}
+    }
+    private String diagnosticSample(int index,String unit,boolean candidate){
+        Telemetry.Sample s=samples[index];
+        if(!s.valid&&!s.held)return UiText.t("미수신");
+        String prefix=(s.held?"LAST "+(s.lastValidAgeMs/1000)+"s ":"")+(candidate?UiText.t("후보")+" ":"");
+        return prefix+String.format(Locale.US,index==Telemetry.BAT_VOLTAGE?"%.2f":"%.0f",s.value)+unit;
+    }
+    private String dctValue(Telemetry.DctTemperatures dct){
+        if(Float.isNaN(dct.oddC)&&Float.isNaN(dct.evenC))return UiText.t("미수신");
+        String left=Float.isNaN(dct.oddC)?"—":String.format(Locale.US,"%.0f",dct.oddC);
+        String right=Float.isNaN(dct.evenC)?"—":String.format(Locale.US,"%.0f",dct.evenC);
+        return UiText.t("후보")+" "+left+(dct.single?"":" / "+right)+" °C";
+    }
+    private void diagRow(Canvas c,float x,float y,String label,String value){
+        fitted(c,UiText.t(label),x+14,y,14,150,MUTED);
+        fitted(c,value,x+165,y,15,190,WHITE);
+    }
+    private void drawDiagnostics(Canvas c,Telemetry.DctTemperatures dct){
+        panel(c,18,68,373,367,PANEL,LINE);panel(c,409,68,373,367,PANEL,LINE);
+        text(c,"DIAG · HUD / NAV",32,94,16,BLUE,true);
+        text(c,"DIAG · WIFI / DCT",423,94,16,BLUE,true);
+        String[] leftLabels={"HUD 장착","HUD 출력","클러스터 API","TBT 메서드","TBT 수신","내비 관찰","내비 알림","내비 상태값","MICOM 서비스","HSCAN 소켓"};
+        String[] leftValues={UiText.t("이전 확인"),UiText.t("미확인"),observed(diagnostic.cluster,"클래스 확인","조회 실패"),
+            observed(diagnostic.tbt,"메서드 확인","조회 실패"),UiText.t("미확인"),
+            diagnostic.nav==2?UiText.t("조회 실패"):observed(diagnostic.nav,"등록됨","미등록"),
+            observed(diagnostic.navNotice,"수신됨","대기 중"),diagnostic.navValue<0?UiText.t("미확인"):String.valueOf(diagnostic.navValue),
+            diagnostic.micom==2?UiText.t("조회 실패"):observed(diagnostic.micom,"서비스 확인","없음/접근 불가"),
+            diagnostic.hscan==2?UiText.t("연결 실패"):observed(diagnostic.hscan,"연결됨","연결 안 됨")};
+        String[] rightLabels={"Wi-Fi 기능","Wi-Fi 서비스","Wi-Fi 상태","Wi-Fi 알림","Wi-Fi 모듈","DCT 온도","클러치 수명","배터리 전압","배터리 SOC","차량 속도"};
+        String[] rightValues={observed(diagnostic.wifiFeature,"선언됨","선언 안 됨"),observed(diagnostic.wifiService,"서비스 확인","없음/접근 불가"),
+            wifiRadio(diagnostic.wifiState),observed(diagnostic.wifiWatch,"등록됨","미등록"),UiText.t("미확인"),dctValue(dct),
+            UiText.t("미확인"),diagnosticSample(Telemetry.BAT_VOLTAGE," V",true),diagnosticSample(Telemetry.BAT_SOC," %",true),
+            diagnosticSample(7," km/h",false)};
+        for(int i=0;i<leftLabels.length;i++)diagRow(c,18,120+i*30,leftLabels[i],leftValues[i]);
+        for(int i=0;i<rightLabels.length;i++)diagRow(c,409,120+i*30,rightLabels[i],rightValues[i]);
     }
     private void text(Canvas c,String s,float x,float y,float size,int color,boolean bold){
         paint.setColor(color);paint.setTextSize(size);paint.setTypeface(bold?Typeface.DEFAULT_BOLD:Typeface.DEFAULT);c.drawText(s,x,y,paint);
@@ -278,8 +322,8 @@ public final class JsPitRenderer {
         float left=x+w-51,right=x+w-10,top=y+44,bottom=y+86;
         box(c,left,top,right,bottom,LINE);
         box(c,left+1,top+1,right-1,bottom-1,PANEL);
-        dctLane(c,UiText.t("홀수단"),"L",dct.oddC,x,y+51,left+7,top,bottom);
-        dctLane(c,UiText.t("짝수단"),"R",dct.evenC,x,y+78,right-17,top,bottom);
+        dctLane(c,dct.single?UiText.t("온도"):UiText.t("홀수단"),"L",dct.oddC,x,y+51,left+7,top,bottom);
+        if(!dct.single)dctLane(c,UiText.t("짝수단"),"R",dct.evenC,x,y+78,right-17,top,bottom);
     }
     private void dctLane(Canvas c,String label,String lane,float temperature,float x,float baseline,float bar,float top,float bottom){
         boolean valid=!Float.isNaN(temperature);

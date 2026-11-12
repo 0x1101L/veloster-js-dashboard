@@ -95,7 +95,7 @@ JS source now uses a separate copy of the PD decoder and separate JS rendering. 
 
 When a valid gear is received on JS, the gear display shows the reported number and labels the selector mode separately as D (automatic) or M (sequential). The JS sequential signal mapping still needs vehicle verification.
 
-The JS overview replaces its oil temperature card with odd/even DCT clutch temperatures and two vertical bars. The display and response decoder are available in source; live diagnostic collection is disabled pending JS vehicle verification. Missing temperatures display as dashes.
+The JS overview has a DCT temperature card. The source supports one candidate TCU11 value on the left and paired values only when a matching two-value diagnostic response is supplied. No JS TCU11 HSCAN slot has been established, so the single-value CAN entry point has no live source. Diagnostic collection is disabled; values and scales require JS verification. The source also contains an `0x0a` battery-voltage candidate that requires vehicle comparison. These source changes are not in the previously distributed trial APK.
 
 The JS overview RPM card uses the standard accent in Normal and Smart, red in Sport, and green in Eco. Unknown or expired drive mode returns to the standard accent.
 
@@ -104,6 +104,8 @@ The JS overview RPM card uses the standard accent in Normal and Smart, red in Sp
 ## Development
 
 [`apps/`](apps/) contains the two apps; [`shared/`](shared/) contains dashboard/UI/data code. [`compile-stubs/`](compile-stubs/) supplies build-only OEM declarations. [`scripts/`](scripts/) and [`tests/`](tests/) provide build, integrity and host checks. [`experimental/`](experimental/README.md) indexes separate local research; its experimental source is not included in this update.
+
+Standalone JS hardware and HSCAN investigation tools live in [`diag/js_kr/`](diag/js_kr/README.md). The JS app source also observes a navigation state provider for investigation; no turn-by-turn input listener or physical HUD output has been verified. These changes are not in the previously distributed APK.
 
 [Build and test](docs/BUILD.md) · [Research walkthrough](docs/RESEARCH.md) · [NEMESIS review](docs/NEMESIS_REVIEW.md)
 

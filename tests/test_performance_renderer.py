@@ -53,6 +53,9 @@ public class PerformancePreview {
    c.write(folder+"/js-dct-"+state+".png");
   }
   t.clear();check(Float.isNaN(t.dctTemperatures(1600).oddC),"no DCT values across ignition reset");
+  byte[] frame=new byte[8];frame[4]=100;t.jsTcu11Frame(0x111,frame,1700);
+  Canvas single=new Canvas(800,480);new JsPitRenderer().draw(single,800,480,false,t,1800);
+  check(single.texts.contains("Temp")&&single.texts.contains("60 °C")&&!single.texts.contains("Odd")&&!single.texts.contains("Even")&&!single.texts.contains("R"),"single TCU11 value displays only on the left");
   Telemetry pd=new Telemetry();pd.profile(true,false,false);pd.jsDctTemperatureReply(reply,1000);
   check(Float.isNaN(pd.dctTemperatures(1000).oddC),"PD does not accept JS DCT reply");
  }
@@ -123,7 +126,7 @@ def render(folder):
         p = root / 'PerformancePreview.java'
         p.write_text(HARNESS)
         sources.append(p)
-        sources += [ROOT / 'shared/src/com/veloster/vehicle' / (name + '.java') for name in ('Telemetry','PdPowertrain','PdGearState','JsPowertrain','JsGearState','JsTelemetryDecoder','JsPitRenderer','JsGaugeRenderer','JsPerformanceRenderer','PitRenderer','PerformanceRenderer','DashboardPage','ShiftGuide','MediaState','GaugeLayout','GaugeRenderer','OverviewLayout','GraphLayout','GraphRenderer')]
+        sources += [ROOT / 'shared/src/com/veloster/vehicle' / (name + '.java') for name in ('Telemetry','PdPowertrain','PdGearState','JsPowertrain','JsGearState','JsTelemetryDecoder','JsDiagState','JsPitRenderer','JsGaugeRenderer','JsPerformanceRenderer','PitRenderer','PerformanceRenderer','DashboardPage','ShiftGuide','MediaState','GaugeLayout','GaugeRenderer','OverviewLayout','GraphLayout','GraphRenderer')]
         sources.append(ROOT / 'shared/src/com/veloster/i18n/UiText.java')
         result = subprocess.run([javac,'-encoding','UTF-8','-d',str(root),*map(str,sources)],capture_output=True,text=True)
         if result.returncode: raise AssertionError(result.stderr)

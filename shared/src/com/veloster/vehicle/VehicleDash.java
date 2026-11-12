@@ -17,6 +17,7 @@ import java.lang.ref.WeakReference;
 /** Opt-in in-activity panel; keeps the original content and all OEM controls alive. */
 public final class VehicleDash extends View implements Runnable {
     private static final Telemetry DATA=new Telemetry();
+    private static final JsDiagState DIAG=new JsDiagState();
     private static WeakReference<VehicleDash> current=new WeakReference<VehicleDash>(null);
     private final Activity activity;
     private final PitRenderer renderer=new PitRenderer();
@@ -30,7 +31,8 @@ public final class VehicleDash extends View implements Runnable {
     private final GraphEditor graphEditor;
     private final OverviewLayout overviewLayout=new OverviewLayout();
     private int overviewDown=-1;
-    private boolean cluster, media, gauges, graphs, performance, touching;
+    private boolean cluster, media, gauges, graphs, performance, diagnostic, touching;
+    private int currentPage=DashboardPage.OVERVIEW;
     private float downX,downY;
     private long lastDiagnostic;
     private long lastPolicyCheck;
@@ -58,6 +60,8 @@ public final class VehicleDash extends View implements Runnable {
         shiftTarget=ShiftGuide.clamp(a.getSharedPreferences("pit_vehicle_ui",0).getInt("shift_target",ShiftGuide.DEFAULT),DATA.pdLayoutProfile()); setVisibility(GONE); }
     private void setPage(int value,boolean save){
         int page=DashboardPage.normalize(value);
+        if(page==DashboardPage.DIAG&&!DATA.jsProfile())page=DashboardPage.OVERVIEW;
+        currentPage=page;diagnostic=page==DashboardPage.DIAG;
         cluster=page==DashboardPage.F1;gauges=page==DashboardPage.GAUGES;graphs=page==DashboardPage.GRAPHS;performance=page==DashboardPage.PERFORMANCE;
         if(save)activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("dashboard_page",page).apply();
     }
@@ -144,6 +148,10 @@ public final class VehicleDash extends View implements Runnable {
     }
     public static void ignition(boolean on) { DATA.clear(); }
     public static void profile(boolean pd,boolean js,boolean jsn){DATA.profile(pd,js,jsn);}
+    public static void diagReset(){DIAG.reset();}
+    public static void diagEvent(String name,String detail){DIAG.event(name,detail);}
+    public static void diagWifi(int feature,int service,int state,int watch){DIAG.wifi(feature,service,state,watch);}
+    public static void diagHscan(int state){DIAG.hscan(state);}
     public static void rpm(byte[] data) { DATA.rpm(data,SystemClock.elapsedRealtime()); }
     public static void beginComputed(float rpm,float tqi,float acor,float standard,float boost,float ambient) { DATA.beginComputed(rpm,tqi,acor,standard,boost,ambient); }
     public static void computed(float power,float torque,float boostKpa) { DATA.computed(power,torque,boostKpa); }
@@ -160,6 +168,7 @@ public final class VehicleDash extends View implements Runnable {
     public static void hscanPd(int cid,int function,byte[] data,long receivedAt){DATA.hscanPd(cid,function,data,receivedAt);}
     public static void hscanJs(int cid,int function,byte[] data,long receivedAt){DATA.hscanJs(cid,function,data,receivedAt);}
     public static void jsDctTemperatureReply(byte[] reply,long receivedAt){DATA.jsDctTemperatureReply(reply,receivedAt);}
+    public static void jsTcu11Frame(int canId,byte[] frame,long receivedAt){DATA.jsTcu11Frame(canId,frame,receivedAt);}
     protected void onAttachedToWindow() { super.onAttachedToWindow(); artwork.open();mediaReceiver.start(activity); post(this); }
     protected void onDetachedFromWindow() { removeCallbacks(this);removeCallbacks(editHold);touching=false;gaugeEditor.dismiss();graphEditor.dismiss();mediaReceiver.stop();artwork.close();super.onDetachedFromWindow(); }
     public void run() {
@@ -180,6 +189,7 @@ public final class VehicleDash extends View implements Runnable {
         MediaState.Snapshot track=mediaState.snapshot(now);artwork.request(track);
         if(DATA.jsProfile()){
         jsRenderer.setPerformancePage(performance);
+        jsRenderer.setDiagnosticPage(diagnostic,DIAG.snapshot());
         jsRenderer.setArtwork(artwork.bitmap());
         jsRenderer.setGaugeLayout(gauges?gaugeLayout:null);
         jsRenderer.setGraphLayout(graphs?graphLayout:null);
@@ -214,7 +224,7 @@ public final class VehicleDash extends View implements Runnable {
         float x=event.getX()*800/getWidth(), y=event.getY()*480/getHeight();
         if(event.getAction()==MotionEvent.ACTION_DOWN) {
             removeCallbacks(editHold);touching=true;downX=x;downY=y;
-            overviewDown=!performance&&!cluster&&!gauges&&!graphs&&!blocked&&!overviewCovered(y)?overviewLayout.hit(x,y):-1;
+            overviewDown=!diagnostic&&!performance&&!cluster&&!gauges&&!graphs&&!blocked&&!overviewCovered(y)?overviewLayout.hit(x,y):-1;
             if(!blocked&&((gauges&&gaugeEditor.hit(x,y)>=0)||(graphs&&graphLayout.hit(x,y)>=0)))postDelayed(editHold,600);
             return true;
         }
@@ -225,7 +235,7 @@ public final class VehicleDash extends View implements Runnable {
         boolean tap=touching && Math.abs(x-downX)<16 && Math.abs(y-downY)<16;
         touching=false;
         if(standalone&&tap&&x>=666&&x<=782&&downX>=666&&downX<=782&&y>=8&&y<=46&&downY>=8&&downY<=46){activity.finish();return true;}
-        if(tap&&!blocked&&!performance&&!cluster&&!gauges&&!graphs&&overviewDown>=0&&overviewLayout.hit(x,y)==overviewDown&&!overviewCovered(y)){
+        if(tap&&!blocked&&!diagnostic&&!performance&&!cluster&&!gauges&&!graphs&&overviewDown>=0&&overviewLayout.hit(x,y)==overviewDown&&!overviewCovered(y)){
             if(OverviewLayout.dctCard(overviewDown,DATA.jsProfile()))return true;
             overviewLayout.cycle(overviewDown);
             activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("overview_style_"+overviewDown,overviewLayout.style(overviewDown)).apply();
@@ -257,7 +267,7 @@ public final class VehicleDash extends View implements Runnable {
         if(!tap || blocked || y<8 || y>46 || downY<8 || downY>46)return true;
         gaugeEditor.dismiss();graphEditor.dismiss();
         int selected=DashboardPage.tap(downX,downY,x,y);
-        if(selected>=0){setPage(selected,true);invalidate();}
+        if(selected>=0){setPage(DashboardPage.select(currentPage,selected,DATA.jsProfile()),true);invalidate();}
         else if(x>=534 && x<=582 && downX>=534 && downX<=582){LanguageSettings.show(activity,new Runnable(){public void run(){invalidate();}});}
         else if(x>=666 && x<=782 && downX>=666 && downX<=782)close();
         return true;

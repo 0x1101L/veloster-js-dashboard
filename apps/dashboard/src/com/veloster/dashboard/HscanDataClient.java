@@ -31,7 +31,11 @@ final class HscanDataClient {
     synchronized void stop() {
         if (session == null) return;
         Session old = session; session = null;
+        if(profile==HscanProfile.Kind.JS)VehicleDash.diagHscan(0);
         old.close();
+    }
+    private synchronized void report(Session source,int state){
+        if(profile==HscanProfile.Kind.JS&&session==source)VehicleDash.diagHscan(state);
     }
 
     private static final class Chunk {
@@ -78,13 +82,14 @@ final class HscanDataClient {
                     synchronized (queue) { queue.clear(); }
                     try {
                         current.connect(new LocalSocketAddress("hscan_mux", LocalSocketAddress.Namespace.ABSTRACT));
+                        report(this,1);
                         current.setSoTimeout(500); // API17 needs connect before setting options.
                         InputStream input = current.getInputStream();
                         while (active) {
                             int n;
                             try { n = input.read(buffer); }
                             catch (SocketTimeoutException idle) { continue; }
-                            if (n < 0) break;
+                            if (n < 0) {report(this,0);break;}
                             if (n == 0) continue;
                             Chunk chunk = new Chunk(buffer, n, SystemClock.elapsedRealtime(), ++sequence);
                             synchronized (queue) {
@@ -95,7 +100,7 @@ final class HscanDataClient {
                             }
                         }
                     } catch (IOException unavailable) {
-                        // No diagnostic/handshake fallback; readings expire normally.
+                        if(active)report(this,2); // No diagnostic/handshake fallback.
                     } finally {
                         synchronized (socketLock) {
                             closeSocket(current);
