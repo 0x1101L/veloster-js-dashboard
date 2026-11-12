@@ -25,7 +25,7 @@ Reproduce the preview with JDK 17 available:
 python3 tests/test_performance_renderer.py --out build/performance-preview
 ```
 
-Implementation: [PerformanceRenderer](../shared/src/com/veloster/vehicle/PerformanceRenderer.java), [DashboardPage](../shared/src/com/veloster/vehicle/DashboardPage.java), [VehicleDash](../shared/src/com/veloster/vehicle/VehicleDash.java). Fixtures are confined to tests. No new vehicle command or telemetry decoding was introduced.
+Implementation: [PerformanceRenderer](../apps/dashboard/src/main/java/com/veloster/dashboard/view/performance/PerformanceRenderer.java), [DashboardPage](../apps/dashboard/src/main/java/com/veloster/dashboard/view/DashboardPage.java), [DashboardView](../apps/dashboard/src/main/java/com/veloster/dashboard/view/DashboardView.java). Fixtures are confined to tests. No new vehicle command or telemetry decoding was introduced.
 
 ## 한국어
 

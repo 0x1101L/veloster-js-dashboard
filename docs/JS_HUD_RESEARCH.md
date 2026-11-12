@@ -62,7 +62,7 @@ NaviClusterManager.sendCluster_TBT_INFO
 |---|---|
 | 경로 상태 방송 | `JsRouteStatusObserver`가 `ROUTE_GUIDE_STATE` 정수를 수동 수신한다. JS 제품·빌드 gate 뒤에서 시작하고 Activity 중지 시 해제한다. 초기 sticky 여부·수신 횟수·앱 수신 후 경과를 표시한다. sticky 원 발신 시각은 미확인이고 발신자도 인증하지 않는다. |
 | 클러스터 서비스 | `JsHudProbe`가 `com.hkmc.micom.cluster` 조회와 `com.hkmc.cluster.IClusterService` descriptor 일치를 확인한다. 메서드 권한이나 출력 성공은 판정하지 않는다. |
-| 진단 화면 | `HUD · 내비 / 차량 신호 / Wi-Fi · DCT` 세 탭으로 구분한다. 방송·provider 계측과 신호별 미수신·무효·유효·보관·만료 상태, 수신 횟수 및 경과를 표시한다. Dashboard의 헤드유닛 화면이며 순정 HUD 렌더러가 아니다. [화면 사용과 상태 의미](JS_DIAGNOSTICS.md)를 참고한다. |
+| 진단 화면 | `HUD · 내비 / 차량 신호 / Wi-Fi · DCT / Bindings` 네 탭으로 구분한다. 방송·provider 계측과 신호별 미수신·무효·유효·보관·만료 상태, 출처별 수신 상태·횟수 및 경과를 표시한다. Dashboard의 헤드유닛 화면이며 순정 HUD 렌더러가 아니다. [화면 사용과 상태 의미](JS_DIAGNOSTICS.md)를 참고한다. |
 
 기존 미디어 위젯과 내비 provider 관찰은 유지했다. 자동 TBT·음악 송신은 추가하지 않았다. 기존 코드의 명시적 `sendTbt` 시험 메서드는 실제 출력 검증을 뜻하지 않는다.
 

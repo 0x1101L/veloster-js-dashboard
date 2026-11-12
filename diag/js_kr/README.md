@@ -22,7 +22,7 @@ python3 diag/js_kr/hscan_capture.py --serial DEVICE_SERIAL --seconds 60 --out /p
 
 ## HUD / 계기판 서비스 조사 코드
 
-`JsHudProbe.java`는 앱 소스의 `apps/dashboard/src/com/veloster/dashboard/`로 옮겼다. JS에서 앱 화면이 활성화되면 내비 `State_Table`의 변경을 관찰하고, 화면이 중지되면 관찰을 해제한다. 상태를 관찰하는 리스너이며 TBT 방향·거리를 수신한다는 뜻은 아니다. 기존 NMode·속도·시동·후방 상태 리스너는 `VehicleDataClient`가 등록한다. `sendTbt(...)`는 명시적인 호출부와 검증된 인자가 필요하며 자동으로 호출되지 않는다. 메서드 반환은 물리 계기판이나 HUD 표시 성공의 증거가 아니다. JS MICOM Binder 계약·서비스 접근 권한·HUD 전용 리스너는 미확인이다. 이 변경은 아직 빌드·실행하지 않았다.
+`JsHudProbe.java`는 앱 소스의 `apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/`로 옮겼다. JS에서 앱 화면이 활성화되면 내비 `State_Table`의 변경을 관찰하고, 화면이 중지되면 관찰을 해제한다. 상태를 관찰하는 리스너이며 TBT 방향·거리를 수신한다는 뜻은 아니다. 기존 NMode·속도·시동·후방 상태 리스너는 `VehicleDataClient`가 등록한다. `sendTbt(...)`는 명시적인 호출부와 검증된 인자가 필요하며 자동으로 호출되지 않는다. 메서드 반환은 물리 계기판이나 HUD 표시 성공의 증거가 아니다. JS MICOM Binder 계약·서비스 접근 권한·HUD 전용 리스너는 미확인이다. 이 변경은 아직 빌드·실행하지 않았다.
 
 ## 클러치 수명 조사
 
