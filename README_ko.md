@@ -103,7 +103,7 @@ JSN 설치는 원본 업스트림 ZIP을 사용하세요. JS 시험 APK는 그 �
 
 [`apps/`](apps/)는 두 앱, [`shared/`](shared/)는 계기판 UI·데이터 처리 소스입니다. [`compile-stubs/`](compile-stubs/)는 빌드 전용 OEM 선언이고, [`scripts/`](scripts/)·[`tests/`](tests/)는 빌드·무결성·호스트 검사 도구입니다. [`experimental/`](experimental/README.md)는 별도 로컬 연구 안내입니다. 해당 실험 소스는 이번 공개 변경에 포함하지 않습니다.
 
-JS 하드웨어·HSCAN 조사 도구는 앱과 분리된 [`diag/js_kr/`](diag/js_kr/README.md)에 있습니다. 앱 소스에는 내비 상태 제공자 관찰이 추가됐으며 TBT 수신 리스너와 물리 HUD 출력은 아직 미검증입니다. 기존 배포 APK에는 반영되지 않았습니다.
+JS 하드웨어·HSCAN 조사 도구는 앱과 분리된 [`diag/js_kr/`](diag/js_kr/README.md)에 있습니다. 앱 소스는 내비 상태 제공자와 순정 `Route_Guide_Status` 방송의 정수 상태를 관찰합니다. Diag의 `경로 방송값`은 등록 후 대기·수신 원시값·오류를 구분하며, sticky 방송은 과거 상태일 수 있고 발신자도 인증하지 않습니다. `클러스터 서비스`는 `com.hkmc.micom.cluster`와 Binder descriptor를 확인합니다. TBT 방향·거리 수신, 메서드 호출 권한이나 물리 HUD 출력 확인은 아닙니다. 이번 수신·서비스 검사 변경은 기존 APK에 반영되지 않았습니다. 펌웨어별 출처·음악 클러스터 API·남은 확인 사항은 [`HUD 데이터 경로 조사`](docs/JS_HUD_RESEARCH.md)에 정리했습니다.
 
 [빌드·테스트](docs/BUILD.md) · [개발 과정](docs/RESEARCH_ko.md) · [JS 값 수집 인계](docs/JS_DEBUG_CAPTURE.md) · [NEMESIS 검토](docs/NEMESIS_REVIEW.md)
 

@@ -105,7 +105,7 @@ The JS overview RPM card uses the standard accent in Normal and Smart, red in Sp
 
 [`apps/`](apps/) contains the two apps; [`shared/`](shared/) contains dashboard/UI/data code. [`compile-stubs/`](compile-stubs/) supplies build-only OEM declarations. [`scripts/`](scripts/) and [`tests/`](tests/) provide build, integrity and host checks. [`experimental/`](experimental/README.md) indexes separate local research; its experimental source is not included in this update.
 
-Standalone JS hardware and HSCAN investigation tools live in [`diag/js_kr/`](diag/js_kr/README.md). The JS app source also observes a navigation state provider for investigation; no turn-by-turn input listener or physical HUD output has been verified. These changes are not in the previously distributed APK.
+Standalone JS hardware and HSCAN investigation tools live in [`diag/js_kr/`](diag/js_kr/README.md). The app source observes the navigation state provider and the integer in the OEM `Route_Guide_Status` broadcast. Diag distinguishes registration/waiting, raw values and errors. Sticky broadcasts may contain historical state and their sender is not authenticated. The cluster service check looks up `com.hkmc.micom.cluster` and verifies its Binder descriptor. These observations do not establish maneuver/distance reception, method permissions or physical HUD output. These new checks are not in existing APKs. See the [HUD data path investigation](docs/JS_HUD_RESEARCH.md) for artifact provenance, the music cluster API and remaining checks.
 
 [Build and test](docs/BUILD.md) · [Research walkthrough](docs/RESEARCH.md) · [NEMESIS review](docs/NEMESIS_REVIEW.md)
 

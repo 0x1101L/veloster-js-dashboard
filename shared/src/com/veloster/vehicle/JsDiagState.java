@@ -4,13 +4,16 @@ package com.veloster.vehicle;
 public final class JsDiagState {
     private int cluster=-1,tbt=-1,micom=-1,nav=-1,navValue=-1,navNotice=-1,hscan=-1;
     private int wifiFeature=-1,wifiService=-1,wifiState=-1,wifiWatch=-1;
+    private int clusterService=-1,routeWatch=-1,routeNotice=-1,routeValue;
     public static final class Snapshot {
         public final int cluster,tbt,micom,nav,navValue,navNotice,hscan,wifiFeature,wifiService,wifiState,wifiWatch;
-        private Snapshot(int c,int t,int m,int n,int nv,int nn,int h,int wf,int ws,int w,int ww){
+        public final int clusterService,routeWatch,routeNotice,routeValue;
+        private Snapshot(int c,int t,int m,int n,int nv,int nn,int h,int wf,int ws,int w,int ww,int cs,int rw,int rn,int rv){
             cluster=c;tbt=t;micom=m;nav=n;navValue=nv;navNotice=nn;hscan=h;wifiFeature=wf;wifiService=ws;wifiState=w;wifiWatch=ww;
+            clusterService=cs;routeWatch=rw;routeNotice=rn;routeValue=rv;
         }
     }
-    public synchronized void reset(){cluster=tbt=micom=nav=navValue=navNotice=hscan=wifiFeature=wifiService=wifiState=wifiWatch=-1;}
+    public synchronized void reset(){cluster=tbt=micom=nav=navValue=navNotice=hscan=wifiFeature=wifiService=wifiState=wifiWatch=clusterService=routeWatch=routeNotice=-1;routeValue=0;}
     public synchronized void wifi(int feature,int service,int state,int watch){wifiFeature=feature;wifiService=service;wifiState=state;wifiWatch=watch;}
     public synchronized void hscan(int value){hscan=value;}
     public synchronized void event(String name,String detail){
@@ -20,6 +23,15 @@ public final class JsDiagState {
         else if("method".equals(name)&&detail.contains("updateTBTInfo"))tbt=1;
         else if("micom.service".equals(name))micom=detail.startsWith("present")?1:0;
         else if("micom.service.error".equals(name))micom=2;
+        else if("cluster.service".equals(name))clusterService=detail.startsWith("present")?1:detail.startsWith("descriptor mismatch")?2:0;
+        else if("cluster.service.error".equals(name))clusterService=2;
+        else if("navigation.route.observer".equals(name)){routeWatch=1;routeNotice=0;routeValue=0;}
+        else if("navigation.route.observer.error".equals(name)){routeWatch=2;routeNotice=-1;routeValue=0;}
+        else if("navigation.route.stopped".equals(name)){routeWatch=0;routeNotice=-1;routeValue=0;}
+        else if("navigation.route.invalid".equals(name)){routeNotice=-1;routeValue=0;}
+        else if("navigation.route_state".equals(name)){
+            try{routeValue=Integer.parseInt(detail);routeNotice=1;}catch(NumberFormatException ignored){routeValue=0;routeNotice=-1;}
+        }
         else if("navigation.observer".equals(name)){nav=1;navNotice=0;}
         else if("navigation.observer.error".equals(name)||"navigation.state.error".equals(name)){nav=2;navValue=-1;}
         else if("navigation.observer.stopped".equals(name)){nav=0;navValue=-1;navNotice=-1;}
@@ -29,5 +41,5 @@ public final class JsDiagState {
         }
         else if("navigation.state".equals(name))navValue=-1;
     }
-    public synchronized Snapshot snapshot(){return new Snapshot(cluster,tbt,micom,nav,navValue,navNotice,hscan,wifiFeature,wifiService,wifiState,wifiWatch);}
+    public synchronized Snapshot snapshot(){return new Snapshot(cluster,tbt,micom,nav,navValue,navNotice,hscan,wifiFeature,wifiService,wifiState,wifiWatch,clusterService,routeWatch,routeNotice,routeValue);}
 }

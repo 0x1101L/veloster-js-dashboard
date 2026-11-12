@@ -126,11 +126,14 @@ public final class JsPitRenderer {
         panel(c,18,68,373,367,PANEL,LINE);panel(c,409,68,373,367,PANEL,LINE);
         text(c,"DIAG · HUD / NAV",32,94,16,BLUE,true);
         text(c,"DIAG · WIFI / DCT",423,94,16,BLUE,true);
-        String[] leftLabels={"HUD 장착","HUD 출력","클러스터 API","TBT 메서드","TBT 수신","내비 관찰","내비 알림","내비 상태값","MICOM 서비스","HSCAN 소켓"};
+        String[] leftLabels={"HUD 장착","HUD 출력","클러스터 API","클러스터 서비스","TBT 메서드","TBT 수신","내비 관찰","내비 알림","내비 상태값","경로 방송값","MICOM 서비스","HSCAN 소켓"};
         String[] leftValues={UiText.t("이전 확인"),UiText.t("미확인"),observed(diagnostic.cluster,"클래스 확인","조회 실패"),
+            diagnostic.clusterService==2?UiText.t("조회 실패"):observed(diagnostic.clusterService,"서비스 확인","없음/접근 불가"),
             observed(diagnostic.tbt,"메서드 확인","조회 실패"),UiText.t("미확인"),
             diagnostic.nav==2?UiText.t("조회 실패"):observed(diagnostic.nav,"등록됨","미등록"),
             observed(diagnostic.navNotice,"수신됨","대기 중"),diagnostic.navValue<0?UiText.t("미확인"):String.valueOf(diagnostic.navValue),
+            diagnostic.routeWatch==2?UiText.t("조회 실패"):diagnostic.routeWatch!=1?UiText.t(diagnostic.routeWatch==0?"미등록":"미확인"):
+                diagnostic.routeNotice==1?String.valueOf(diagnostic.routeValue):UiText.t(diagnostic.routeNotice==0?"대기 중":"미확인"),
             diagnostic.micom==2?UiText.t("조회 실패"):observed(diagnostic.micom,"서비스 확인","없음/접근 불가"),
             diagnostic.hscan==2?UiText.t("연결 실패"):observed(diagnostic.hscan,"연결됨","연결 안 됨")};
         String[] rightLabels={"Wi-Fi 기능","Wi-Fi 서비스","Wi-Fi 상태","Wi-Fi 알림","Wi-Fi 모듈","DCT 온도","클러치 수명","배터리 전압","배터리 SOC","차량 속도"};
@@ -138,7 +141,7 @@ public final class JsPitRenderer {
             wifiRadio(diagnostic.wifiState),observed(diagnostic.wifiWatch,"등록됨","미등록"),UiText.t("미확인"),dctValue(dct),
             UiText.t("미확인"),diagnosticSample(Telemetry.BAT_VOLTAGE," V",true),diagnosticSample(Telemetry.BAT_SOC," %",true),
             diagnosticSample(7," km/h",false)};
-        for(int i=0;i<leftLabels.length;i++)diagRow(c,18,120+i*30,leftLabels[i],leftValues[i]);
+        for(int i=0;i<leftLabels.length;i++)diagRow(c,18,120+i*25,leftLabels[i],leftValues[i]);
         for(int i=0;i<rightLabels.length;i++)diagRow(c,409,120+i*30,rightLabels[i],rightValues[i]);
     }
     private void text(Canvas c,String s,float x,float y,float size,int color,boolean bold){

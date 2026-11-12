@@ -275,5 +275,7 @@
   "켜짐": "On",
   "권한 오류": "Permission denied",
   "후보": "Candidate",
-  "미수신": "Not received"
+  "미수신": "Not received",
+  "클러스터 서비스": "Cluster service",
+  "경로 방송값": "Route broadcast value"
 }

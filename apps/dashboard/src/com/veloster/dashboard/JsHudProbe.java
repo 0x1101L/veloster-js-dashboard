@@ -15,6 +15,7 @@ public final class JsHudProbe {
     public interface Sink { void event(String name, String detail); }
     private final Context context;
     private final Sink sink;
+    private final JsRouteStatusObserver routeObserver;
     private static final Uri NAV_STATE=Uri.parse("content://com.mnsoft.navi/State_Table");
     private HandlerThread navThread;
     private Handler navHandler;
@@ -27,6 +28,7 @@ public final class JsHudProbe {
         if(!"js_kr".equals(Build.PRODUCT)||!"eng.vmadmin.20260114.090656".equals(Build.VERSION.INCREMENTAL))
             throw new IllegalStateException("Unexpected product/build");
         this.context=context;this.sink=sink;
+        routeObserver=new JsRouteStatusObserver(context,sink);
     }
     /** Inspect only. An Android Context is required for listener registration or TBT. */
     public static void main(String[] args){
@@ -35,19 +37,30 @@ public final class JsHudProbe {
         if(!"js_kr".equals(Build.PRODUCT)||!"eng.vmadmin.20260114.090656".equals(Build.VERSION.INCREMENTAL))
             throw new IllegalStateException("Unexpected product/build");
         Sink stdout=new Sink(){public void event(String name,String detail){System.out.println(name+": "+detail);}};
-        inspectTypes(stdout);inspectMicomService(stdout);
+        inspectTypes(stdout);inspectServices(stdout);
     }
-    private static void inspectMicomService(Sink output){
+    private static void inspectServices(Sink output){
+        inspectService(output,"micom","com.hkmc.micom.hscanmicomservice",null);
+        inspectService(output,"cluster","com.hkmc.micom.cluster","com.hkmc.cluster.IClusterService");
+    }
+    private static void inspectService(Sink output,String label,String name,String expected){
         try{
             Class<?> sm=Class.forName("android.os.ServiceManager");
-            Object binder=sm.getMethod("getService",String.class).invoke(null,"com.hkmc.micom.hscanmicomservice");
-            output.event("micom.service",binder==null?"absent or inaccessible":"present; descriptor and permissions unverified");
-        }catch(Throwable e){output.event("micom.service.error",e.getClass().getName());}
+            Object binder=sm.getMethod("getService",String.class).invoke(null,name);
+            if(binder==null)output.event(label+".service","absent or inaccessible");
+            else if(expected==null)output.event(label+".service","present; descriptor and permissions unverified");
+            else{
+                String descriptor=((android.os.IBinder)binder).getInterfaceDescriptor();
+                output.event(label+".service",expected.equals(descriptor)?
+                    "present; matching descriptor; method permissions unverified":"descriptor mismatch");
+            }
+        }catch(Throwable e){output.event(label+".service.error",e.getClass().getName());}
     }
     /** Examine declarations; neither service discovery nor these listeners prove HUD reception. */
-    public void inspect(){inspectTypes(sink);inspectMicomService(sink);}
+    public void inspect(){inspectTypes(sink);inspectServices(sink);}
     private static void inspectTypes(Sink sink){
-        for(String name:new String[]{"com.hkmc.cluster.NavigationCluster", "com.hkmc.micom.NModeListener",
+        for(String name:new String[]{"com.hkmc.cluster.NavigationCluster", "com.hkmc.cluster.NavigationClusterListener",
+                "com.hkmc.cluster.ClusterManager", "com.hkmc.micom.NModeListener",
                 "com.hkmc.micom.VehicleInfoListener", "com.hkmc.hscan.IHscanMicomService",
                 "com.hkmc.hscan.IHscanMicomListener"}){
             try{
@@ -61,8 +74,9 @@ public final class JsHudProbe {
         }
     }
 
-    /** Observe the known navigation state provider; this is not a turn-by-turn listener. */
+    /** Observe provider and route-status broadcasts independently; neither supplies turn-by-turn data. */
     public synchronized void startNavigationObservation(){
+        routeObserver.start();
         if(navObserver!=null)return;
         try{
             final int generation=++navGeneration;
@@ -126,7 +140,8 @@ public final class JsHudProbe {
         m.invoke(cluster,displayType,sideStreet,direction,distance,distanceError,combiSideStreet,scale,barGraphLevel,barGraphLevelError);
         sink.event("tbt.returned","Method returned; physical cluster/HUD display not confirmed");
     }
-    public void close(){
+    public synchronized void close(){
+        routeObserver.stop();
         stopNavigationObservation();
     }
 }

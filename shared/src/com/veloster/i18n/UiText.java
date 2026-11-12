@@ -75,6 +75,7 @@ public final class UiText {
         EN.put("게이지 ","Gauge ");
         EN.put("게이지 모양","Gauge style");
         EN.put("게이지를 길게 눌러 항목 · 모양 · 위치 편집","Hold a gauge to edit its signal, style or position");
+        EN.put("경로 방송값","Route broadcast value");
         EN.put("권한 오류","Permission denied");
         EN.put("그래프","Graphs");
         EN.put("그래프 ","Graph ");
@@ -262,6 +263,7 @@ public final class UiText {
         EN.put("켜짐","On");
         EN.put("클래스 확인","Class found");
         EN.put("클러스터 API","Cluster API");
+        EN.put("클러스터 서비스","Cluster service");
         EN.put("클러치 수명","Clutch life");
         EN.put("타이어 공기압","Tire pressure");
         EN.put("토크 (계산)","Torque (calc.)");
