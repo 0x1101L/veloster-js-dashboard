@@ -41,9 +41,21 @@
     "ko",
     "en"
   ],
-  "verification_updated": "2026-11-11",
+  "verification_updated": "2026-11-12",
   "verification_document": "docs/STATUS.md",
   "js_trial_apks": [
+    {
+      "file": "apks/JS-Dashboard-build-20261112-184552.apk",
+      "package": "com.veloster.dashboard",
+      "version_code": 10,
+      "version_name": "1.5-i18n",
+      "sha256": "bec1e2be2f5c845eb7ae451118be7f33560cd07b16eef4581f7c36868971fa62",
+      "bytes": 99591,
+      "source_commit": "b7c6026408fc7cbedc019680c015bfc21609834b",
+      "scope": "JS development trial; host tests, API17 V1 signature, installation readback and brief runtime observation completed. Signal values remain uncalibrated; not a JSN installer companion.",
+      "vehicle_install_observed": true,
+      "build_input_note": "Source tree at b7c6026. JDK24 javac was invoked through an external temporary wrapper mapping source/target 7 to 8; Android API17 and Build Tools 36.1.0 were used."
+    },
     {
       "file": "apks/JS-Dashboard-build-20261111-175521.apk",
       "package": "com.veloster.dashboard",

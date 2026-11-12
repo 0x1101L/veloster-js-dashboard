@@ -314,29 +314,32 @@
     }
   },
   "js_trial_validation": {
-    "date": "2026-11-11",
+    "date": "2026-11-12",
     "artifact": {
-      "file": "apks/JS-Dashboard-build-20261111-175521.apk",
+      "file": "apks/JS-Dashboard-build-20261112-184552.apk",
       "package": "com.veloster.dashboard",
-      "version_code": 9,
+      "version_code": 10,
       "version_name": "1.5-i18n",
-      "sha256": "d03adf3759939d3123204f77cc25a663cb8201c77091e843ee6d598fe7e74fd6",
-      "bytes": 84152,
-      "source_commit": "3cd73e3bf467ffbdb52f6f886f3ebd937027cc94",
-      "scope": "JS development trial; host-built and signature-verified only. Not a JSN installer companion.",
-      "vehicle_install_observed": false,
-      "original_source_commit": "6448644",
-      "build_input_note": "Source tree plus AndroidManifest versionCode 9; packaging scripts and metadata are committed separately."
+      "sha256": "bec1e2be2f5c845eb7ae451118be7f33560cd07b16eef4581f7c36868971fa62",
+      "bytes": 99591,
+      "source_commit": "b7c6026408fc7cbedc019680c015bfc21609834b",
+      "scope": "JS development trial; host tests, API17 V1 signature, installation readback and brief runtime observation completed. Signal values remain uncalibrated; not a JSN installer companion.",
+      "vehicle_install_observed": true,
+      "build_input_note": "Source tree at b7c6026. JDK24 javac was invoked through an external temporary wrapper mapping source/target 7 to 8; Android API17 and Build Tools 36.1.0 were used."
     },
-    "java_host_programs": 15,
-    "python_tests": 54,
+    "java_host_programs": 16,
+    "python_tests": 57,
     "compile_android_api": 17,
     "min_sdk": 17,
     "target_sdk": 17,
     "dex_version": "035",
     "v1_signature_valid": true,
     "zipalign_valid": true,
-    "vehicle_tested": false,
-    "note": "The root record describes a historical 2026-10-23 release; its old Dashboard files are not in this checkout."
+    "vehicle_tested": true,
+    "installation_readback_sha256_match": true,
+    "runtime_observation": "DashboardActivity remained foreground; VehicleDash counters advanced; no AndroidRuntime fatal exception after installation. Existing app-private errors.log contains six pre-install 2026-11-11 OverviewLayout errors; no post-install entries observed.",
+    "signal_capture": "Six private HSCAN captures total 699864 bytes and 2637 chunks. Current JS decoder replay accepted 19887 records over 753379 ms of host monotonic timestamps (about 107 seconds of active capture across sessions). No JS_SAMPLE numeric app logs were found. Captured inputs: coolant, throttle, brake pressure, lateral/longitudinal acceleration, steering angle/rate, calculated boost, TPMS, candidate battery voltage, intake temperature, pedal, TCS/ESC/ABS state, and gear. Oil temperature and battery SOC were received but invalid. No RPM numeric value from OEM callbacks was logged. Decoder outputs were not independently calibrated.",
+    "build_compatibility_note": "The installed environment had only JDK24. A temporary wrapper mapped javac source/target 7 to 8 outside the repository; exact Java 7 compilation was not verified. D8 emitted four compile-only OEM listener interface warnings.",
+    "capture_files_private": "Canonical private HSCAN captures are in the connected project memory under 13_research/can_bus/raw; the repository does not contain them. Temporary copies may remain outside the repository."
   }
 }
