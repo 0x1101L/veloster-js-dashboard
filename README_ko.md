@@ -15,7 +15,7 @@ Veloster JS·JSN과 i30 PD 순정 헤드유닛에서 사용할 대시보드 프�
 
 JS 소스는 PD 디코더를 복제한 전용 처리 경로와 JS 전용 화면을 사용합니다. 무효 입력 시 느린 값은 마지막 유효값을 최대 60초 동안 `LAST`와 경과 시간으로 표시합니다. JS 외기온과 TPMS는 시간 경과로 만료하지 않고 시동 상태 초기화까지 유지합니다. 빠르게 변하는 값은 2초 후 만료되며 보관값을 표시하지 않습니다. 시간은 앱의 임시 정책이며 순정 규격으로 확인된 값이 아닙니다. JSN·PD 기존 동작은 유지합니다. 아직 설치하지 않은 소스이며 실차 확인이 필요합니다.
 
-JS에서 유효 단수를 수신하면 숫자 칸에는 실제 단수만 표시하고, 자동(D)·시퀀셜(M) 모드는 별도로 표시합니다. JS 시퀀셜 신호 매핑은 실차 확인이 필요합니다.
+JS에서 DCT 유효 단수를 수신하면 자동(D)·시퀀셜(M) 모드와 단수를 D1·M1처럼 함께 표시합니다. JS 시퀀셜 신호 매핑은 실차 확인이 필요합니다.
 
 JS 전체 조망에는 DCT 온도 카드가 있습니다. 현재 소스는 단일 TCU11 후보 값을 왼쪽에 표시하며, 두 값이 든 진단 응답이 공급되는 경우에만 홀·짝을 따로 표시합니다. JS의 TCU11 HSCAN 슬롯이 확인되지 않아 단일 값 입력에는 실제 수신원이 연결되지 않았고, 진단 수집도 비활성입니다. `0x0a` 배터리 전압 후보 역시 JS 실차 비교가 필요합니다. 이 소스 변경은 기존 배포 시험 APK에 포함되지 않습니다.
 
@@ -63,7 +63,7 @@ JS 시험 빌드 런타임에서 PD 기준 공용 개요 레이아웃의 리매�
 
 | 현재 APK | 버전 |
 | --- | --- |
-| [JS Dashboard 시험본](apks/JS-Dashboard-build-20261111-175521.apk) | versionCode 9 · 1.5-i18n · 호스트 검증만 완료 |
+| [JS Dashboard 시험본](apks/JS-Dashboard-build-20261112-184552.apk) | versionCode 10 · 1.5-i18n · JS 설치/readback 및 짧은 런타임 확인 |
 | [내 앱](apks/My-Apps-v10-API17.apk) | v10 · 1.9-i18n |
 
 JSN 설치는 원본 업스트림 ZIP을 사용하세요. JS 시험 APK는 그 설치기에서 사용하지 않습니다. APK를 SD 카드에 복사하는 것만으로 설치되지 않습니다. 날짜가 붙은 ZIP의 문서는 배포 당시 상태이며 이후 검증은 이 저장소에 반영합니다. [이전 버전·배포 기록](docs/RELEASE.md) · [파일 해시·패키지 정보](release.json)
@@ -99,6 +99,9 @@ JSN 설치는 원본 업스트림 ZIP을 사용하세요. JS 시험 APK는 그 �
 | 05 · 언어 설정 | [언어](docs/LANGUAGES.md#한국어) | [Languages](docs/LANGUAGES.md) |
 | 06 · 개발·연구 | [개발·연구 색인](docs/README.md#development-and-research) | [Documentation index](docs/README.md#development-and-research) |
 
+
+JS·PD의 변속 알림은 설정한 3,000–6,700rpm 범위를 실제 알림 계산에도 적용합니다. DCT 수신 단수의 알림 동작은 호스트 합성 테스트만 했으며 실차 확인이 필요합니다.
+
 ## 개발
 
 [`apps/`](apps/)는 두 앱, [`shared/`](shared/)는 계기판 UI·데이터 처리 소스입니다. [`compile-stubs/`](compile-stubs/)는 빌드 전용 OEM 선언이고, [`scripts/`](scripts/)·[`tests/`](tests/)는 빌드·무결성·호스트 검사 도구입니다. [`experimental/`](experimental/README.md)는 별도 로컬 연구 안내입니다. 해당 실험 소스는 이번 공개 변경에 포함하지 않습니다.
@@ -107,6 +110,10 @@ JS 하드웨어·HSCAN 조사 도구는 앱과 분리된 [`diag/js_kr/`](diag/js
 
 [빌드·테스트](docs/BUILD.md) · [개발 과정](docs/RESEARCH_ko.md) · [JS 값 수집 인계](docs/JS_DEBUG_CAPTURE.md) · [NEMESIS 검토](docs/NEMESIS_REVIEW.md)
 
-소스의 [JS 진단 화면](docs/JS_DIAGNOSTICS.md)은 `HUD·내비 / 차량 신호 / Wi-Fi·DCT` 세 탭으로 나뉩니다. 신호별 미수신·무효·유효·보관·만료 상태와 수신 횟수, 마지막 수신/유효값 경과를 비교할 수 있습니다. 내비는 초기 sticky 여부와 오류 원인도 표시합니다. 기존 APK에는 화면 개편이 포함되지 않으며 실차 수신·보정·HUD 출력 검증과는 구분합니다.
+소스의 [JS 진단 화면](docs/JS_DIAGNOSTICS.md)은 `HUD·내비 / 차량 신호 / Wi-Fi·DCT / Bindings` 네 탭으로 나뉩니다. 신호별 미수신·무효·유효·보관·만료 상태와 수신 횟수, 마지막 수신/유효값 경과를 비교할 수 있습니다. 내비는 초기 sticky 여부와 오류 원인도 표시합니다. 기존 APK에는 화면 개편이 포함되지 않으며 실차 수신·보정·HUD 출력 검증과는 구분합니다.
 
 자체 코드·문서는 [MIT](LICENSE)입니다. [의존성·서명 안내](NOTICE.md)를 참고하세요. 공개 AOSP 시험 인증서는 독점 배포자 신원이나 OTA 키가 아닙니다. 소스 빌드 결과는 서명 전 APK입니다. 제조사 펌웨어·APK, 개인 로그·식별자·개인키는 배포하지 않습니다. 제조사와 무관한 비공식 프로젝트입니다.
+
+Dashboard Java 소스는 `apps/dashboard/src/main/java`에 있습니다. Activity는 `com.veloster.dashboard`, 차량 연결은 `com.veloster.dashboard.vehicle`, 뷰와 페이지별 렌더러는 `com.veloster.dashboard.view` 하위 패키지에 있습니다. JS·PD·JSN 디코더는 `apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/js`, `pd`, `jsn`에 있습니다. 사용자 작성 HUD 조사기와 경로 리스너는 `src/0x1101L/java` 아래 역할별 패키지에 있습니다. Bindings 탭은 수동 수신의 상태·콜백 횟수·경과 시간을 표시합니다. 이 소스 변경은 기존 APK에 포함되지 않았습니다.
+
+JS 소스는 기존 진단·텔레메트리 snapshot을 버전 계약 `JS_LOGGER v1`로 기록하며 호스트 추출기는 CSV·요약 JSON·분석 초안을 생성합니다. 과거 `JS_SAMPLE` 기록과 출력 호환도 유지합니다. 확인된 callback/decoder 출처만 표시하고, 알 수 없으면 `unknown`으로 둡니다. 원시 payload, 내비 목적지·좌표, 미디어 정보와 장치 식별자는 수집하지 않습니다. Java 로거와 Python 파서는 한 버전 계약이므로 필드나 버전 변경 시 항상 함께 바꿔야 합니다. 현재 APK에는 이 소스 변경이 포함되지 않았습니다. [수집 계약과 명령](docs/JS_DEBUG_CAPTURE.md).

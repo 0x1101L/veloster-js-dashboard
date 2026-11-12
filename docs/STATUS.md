@@ -2,11 +2,11 @@
 
 [Documentation](README.md) · [한국어](#한국어)
 
-Documentation reviewed **2026-11-02**. Vehicle evidence through **2026-10-28**. No new vehicle session was performed for this documentation update.
+Documentation reviewed **2026-11-12**. A short JS device session was performed for versionCode 10; signal values are not calibrated.
 
 ## Current JS trial — 2026-11-11
 
-The JS repository now contains a signed versionCode 9 trial APK under `apks/JS-Dashboard-build-*.apk`. API17 V1 signature, ZIP alignment, 15 Java host programs and 55 Python tests passed. No installation or vehicle execution of this artifact was performed. The historical JSN Dashboard APKs were removed from this checkout; the following JSN observations describe the original upstream bundle.
+The JS repository now contains a signed versionCode 10 trial APK at `apks/JS-Dashboard-build-20261112-184552.apk`. API17 V1 signature and ZIP alignment passed; 16 Java host programs and 57 Python tests passed. It was installed on the identified JS head unit, and installed APK readback matched the build SHA-256. The app remained in the foreground with telemetry counters advancing and no post-install AndroidRuntime fatal exception observed. Six bounded HSCAN captures obtained 699,864 bytes across 2,637 chunks; decoder replay accepted 19,887 records over about 107 seconds of active capture. Numeric app log extraction found no `JS_SAMPLE` records, so RPM and OEM callback values were not numerically logged. HSCAN values are decoder outputs only, without independent reference comparison or calibration. The historical JSN Dashboard APKs were removed from this checkout; the following JSN observations describe the original upstream bundle.
 
 ## Supported target
 

@@ -54,7 +54,7 @@ The existing guarded installer supports **Korean Veloster N JSN**, product `jsn_
 
 | Current APK | Version |
 | --- | --- |
-| [JS Dashboard trial](apks/JS-Dashboard-build-20261111-175521.apk) | versionCode 9 · 1.5-i18n · host-verified only |
+| [JS Dashboard trial](apks/JS-Dashboard-build-20261112-184552.apk) | versionCode 10 · 1.5-i18n · installed/readback and brief runtime observation |
 | [My Apps](apks/My-Apps-v10-API17.apk) | v10 · 1.9-i18n |
 
 Use the original upstream ZIP for JSN installation. The JS trial APK is separate from that installer. Copying an APK onto an SD card does not install it. The dated ZIP retains its original documentation; this repository records later verification. [Older versions and release history](docs/RELEASE.md) · [Hashes and package identities](release.json)
@@ -93,13 +93,16 @@ Once installed, normal use does not require a PC. If neither the edge button nor
 
 JS source now uses a separate copy of the PD decoder and separate JS rendering. Invalid readings retain the last valid slow-changing value with a `LAST` age label for up to 60 seconds, except ambient temperature and TPMS, which have no time expiry within an ignition session; fast-changing readings expire after 2 seconds and are not displayed as retained. These are application policies, not validated OEM timeouts. JSN and PD retain their existing behavior. This is uninstalled source; vehicle validation is pending.
 
-When a valid gear is received on JS, the gear display shows the reported number and labels the selector mode separately as D (automatic) or M (sequential). The JS sequential signal mapping still needs vehicle verification.
+When a valid JS DCT gear is received, the display combines the selector mode and number, such as D1 or M1. The JS sequential signal mapping still needs vehicle verification.
 
 The JS overview has a DCT temperature card. The source supports one candidate TCU11 value on the left and paired values only when a matching two-value diagnostic response is supplied. No JS TCU11 HSCAN slot has been established, so the single-value CAN entry point has no live source. Diagnostic collection is disabled; values and scales require JS verification. The source also contains an `0x0a` battery-voltage candidate that requires vehicle comparison. These source changes are not in the previously distributed trial APK.
 
 The JS overview RPM card uses the standard accent in Normal and Smart, red in Sport, and green in Eco. Unknown or expired drive mode returns to the standard accent.
 
 <a id="source-and-tests"></a>
+
+
+JS and PD shift alerts apply the configured 3,000–6,700 rpm range to the actual cue. DCT gear handling has synthetic host coverage and still needs vehicle verification.
 
 ## Development
 
@@ -109,6 +112,10 @@ Standalone JS hardware and HSCAN investigation tools live in [`diag/js_kr/`](dia
 
 [Build and test](docs/BUILD.md) · [Research walkthrough](docs/RESEARCH.md) · [NEMESIS review](docs/NEMESIS_REVIEW.md)
 
-The source-only [JS diagnostics page](docs/JS_DIAGNOSTICS.md) now has HUD/navigation, vehicle-signal and Wi-Fi/DCT tabs. It separates missing, invalid, valid, held and expired signal data, with reception counts and receive/valid ages. Navigation observations include initial sticky status and bounded error reasons. Counts and service presence do not prove calibration, TBT reception or physical HUD output.
+The source-only [JS diagnostics page](docs/JS_DIAGNOSTICS.md) now has HUD/navigation, vehicle-signal, Wi-Fi/DCT and Bindings tabs. It separates missing, invalid, valid, held and expired signal data, with reception counts and receive/valid ages. Navigation observations include initial sticky status and bounded error reasons. Counts and service presence do not prove calibration, TBT reception or physical HUD output.
+
+The JS source now exports those existing snapshots through versioned `JS_LOGGER` v1 records; the host extractor creates CSV, summary JSON and analysis while preserving old `JS_SAMPLE` logs. The logger records known callback/decoder sources and labels unknown provenance explicitly. It omits raw payloads, navigation destinations/coordinates, media details and device identifiers. The paired Java logger and Python parser must always be changed and verified together under the same contract version. Held values retain their last valid input source. These source changes are not in the existing APKs. [Capture contract and command](docs/JS_DEBUG_CAPTURE.md).
 
 Project-authored code and documentation: [MIT](LICENSE). [Dependency and signing notices](NOTICE.md). The public AOSP test certificate is not a private publisher identity or an OTA key. Source builds are unsigned. OEM firmware/APKs, private logs, identifiers and signing keys are not distributed. Unofficial project; no manufacturer affiliation.
+
+Dashboard Java sources use `apps/dashboard/src/main/java`. The Activity is in `com.veloster.dashboard`, vehicle connections in `com.veloster.dashboard.vehicle`, and views and page renderers under `com.veloster.dashboard.view`. JS, PD and JSN decoders are under `apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/js` `pd` and `jsn`. The authored HUD probe and route listener use the single `src/0x1101L/java` root. The Bindings tab reports passive subscription status, callback counts and receive ages; these source changes are not in the existing APKs.
