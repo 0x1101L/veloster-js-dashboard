@@ -107,4 +107,6 @@ JS 하드웨어·HSCAN 조사 도구는 앱과 분리된 [`diag/js_kr/`](diag/js
 
 [빌드·테스트](docs/BUILD.md) · [개발 과정](docs/RESEARCH_ko.md) · [JS 값 수집 인계](docs/JS_DEBUG_CAPTURE.md) · [NEMESIS 검토](docs/NEMESIS_REVIEW.md)
 
+소스의 [JS 진단 화면](docs/JS_DIAGNOSTICS.md)은 `HUD·내비 / 차량 신호 / Wi-Fi·DCT` 세 탭으로 나뉩니다. 신호별 미수신·무효·유효·보관·만료 상태와 수신 횟수, 마지막 수신/유효값 경과를 비교할 수 있습니다. 내비는 초기 sticky 여부와 오류 원인도 표시합니다. 기존 APK에는 화면 개편이 포함되지 않으며 실차 수신·보정·HUD 출력 검증과는 구분합니다.
+
 자체 코드·문서는 [MIT](LICENSE)입니다. [의존성·서명 안내](NOTICE.md)를 참고하세요. 공개 AOSP 시험 인증서는 독점 배포자 신원이나 OTA 키가 아닙니다. 소스 빌드 결과는 서명 전 APK입니다. 제조사 펌웨어·APK, 개인 로그·식별자·개인키는 배포하지 않습니다. 제조사와 무관한 비공식 프로젝트입니다.

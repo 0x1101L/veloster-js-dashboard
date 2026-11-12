@@ -109,4 +109,6 @@ Standalone JS hardware and HSCAN investigation tools live in [`diag/js_kr/`](dia
 
 [Build and test](docs/BUILD.md) · [Research walkthrough](docs/RESEARCH.md) · [NEMESIS review](docs/NEMESIS_REVIEW.md)
 
+The source-only [JS diagnostics page](docs/JS_DIAGNOSTICS.md) now has HUD/navigation, vehicle-signal and Wi-Fi/DCT tabs. It separates missing, invalid, valid, held and expired signal data, with reception counts and receive/valid ages. Navigation observations include initial sticky status and bounded error reasons. Counts and service presence do not prove calibration, TBT reception or physical HUD output.
+
 Project-authored code and documentation: [MIT](LICENSE). [Dependency and signing notices](NOTICE.md). The public AOSP test certificate is not a private publisher identity or an OTA key. Source builds are unsigned. OEM firmware/APKs, private logs, identifiers and signing keys are not distributed. Unofficial project; no manufacturer affiliation.

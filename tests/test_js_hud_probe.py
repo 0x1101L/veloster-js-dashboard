@@ -34,11 +34,11 @@ STUBS = {
  public String getAction(){return action;}public Bundle getExtras(){return extras;}
  public Intent put(String k,Object v){extras.put(k,v);return this;}}''',
     'android/content/IntentFilter.java': 'package android.content;public class IntentFilter {public final String action;public IntentFilter(String a){action=a;}}',
-    'android/content/BroadcastReceiver.java': 'package android.content;public abstract class BroadcastReceiver {public abstract void onReceive(Context c,Intent i);}',
+    'android/content/BroadcastReceiver.java': 'package android.content;public abstract class BroadcastReceiver {public boolean initialSticky;public boolean isInitialStickyBroadcast(){return initialSticky;}public abstract void onReceive(Context c,Intent i);}',
     'android/content/Context.java': '''package android.content;public class Context {
- public BroadcastReceiver receiver,lastReceiver;public IntentFilter filter;public int adds,removes;public boolean fail,failRemove;
+ public BroadcastReceiver receiver,lastReceiver;public IntentFilter filter;public int adds,removes;public boolean fail,failRemove;public Intent sticky;
  public ContentResolver resolver=new ContentResolver();public ContentResolver getContentResolver(){return resolver;}
- public Intent registerReceiver(BroadcastReceiver r,IntentFilter f){adds++;receiver=lastReceiver=r;filter=f;if(fail)throw new SecurityException();return null;}
+ public Intent registerReceiver(BroadcastReceiver r,IntentFilter f){adds++;receiver=lastReceiver=r;filter=f;if(fail)throw new SecurityException();if(sticky!=null){r.initialSticky=true;r.onReceive(this,sticky);r.initialSticky=false;}return sticky;}
  public void unregisterReceiver(BroadcastReceiver r){removes++;if(failRemove)throw new IllegalStateException();if(receiver==r)receiver=null;}}''',
 }
 
@@ -56,6 +56,7 @@ public class JsHudProbeHarness {
   check(JsRouteStatusObserver.ACTION.equals(c.filter.action)&&o.state.snapshot().routeNotice==0,"exact filter and waiting");
   BroadcastReceiver old=c.receiver;old.onReceive(c,route(0));
   check(o.state.snapshot().routeValue==0&&o.state.snapshot().routeNotice==1,"zero is a received value");
+  check(o.state.snapshot().routeCount==1&&o.state.snapshot().routeSource==0,"counted as broadcast, without inferring an OEM sender");
   old.onReceive(c,route(-1));check(o.state.snapshot().routeValue==-1,"raw negative integer preserved");
   old.onReceive(c,new Intent("other").put(JsRouteStatusObserver.STATE,99));old.onReceive(c,null);
   check(o.values==2,"other broadcasts ignored");
@@ -80,6 +81,11 @@ public class JsHudProbeHarness {
   BroadcastReceiver old=c.receiver;c.failRemove=true;p.close();p.startNavigationObservation();
   old.onReceive(c,route(1));check(o.values==0,"unregister exception cannot revive old receiver");c.failRemove=false;p.close();
  }
+ static void sticky(){
+  Context c=new Context();c.sticky=route(3);Output o=new Output();JsHudProbe p=new JsHudProbe(c,o);p.startNavigationObservation();
+  check(o.state.snapshot().routeNotice==1&&o.state.snapshot().routeValue==3&&o.state.snapshot().routeSource==1,"initial sticky value survives registration completion");
+  c.receiver.onReceive(c,route(0));check(o.state.snapshot().routeCount==2&&o.state.snapshot().routeSource==0,"later broadcast replaces initial sticky origin");p.close();
+ }
  static void service(){
   Context c=new Context();Output o=new Output();JsHudProbe p=new JsHudProbe(c,o);p.inspect();
   check(o.state.snapshot().clusterService==0&&ServiceManager.last.equals("com.hkmc.micom.cluster"),"owning cluster service queried");
@@ -90,7 +96,7 @@ public class JsHudProbeHarness {
   ServiceManager.binder=new IBinder(){public String getInterfaceDescriptor(){throw new SecurityException();}};p.inspect();check(o.state.snapshot().clusterService==2,"descriptor failure contained");
  }
  static void profile(){Build.PRODUCT="hyundaiB_kr";try{new JsHudProbe(new Context(),new Output());throw new AssertionError("profile gate");}catch(IllegalStateException expected){}finally{Build.PRODUCT="js_kr";}}
- public static void main(String[] args){lifecycle();independent();failedCleanup();service();profile();System.out.println("PASS passive HUD observation scenarios");}
+ public static void main(String[] args){lifecycle();independent();failedCleanup();sticky();service();profile();System.out.println("PASS passive HUD observation scenarios");}
 }'''
 
 

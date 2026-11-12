@@ -26,7 +26,16 @@ public class JsDiagStateTest {
   s.event("navigation.route_state","3");s.event("navigation.route.stopped","stopped");
   check(s.snapshot().routeWatch==0&&s.snapshot().routeNotice==-1,"stop clears route status");
   s.event("navigation.route.observer.error","SecurityException");check(s.snapshot().routeWatch==2,"route registration failure");
+  check(s.snapshot().routeError==1,"permission failure has a bounded display reason");
+  s.event("navigation.route.starting","start");s.event("navigation.route.source","sticky");s.event("navigation.route_state","-3",1000);
+  s.event("navigation.route.observer","registered");
+  check(s.snapshot(1600).routeValue==-3&&s.snapshot(1600).routeSource==1&&s.snapshot(1600).routeAgeMs==600,"sticky reception age is app age and registration preserves it");
+  long count=s.snapshot().routeCount;s.snapshot(9000);check(s.snapshot().routeCount==count,"screen refresh never increments receptions");
+  s.event("navigation.route.invalid","bad");check(s.snapshot(9000).routeAgeMs==-1&&s.snapshot().routeInvalidCount>0,"invalid input cannot retain a received value age");
+  s.event("navigation.state_destination","-1",2000);s.event("navigation.notification","received",2200);
+  check(s.snapshot(2500).navValueKnown&&s.snapshot().navValue==-1&&s.snapshot(2500).navAgeMs==500&&s.snapshot(2500).navNoticeAgeMs==300,"provider raw integer and notification ages kept separately");
   s.reset();check(s.snapshot().wifiState==-1&&s.snapshot().hscan==-1&&s.snapshot().routeWatch==-1&&s.snapshot().clusterService==-1,"reset");
+  check(s.snapshot().routeCount==0&&s.snapshot().navQueryCount==0&&s.snapshot().routeAgeMs==-1,"reset clears diagnostic counts and ages");
   System.out.println("PASS: diagnostic observation states");
  }
 }

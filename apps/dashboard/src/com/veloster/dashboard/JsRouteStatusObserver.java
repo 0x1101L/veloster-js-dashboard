@@ -24,11 +24,15 @@ final class JsRouteStatusObserver {
                 if(receiver!=this||generation!=token||intent==null||!ACTION.equals(intent.getAction()))return;
                 try{
                     Object value=intent.getExtras()==null?null:intent.getExtras().get(STATE);
-                    if(value instanceof Integer)sink.event("navigation.route_state",String.valueOf(value));
+                    if(value instanceof Integer){
+                        sink.event("navigation.route.source",isInitialStickyBroadcast()?"sticky":"broadcast");
+                        sink.event("navigation.route_state",String.valueOf(value));
+                    }
                     else sink.event("navigation.route.invalid","missing or non-integer state");
                 }catch(RuntimeException e){sink.event("navigation.route.invalid",e.getClass().getName());}
             }
         }};
+        sink.event("navigation.route.starting","waiting for registration");
         try{
             // Android delivers the matching sticky intent through onReceive, if one exists.
             context.registerReceiver(receiver,new IntentFilter(ACTION));

@@ -32,6 +32,7 @@ public final class JsPitRenderer {
     private OverviewLayout overviewLayout=new OverviewLayout();
     private boolean performancePage;
     private boolean diagnosticPage;
+    private int diagnosticTab;
     private JsDiagState.Snapshot diagnostic=new JsDiagState().snapshot();
     private final JsPerformanceRenderer performanceRenderer=new JsPerformanceRenderer();
     private final java.text.SimpleDateFormat clockFormat=new java.text.SimpleDateFormat("HH:mm",Locale.US);
@@ -44,6 +45,19 @@ public final class JsPitRenderer {
     }
     public void setPerformancePage(boolean value){performancePage=value;}
     public void setDiagnosticPage(boolean value,JsDiagState.Snapshot status){diagnosticPage=value;if(status!=null)diagnostic=status;}
+    /** Local display selection only; a drag between tabs never selects one. */
+    public boolean selectDiagnosticTab(float downX,float downY,float x,float y){
+        int tab=diagnosticTabAt(x,y);
+        if(tab<0||tab!=diagnosticTabAt(downX,downY))return false;
+        diagnosticTab=tab;return true;
+    }
+    private static int diagnosticTabAt(float x,float y){
+        if(y<62||y>100)return -1;
+        if(x>=18&&x<=258)return 0;
+        if(x>=270&&x<=510)return 1;
+        if(x>=522&&x<=782)return 2;
+        return -1;
+    }
     public void setArtwork(Bitmap value){artwork=value;}
     public void setGaugeLayout(GaugeLayout value){gaugeLayout=value;}
     public void setGraphLayout(GraphLayout value){graphLayout=value;}
@@ -75,7 +89,7 @@ public final class JsPitRenderer {
         for(int y=56;y<480;y+=8)stroke(c,0,y,800,y,0x063f4948,1);
         box(c,0,0,800,52,0xff090b0c);box(c,18,51,782,52,LINE);
         button(c,UiText.t("퍼포먼스"),DashboardPage.left(DashboardPage.PERFORMANCE),8,DashboardPage.width(DashboardPage.PERFORMANCE),38,performancePage,BLUE);
-        button(c,UiText.t("전체 조망"),144,8,100,38,!performancePage&&!cluster&&gaugeLayout==null&&graphLayout==null,BLUE);
+        button(c,UiText.t(diagnosticPage?"진단":"전체 조망"),144,8,100,38,!performancePage&&!cluster&&gaugeLayout==null&&graphLayout==null,BLUE);
         button(c,"F1",250,8,72,38,cluster&&gaugeLayout==null&&graphLayout==null,BLUE);
         button(c,UiText.t("게이지"),328,8,84,38,gaugeLayout!=null,BLUE);
         button(c,UiText.t("그래프"),418,8,110,38,graphLayout!=null,BLUE);
@@ -108,7 +122,7 @@ public final class JsPitRenderer {
     }
     private String diagnosticSample(int index,String unit,boolean candidate){
         Telemetry.Sample s=samples[index];
-        if(!s.valid&&!s.held)return UiText.t("미수신");
+        if(!s.valid&&!s.held)return "—";
         String prefix=(s.held?"LAST "+(s.lastValidAgeMs/1000)+"s ":"")+(candidate?UiText.t("후보")+" ":"");
         return prefix+String.format(Locale.US,index==Telemetry.BAT_VOLTAGE?"%.2f":"%.0f",s.value)+unit;
     }
@@ -122,27 +136,77 @@ public final class JsPitRenderer {
         fitted(c,UiText.t(label),x+14,y,14,150,MUTED);
         fitted(c,value,x+165,y,15,190,WHITE);
     }
+    private String diagAge(long age){
+        if(age<0||age==Long.MAX_VALUE)return "—";
+        return age<10000?String.format(Locale.US,"%.1fs",age/1000f):age/1000+"s";
+    }
+    private String diagError(int error){return UiText.t(error==1?"권한 오류":error==2?"형식 오류":error==3?"조회 실패":"오류 없음");}
+    private String observerState(int state){return state==2?UiText.t("조회 실패"):observed(state,"등록됨","미등록");}
+    private String serviceState(int state){return state==2?UiText.t("조회 실패"):observed(state,"서비스 확인","없음/접근 불가");}
+    private String sampleState(Telemetry.Sample sample){
+        return UiText.t(!sample.seen?"미수신":sample.stale?"만료":sample.held?"보관값":sample.valid?"유효":"무효 수신");
+    }
+    private void diagNote(Canvas c,String key,float y){fitted(c,UiText.t(key),32,y,13,736,MUTED);}
     private void drawDiagnostics(Canvas c,Telemetry.DctTemperatures dct){
-        panel(c,18,68,373,367,PANEL,LINE);panel(c,409,68,373,367,PANEL,LINE);
-        text(c,"DIAG · HUD / NAV",32,94,16,BLUE,true);
-        text(c,"DIAG · WIFI / DCT",423,94,16,BLUE,true);
-        String[] leftLabels={"HUD 장착","HUD 출력","클러스터 API","클러스터 서비스","TBT 메서드","TBT 수신","내비 관찰","내비 알림","내비 상태값","경로 방송값","MICOM 서비스","HSCAN 소켓"};
-        String[] leftValues={UiText.t("이전 확인"),UiText.t("미확인"),observed(diagnostic.cluster,"클래스 확인","조회 실패"),
-            diagnostic.clusterService==2?UiText.t("조회 실패"):observed(diagnostic.clusterService,"서비스 확인","없음/접근 불가"),
-            observed(diagnostic.tbt,"메서드 확인","조회 실패"),UiText.t("미확인"),
-            diagnostic.nav==2?UiText.t("조회 실패"):observed(diagnostic.nav,"등록됨","미등록"),
-            observed(diagnostic.navNotice,"수신됨","대기 중"),diagnostic.navValue<0?UiText.t("미확인"):String.valueOf(diagnostic.navValue),
-            diagnostic.routeWatch==2?UiText.t("조회 실패"):diagnostic.routeWatch!=1?UiText.t(diagnostic.routeWatch==0?"미등록":"미확인"):
-                diagnostic.routeNotice==1?String.valueOf(diagnostic.routeValue):UiText.t(diagnostic.routeNotice==0?"대기 중":"미확인"),
-            diagnostic.micom==2?UiText.t("조회 실패"):observed(diagnostic.micom,"서비스 확인","없음/접근 불가"),
-            diagnostic.hscan==2?UiText.t("연결 실패"):observed(diagnostic.hscan,"연결됨","연결 안 됨")};
-        String[] rightLabels={"Wi-Fi 기능","Wi-Fi 서비스","Wi-Fi 상태","Wi-Fi 알림","Wi-Fi 모듈","DCT 온도","클러치 수명","배터리 전압","배터리 SOC","차량 속도"};
-        String[] rightValues={observed(diagnostic.wifiFeature,"선언됨","선언 안 됨"),observed(diagnostic.wifiService,"서비스 확인","없음/접근 불가"),
-            wifiRadio(diagnostic.wifiState),observed(diagnostic.wifiWatch,"등록됨","미등록"),UiText.t("미확인"),dctValue(dct),
-            UiText.t("미확인"),diagnosticSample(Telemetry.BAT_VOLTAGE," V",true),diagnosticSample(Telemetry.BAT_SOC," %",true),
-            diagnosticSample(7," km/h",false)};
-        for(int i=0;i<leftLabels.length;i++)diagRow(c,18,120+i*25,leftLabels[i],leftValues[i]);
-        for(int i=0;i<rightLabels.length;i++)diagRow(c,409,120+i*30,rightLabels[i],rightValues[i]);
+        button(c,UiText.t("HUD · 내비"),18,62,240,38,diagnosticTab==0,BLUE);
+        button(c,UiText.t("차량 신호"),270,62,240,38,diagnosticTab==1,BLUE);
+        button(c,"Wi-Fi · DCT",522,62,260,38,diagnosticTab==2,BLUE);
+        if(diagnosticTab==1){drawDiagnosticSignals(c);return;}
+        panel(c,18,112,373,316,PANEL,LINE);panel(c,409,112,373,316,PANEL,LINE);
+        if(diagnosticTab==2){drawDiagnosticWifi(c,dct);return;}
+        text(c,UiText.t("내비 수신"),32,138,16,BLUE,true);
+        text(c,UiText.t("서비스 · 확인 범위"),423,138,16,BLUE,true);
+        String source=UiText.t(diagnostic.routeSource==1?"초기 sticky":diagnostic.routeSource==0?"방송 수신":"미확인");
+        String[] labels={"경로 방송 관찰","경로 방송값","방송 종류","정수 수신 횟수","마지막 방송 경과","잘못된 방송 횟수","방송 오류","내비 관찰","내비 상태값","정수 조회 횟수","변경 알림 횟수","조회 / 알림 경과","내비 오류"};
+        String[] values={observerState(diagnostic.routeWatch),diagnostic.routeNotice==1?String.valueOf(diagnostic.routeValue):UiText.t(diagnostic.routeNotice==0?"대기 중":"미확인"),
+            source,String.valueOf(diagnostic.routeCount),diagAge(diagnostic.routeAgeMs),String.valueOf(diagnostic.routeInvalidCount),diagError(diagnostic.routeError),
+            observerState(diagnostic.nav),diagnostic.navValueKnown?String.valueOf(diagnostic.navValue):UiText.t("미확인"),String.valueOf(diagnostic.navQueryCount),
+            String.valueOf(diagnostic.navNoticeCount),diagAge(diagnostic.navAgeMs)+" / "+diagAge(diagnostic.navNoticeAgeMs),diagError(diagnostic.navError)};
+        for(int i=0;i<labels.length;i++)diagRow(c,18,160+i*20,labels[i],values[i]);
+        String[] checks={"클러스터 API","클러스터 서비스","TBT 메서드","MICOM 서비스","HSCAN 소켓","HUD 장착","방향 · 거리 수신","HUD 출력"};
+        String[] states={observed(diagnostic.cluster,"클래스 확인","조회 실패"),serviceState(diagnostic.clusterService),observed(diagnostic.tbt,"메서드 확인","조회 실패"),
+            serviceState(diagnostic.micom),diagnostic.hscan==2?UiText.t("연결 실패"):observed(diagnostic.hscan,"연결됨","연결 안 됨"),UiText.t("사용자 확인"),UiText.t("미검증"),UiText.t("미검증")};
+        for(int i=0;i<checks.length;i++)diagRow(c,409,162+i*28,checks[i],states[i]);
+        fitted(c,UiText.t("서비스 표시는 앱 시작 시 조회 결과"),423,399,13,344,MUTED);
+        diagNote(c,"경로 변경 전후의 정수값과 수신 횟수를 대조하세요.",448);
+        diagNote(c,"경과는 앱 수신 이후 시간입니다. sticky 원 발신 시각은 미확인입니다.",468);
+    }
+    private void drawDiagnosticSignals(Canvas c){
+        panel(c,18,112,764,316,PANEL,LINE);
+        text(c,UiText.t("신호별 수신 · 유효성"),32,138,16,BLUE,true);
+        text(c,"HSCAN: "+(diagnostic.hscan==2?UiText.t("연결 실패"):observed(diagnostic.hscan,"연결됨","연결 안 됨")),575,138,14,MUTED,false);
+        String[] headers={"신호","상태","현재 / 보관값","수신 횟수","수신 / 유효 경과"};
+        float[] positions={32,190,302,510,610};
+        for(int i=0;i<headers.length;i++)text(c,UiText.t(headers[i]),positions[i],163,13,MUTED,false);
+        int[] indices={Telemetry.BAT_VOLTAGE,Telemetry.BAT_SOC,Telemetry.TPMS_FL,Telemetry.TPMS_FR,Telemetry.TPMS_RL,Telemetry.TPMS_RR,1,10,11,12};
+        for(int row=0;row<indices.length;row++){
+            int i=indices[row];Telemetry.Sample s=samples[i];float y=187+row*25;
+            fitted(c,UiText.t(Telemetry.LABELS[i]),32,y,14,150,WHITE);
+            fitted(c,sampleState(s),190,y,14,102,!s.seen?MUTED:s.valid?ECO_GREEN:s.held?BLUE:RED);
+            String reading="—";
+            if(s.valid||s.held)reading=String.format(Locale.US,i==Telemetry.BAT_VOLTAGE?"%.2f":i==11||i==12?"%+.2f":"%.1f",s.value)+" "+Telemetry.UNITS[i];
+            fitted(c,reading,302,y,15,198,WHITE);
+            fitted(c,String.valueOf(s.receivedCount),510,y,14,90,WHITE);
+            fitted(c,diagAge(s.seen?s.ageMs:-1)+" / "+diagAge(s.lastValidAgeMs),610,y,14,156,MUTED);
+        }
+        diagNote(c,"유효·무효는 디코더 판정입니다. 배터리 전압·가속도는 실차 대조가 필요합니다.",448);
+        diagNote(c,"신호 횟수는 시동 경계에서 초기화됩니다. 보관값은 현재 실측값이 아닙니다.",468);
+    }
+    private void drawDiagnosticWifi(Canvas c,Telemetry.DctTemperatures dct){
+        text(c,UiText.t("Wi-Fi 관찰"),32,138,16,BLUE,true);
+        text(c,UiText.t("DCT · 수신 경로"),423,138,16,BLUE,true);
+        String[] labels={"Wi-Fi 기능","Wi-Fi 서비스","Wi-Fi 상태","Wi-Fi 알림","Wi-Fi 모듈"};
+        String[] states={observed(diagnostic.wifiFeature,"선언됨","선언 안 됨"),observed(diagnostic.wifiService,"서비스 확인","없음/접근 불가"),
+            wifiRadio(diagnostic.wifiState),observed(diagnostic.wifiWatch,"등록됨","미등록"),UiText.t("미검증")};
+        for(int i=0;i<labels.length;i++)diagRow(c,18,170+i*36,labels[i],states[i]);
+        diagRow(c,409,170,"DCT 온도",dctValue(dct));
+        diagRow(c,409,206,"실차 수신 경로",UiText.t("미연결"));
+        diagRow(c,409,242,"클러치 수명",UiText.t("미검증"));
+        diagRow(c,409,278,"차량 속도",diagnosticSample(7," km/h",false));
+        fitted(c,UiText.t("응답 해석만 구현 · 자동 진단 요청 없음"),423,329,13,344,MUTED);
+        fitted(c,UiText.t("Wi-Fi 켜짐은 통신 모듈 검증과 별개"),32,384,13,344,MUTED);
+        diagNote(c,"Wi-Fi 상태 변경을 대조하세요. DCT는 실제 수신 경로 확인이 남아 있습니다.",448);
+        diagNote(c,"진단 화면의 탭 전환은 차량 요청이나 송신을 실행하지 않습니다.",468);
     }
     private void text(Canvas c,String s,float x,float y,float size,int color,boolean bold){
         paint.setColor(color);paint.setTextSize(size);paint.setTypeface(bold?Typeface.DEFAULT_BOLD:Typeface.DEFAULT);c.drawText(s,x,y,paint);

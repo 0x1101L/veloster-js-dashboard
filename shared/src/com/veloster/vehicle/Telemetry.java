@@ -125,11 +125,12 @@ public final class Telemetry {
     public static final class Sample {
         public final float value;
         public final long ageMs;
+        public final long receivedCount;
         public final boolean valid, changed, seen, stale, held;
         public final long lastValidAgeMs,lastChangedAgeMs;
-        Sample(float v, boolean ok, boolean diff, boolean received, boolean old,long age,boolean heldValue,long validAge,long changedAge) {
+        Sample(float v, boolean ok, boolean diff, boolean received, boolean old,long age,boolean heldValue,long validAge,long changedAge,long count) {
             ageMs=age;value=v; valid=ok; changed=diff; seen=received; stale=old;
-            held=heldValue;lastValidAgeMs=validAge;lastChangedAgeMs=changedAge;
+            held=heldValue;lastValidAgeMs=validAge;lastChangedAgeMs=changedAge;receivedCount=count;
         }
     }
     private void put(int i, float v, boolean ok, long now) {
@@ -161,7 +162,7 @@ public final class Telemetry {
         boolean stale=js?jsHasValue[i]&&!jsNoTimeExpiry(i)&&validAge>=(jsFast(i)?JS_FAST_STALE_MS:STALE_MS):seen[i]&&age>=STALE_MS;
         boolean current=valid[i]&&!stale;
         boolean held=js&&jsHasValue[i]&&!current&&!stale&&!jsFast(i);
-        return new Sample(values[i],current,changed[i]&&current,seen[i],stale,age,held,validAge,changedAge);
+        return new Sample(values[i],current,changed[i]&&current,seen[i],stale,age,held,validAge,changedAge,counts[i]);
     }
     public synchronized Sample[] snapshot(long now) {
         Sample[] result=new Sample[LABELS.length];

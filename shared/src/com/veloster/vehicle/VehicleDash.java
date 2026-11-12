@@ -149,7 +149,7 @@ public final class VehicleDash extends View implements Runnable {
     public static void ignition(boolean on) { DATA.clear(); }
     public static void profile(boolean pd,boolean js,boolean jsn){DATA.profile(pd,js,jsn);}
     public static void diagReset(){DIAG.reset();}
-    public static void diagEvent(String name,String detail){DIAG.event(name,detail);}
+    public static void diagEvent(String name,String detail){DIAG.event(name,detail,SystemClock.elapsedRealtime());}
     public static void diagWifi(int feature,int service,int state,int watch){DIAG.wifi(feature,service,state,watch);}
     public static void diagHscan(int state){DIAG.hscan(state);}
     public static void rpm(byte[] data) { DATA.rpm(data,SystemClock.elapsedRealtime()); }
@@ -189,7 +189,7 @@ public final class VehicleDash extends View implements Runnable {
         MediaState.Snapshot track=mediaState.snapshot(now);artwork.request(track);
         if(DATA.jsProfile()){
         jsRenderer.setPerformancePage(performance);
-        jsRenderer.setDiagnosticPage(diagnostic,DIAG.snapshot());
+        jsRenderer.setDiagnosticPage(diagnostic,DIAG.snapshot(now));
         jsRenderer.setArtwork(artwork.bitmap());
         jsRenderer.setGaugeLayout(gauges?gaugeLayout:null);
         jsRenderer.setGraphLayout(graphs?graphLayout:null);
@@ -235,6 +235,7 @@ public final class VehicleDash extends View implements Runnable {
         boolean tap=touching && Math.abs(x-downX)<16 && Math.abs(y-downY)<16;
         touching=false;
         if(standalone&&tap&&x>=666&&x<=782&&downX>=666&&downX<=782&&y>=8&&y<=46&&downY>=8&&downY<=46){activity.finish();return true;}
+        if(tap&&!blocked&&diagnostic&&jsRenderer.selectDiagnosticTab(downX,downY,x,y)){invalidate();return true;}
         if(tap&&!blocked&&!diagnostic&&!performance&&!cluster&&!gauges&&!graphs&&overviewDown>=0&&overviewLayout.hit(x,y)==overviewDown&&!overviewCovered(y)){
             if(OverviewLayout.dctCard(overviewDown,DATA.jsProfile()))return true;
             overviewLayout.cycle(overviewDown);
