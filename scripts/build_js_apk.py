@@ -16,7 +16,7 @@ SIGNER = "c8a2e9bccf597c2fb6dc66bee293fc13f2fc47ec77bc6b2b0d52c11f51192ab8"
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--java", required=True, type=Path, help="JDK 17 java executable")
+    parser.add_argument("--java", required=True, type=Path, help="Compatible JDK java executable")
     parser.add_argument("--android-jar", required=True, type=Path)
     parser.add_argument("--build-tools", required=True, type=Path)
     parser.add_argument("--key", required=True, type=Path, help="External public AOSP platform.pk8")

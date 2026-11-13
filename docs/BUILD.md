@@ -10,16 +10,16 @@
 
 ## 준비물
 
-- Python 3.9 이상과 JDK 17 (`java`, 같은 디렉터리의 `javac`).
+- Python 3.9 이상과 호환되는 JDK (`java`, 같은 디렉터리의 `javac`). JDK 17을 필수 버전으로 요구하지 않습니다.
 - 외부 Android SDK `android.jar` API 16 또는 17. 공개 준비 검증은 기존 API 16 JAR로 컴파일하고 min/target SDK는 17로 지정했습니다.
 - AAPT2 실행 파일과 D8가 포함된 R8 JAR. 도구는 사용자 설치 경로를 인자로 전달하며 이 폴더에 배포하지 않습니다.
 
-소스는 Java 7 언어/클래스 수준으로 컴파일하고 D8 `--min-api 17`을 사용합니다. 제조사 API 선언은 별도 클래스 디렉터리에 컴파일해 javac의 classpath에만 넣고, 앱 DEX에 패키징하지 않습니다. 실제 실행에는 차량의 OEM `automotive` 라이브러리가 필요합니다.
+기본 빌드 스크립트는 javac에 Java 7 source/target 옵션을 전달하고 D8 `--min-api 17`을 사용합니다. 설치된 JDK가 이 옵션을 지원하지 않으면 해당 빌드의 실제 컴파일 설정을 명시하고 호환성을 검증합니다. JDK 24에서는 이전 시험처럼 외부 래퍼로 source/target을 8로 바꿀 수 있으며, 이 경우 Java 7 컴파일을 주장하지 않습니다. Android API 17은 JDK 버전과 별개입니다. 제조사 API 선언은 별도 클래스 디렉터리에 컴파일해 javac의 classpath에만 넣고, 앱 DEX에 패키징하지 않습니다. 실제 실행에는 차량의 OEM `automotive` 라이브러리가 필요합니다.
 
 ## 호스트 테스트
 
 ```sh
-python3 scripts/test.py --java /path/to/jdk17/bin/java
+python3 scripts/test.py --java /path/to/jdk/bin/java
 python3 -m unittest discover -s tests -p 'test_*.py'
 python3 scripts/verify_release.py
 ```
@@ -32,14 +32,14 @@ python3 scripts/verify_release.py
 
 ```sh
 python3 scripts/build.py dashboard \
-  --java /path/to/jdk17/bin/java \
+  --java /path/to/jdk/bin/java \
   --android-jar /path/to/android.jar \
   --aapt2 /path/to/aapt2 \
   --r8-jar /path/to/r8.jar \
   --out build/dashboard
 
 python3 scripts/build.py hub \
-  --java /path/to/jdk17/bin/java \
+  --java /path/to/jdk/bin/java \
   --android-jar /path/to/android.jar \
   --aapt2 /path/to/aapt2 \
   --r8-jar /path/to/r8.jar \
@@ -56,7 +56,7 @@ JS Dashboard 시험본은 외부의 공개 AOSP Android 4.2.2 platform 테스트
 
 ```sh
 python3 scripts/build_js_apk.py \
-  --java /path/to/jdk17/bin/java \
+  --java /path/to/jdk/bin/java \
   --android-jar /path/to/android-17/android.jar \
   --build-tools /path/to/android-sdk/build-tools/36.1.0 \
   --key /outside/repository/platform.pk8 \
@@ -64,6 +64,8 @@ python3 scripts/build_js_apk.py \
 ```
 
 키·인증서는 `menu-entry/tool-sources.json`의 고정 해시와 일치해야 하며 저장소 밖에 둡니다. 래퍼는 빌드·ZIP 정렬·API17 V1 서명·인증서 확인 후 APK만 `apks/`에 복사하고 기존 파일을 덮어쓰지 않습니다. `N-Dashboard-v*-API17.apk`는 rollback 폴더를 포함해 이 저장소에 두지 않습니다. 과거 JSN APK는 원본 업스트림 ZIP을 사용합니다.
+
+JS 설치 후보를 새로 빌드할 때는 확인된 기존 설치본보다 `versionCode`를 높입니다. 설치본을 확인할 수 없으면 마지막으로 확인된 설치본을 기준으로 하고, 실제 설치 전 대상 버전을 다시 확인합니다. 빌드 시각(KST), 파일명, SHA-256, 패키지, versionCode/versionName, 기준 Git 커밋과 빌드에 반영된 미커밋 입력을 기록합니다. 커밋만 기록해 변경된 작업 트리가 커밋과 동일하다고 오인하지 않도록 합니다. APK별 항목은 `release.json`의 `js_trial_apks`, `SHA256SUMS`, `VALIDATION.json`과 연결된 프로젝트의 조사 기록에 반영합니다. 빌드와 기기 설치·실행 검증은 구분합니다.
 
 JS 시험본은 `release.json`의 `js_trial_apks`에 분리합니다. 기존 JSN 설치기는 이 APK를 선택하지 않으며 원본 JSN 묶음을 안내하고 중단합니다. 이 빌드에는 실차 설치·실행 결과가 없습니다. versionCode 9는 과거 별도 versionCode 8 시험본과도 구분합니다.
 

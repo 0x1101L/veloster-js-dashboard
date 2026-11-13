@@ -41,9 +41,34 @@
     "ko",
     "en"
   ],
-  "verification_updated": "2026-11-12",
+  "verification_updated": "2026-11-13",
   "verification_document": "docs/STATUS.md",
   "js_trial_apks": [
+    {
+      "file": "apks/JS-Dashboard-build-20261113-031241.apk",
+      "package": "com.veloster.dashboard",
+      "version_code": 11,
+      "version_name": "1.5-i18n",
+      "sha256": "86ac7f18fcc85dc14f6b10636f7253333fda48014b2117e0cb3f58c4a6c70f16",
+      "bytes": 105001,
+      "source_commit": "7d852dd378787ddcd071a1d625fba5b28111f001",
+      "uncommitted_build_input": "apps/dashboard/AndroidManifest.xml versionCode 10 to 11; other tracked changes are release metadata and documentation, not build inputs.",
+      "scope": "JS_LOGGER v1 trial; API17 V1 signature, installation readback and 30-second live logger extraction verified. Signal accuracy and extended device operation unverified.",
+      "vehicle_install_observed": true,
+      "build_input_note": "JDK24 external wrapper maps source/target 7 to 8; API17 and Build Tools 36.1.0. Java 7 compilation not verified."
+    },
+    {
+      "file": "apks/JS-Dashboard-build-20261113-031057.apk",
+      "package": "com.veloster.dashboard",
+      "version_code": 10,
+      "version_name": "1.5-i18n",
+      "sha256": "5013384cffb98099529227bd04e1c3a4b8322f17f5331b56ccdbe4c586e1c9dc",
+      "bytes": 105001,
+      "source_commit": "7d852dd378787ddcd071a1d625fba5b28111f001",
+      "scope": "Superseded build: versionCode 10 matches the installed trial; do not use as the new installation candidate. Host checks only.",
+      "vehicle_install_observed": false,
+      "build_input_note": "JDK24 external wrapper maps source/target 7 to 8; API17 and Build Tools 36.1.0. Java 7 compilation not verified."
+    },
     {
       "file": "apks/JS-Dashboard-build-20261112-184552.apk",
       "package": "com.veloster.dashboard",

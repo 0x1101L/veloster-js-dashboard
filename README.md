@@ -54,7 +54,8 @@ The existing guarded installer supports **Korean Veloster N JSN**, product `jsn_
 
 | Current APK | Version |
 | --- | --- |
-| [JS Dashboard trial](apks/JS-Dashboard-build-20261112-184552.apk) | versionCode 10 · 1.5-i18n · installed/readback and brief runtime observation |
+| [JS Dashboard trial with JS_LOGGER](apks/JS-Dashboard-build-20261113-031241.apk) | versionCode 11 · 1.5-i18n · installed/readback and logger capture verified |
+| [Previous JS Dashboard trial](apks/JS-Dashboard-build-20261112-184552.apk) | versionCode 10 · 1.5-i18n · installed/readback and brief runtime observation |
 | [My Apps](apks/My-Apps-v10-API17.apk) | v10 · 1.9-i18n |
 
 Use the original upstream ZIP for JSN installation. The JS trial APK is separate from that installer. Copying an APK onto an SD card does not install it. The dated ZIP retains its original documentation; this repository records later verification. [Older versions and release history](docs/RELEASE.md) · [Hashes and package identities](release.json)
@@ -114,7 +115,7 @@ Standalone JS hardware and HSCAN investigation tools live in [`diag/js_kr/`](dia
 
 The source-only [JS diagnostics page](docs/JS_DIAGNOSTICS.md) now has HUD/navigation, vehicle-signal, Wi-Fi/DCT and Bindings tabs. It separates missing, invalid, valid, held and expired signal data, with reception counts and receive/valid ages. Navigation observations include initial sticky status and bounded error reasons. Counts and service presence do not prove calibration, TBT reception or physical HUD output.
 
-The JS source now exports those existing snapshots through versioned `JS_LOGGER` v1 records; the host extractor creates CSV, summary JSON and analysis while preserving old `JS_SAMPLE` logs. The logger records known callback/decoder sources and labels unknown provenance explicitly. It omits raw payloads, navigation destinations/coordinates, media details and device identifiers. The paired Java logger and Python parser must always be changed and verified together under the same contract version. Held values retain their last valid input source. These source changes are not in the existing APKs. [Capture contract and command](docs/JS_DEBUG_CAPTURE.md).
+The JS source now exports those existing snapshots through versioned `JS_LOGGER` v1 records; the host extractor creates CSV, summary JSON and analysis while preserving old `JS_SAMPLE` logs. The logger records known callback/decoder sources and labels unknown provenance explicitly. It omits raw payloads, navigation destinations/coordinates, media details and device identifiers. The paired Java logger and Python parser must always be changed and verified together under the same contract version. Held values retain their last valid input source. The new trial APK includes the logger; a short device capture was extracted; signal accuracy remains unverified. [Capture contract and command](docs/JS_DEBUG_CAPTURE.md).
 
 Project-authored code and documentation: [MIT](LICENSE). [Dependency and signing notices](NOTICE.md). The public AOSP test certificate is not a private publisher identity or an OTA key. Source builds are unsigned. OEM firmware/APKs, private logs, identifiers and signing keys are not distributed. Unofficial project; no manufacturer affiliation.
 

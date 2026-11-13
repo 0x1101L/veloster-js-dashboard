@@ -341,5 +341,48 @@
     "signal_capture": "Six private HSCAN captures total 699864 bytes and 2637 chunks. Current JS decoder replay accepted 19887 records over 753379 ms of host monotonic timestamps (about 107 seconds of active capture across sessions). No JS_SAMPLE numeric app logs were found. Captured inputs: coolant, throttle, brake pressure, lateral/longitudinal acceleration, steering angle/rate, calculated boost, TPMS, candidate battery voltage, intake temperature, pedal, TCS/ESC/ABS state, and gear. Oil temperature and battery SOC were received but invalid. No RPM numeric value from OEM callbacks was logged. Decoder outputs were not independently calibrated.",
     "build_compatibility_note": "The installed environment had only JDK24. A temporary wrapper mapped javac source/target 7 to 8 outside the repository; exact Java 7 compilation was not verified. D8 emitted four compile-only OEM listener interface warnings.",
     "capture_files_private": "Canonical private HSCAN captures are in the connected project memory under 13_research/can_bus/raw; the repository does not contain them. Temporary copies may remain outside the repository."
+  },
+  "js_logger_trial_validation": {
+    "date": "2026-11-13",
+    "artifact": {
+      "file": "apks/JS-Dashboard-build-20261113-031241.apk",
+      "package": "com.veloster.dashboard",
+      "version_code": 11,
+      "version_name": "1.5-i18n",
+      "sha256": "86ac7f18fcc85dc14f6b10636f7253333fda48014b2117e0cb3f58c4a6c70f16",
+      "bytes": 105001,
+      "source_commit": "7d852dd378787ddcd071a1d625fba5b28111f001",
+      "uncommitted_build_input": "apps/dashboard/AndroidManifest.xml versionCode 10 to 11; other tracked changes are release metadata and documentation, not build inputs.",
+      "scope": "JS_LOGGER v1 trial; API17 V1 signature, installation readback and 30-second live logger extraction verified. Signal accuracy and extended device operation unverified.",
+      "vehicle_install_observed": true,
+      "build_input_note": "JDK24 external wrapper maps source/target 7 to 8; API17 and Build Tools 36.1.0. Java 7 compilation not verified."
+    },
+    "java_host_programs": 17,
+    "python_tests": 66,
+    "compile_android_api": 17,
+    "min_sdk": 17,
+    "target_sdk": 17,
+    "dex_version": "035",
+    "v1_signature_valid": true,
+    "zipalign_valid": true,
+    "zip_integrity_valid": true,
+    "js_logger_descriptor_present": true,
+    "vehicle_tested": true,
+    "capture": "30-second live capture produced 414 JS_LOGGER v1 rows across 25.166 seconds; CSV, summary and analysis generated. Signal values not independently calibrated.",
+    "build_compatibility_note": "JDK24 external wrapper maps source/target 7 to 8; API17 and Build Tools 36.1.0. Java 7 compilation not verified.",
+    "superseded_version_10_build": {
+      "file": "apks/JS-Dashboard-build-20261113-031057.apk",
+      "package": "com.veloster.dashboard",
+      "version_code": 10,
+      "version_name": "1.5-i18n",
+      "sha256": "5013384cffb98099529227bd04e1c3a4b8322f17f5331b56ccdbe4c586e1c9dc",
+      "bytes": 105001,
+      "source_commit": "7d852dd378787ddcd071a1d625fba5b28111f001",
+      "scope": "Superseded build: versionCode 10 matches the installed trial; do not use as the new installation candidate. Host checks only.",
+      "vehicle_install_observed": false,
+      "build_input_note": "JDK24 external wrapper maps source/target 7 to 8; API17 and Build Tools 36.1.0. Java 7 compilation not verified."
+    },
+    "installation_readback_sha256_match": true,
+    "runtime_observation": "DashboardActivity foreground; no AndroidRuntime errors in inspected log buffer. Extended operation and OEM functions unverified."
   }
 }

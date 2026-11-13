@@ -6,6 +6,8 @@ Documentation reviewed **2026-11-12**. A short JS device session was performed f
 
 ## Current JS trial — 2026-11-11
 
+A newer JS_LOGGER trial `apks/JS-Dashboard-build-20261113-031241.apk` was built from commit `7d852dd` and passed host tests and API17 V1 signature checks; installation and APK readback matched, and 414 JS_LOGGER records were extracted during a short device capture; signal accuracy and extended operation remain unverified. It uses versionCode 11; the uncommitted build input is the manifest versionCode change from 10 to 11.
+
 The JS repository now contains a signed versionCode 10 trial APK at `apks/JS-Dashboard-build-20261112-184552.apk`. API17 V1 signature and ZIP alignment passed; 16 Java host programs and 57 Python tests passed. It was installed on the identified JS head unit, and installed APK readback matched the build SHA-256. The app remained in the foreground with telemetry counters advancing and no post-install AndroidRuntime fatal exception observed. Six bounded HSCAN captures obtained 699,864 bytes across 2,637 chunks; decoder replay accepted 19,887 records over about 107 seconds of active capture. Numeric app log extraction found no `JS_SAMPLE` records, so RPM and OEM callback values were not numerically logged. HSCAN values are decoder outputs only, without independent reference comparison or calibration. The historical JSN Dashboard APKs were removed from this checkout; the following JSN observations describe the original upstream bundle.
 
 ## Supported target

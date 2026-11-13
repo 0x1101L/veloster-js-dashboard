@@ -16,7 +16,7 @@ def main():
     args = parser.parse_args()
     found = shutil.which(args.java)
     if not found:
-        raise SystemExit("JDK 17 java is required")
+        raise SystemExit("A compatible JDK java is required")
     java = Path(found).resolve()
     javac = java.with_name("javac.exe" if os.name == "nt" else "javac")
     hub = ROOT / "apps/hub/src/com/veloster/carplayhub"
