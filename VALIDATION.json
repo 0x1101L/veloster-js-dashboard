@@ -384,5 +384,128 @@
     },
     "installation_readback_sha256_match": true,
     "runtime_observation": "DashboardActivity foreground; no AndroidRuntime errors in inspected log buffer. Extended operation and OEM functions unverified."
+  },
+  "js_binder_trial_validation": {
+    "artifact": {
+      "file": "apks/JS-Dashboard-build-20261113-102416.apk",
+      "package": "com.veloster.dashboard",
+      "version_code": 12,
+      "version_name": "1.5-i18n",
+      "sha256": "d01108739e65bf527015fe63414e784b1252e579b4679561edcacd5135d4a978",
+      "bytes": 105114,
+      "source_commit": "cbaaea14e3ae73f058fca9a0a7bb99ee2a975f66",
+      "uncommitted_build_input": "Manifest versionCode 12; JsHudProbe Binder ping; JsDiagnosticsRenderer Binder status; translations/en.json and generated UiText.java. Test changes excluded from APK.",
+      "scope": "JS trial; Binder ping host-tested; installed and APK readback matched; cluster and MICOM Binder ping confirmed. HUD output and method permissions unverified.",
+      "vehicle_install_observed": true,
+      "build_input_note": "JDK24 external wrapper maps source/target 7 to 8; API17 and Build Tools 36.1.0."
+    },
+    "host_tests": [
+      "test_js_hud_probe.py",
+      "test_js_diagnostics_renderer.py"
+    ],
+    "installation_readback_sha256_match": true,
+    "cluster_and_micom_ping": true,
+    "hud_output_verified": false
+  },
+  "js_hud_event_trial_validation": {
+    "date": "2026-11-13",
+    "artifact": {
+      "file": "apks/JS-Dashboard-build-20261113-130125.apk",
+      "package": "com.veloster.dashboard",
+      "version_code": 13,
+      "version_name": "1.5-i18n",
+      "sha256": "db453de5b51511aca4357efd05249fea4c7c4b3affa74a3e1d2321b83b242f13",
+      "bytes": 106550,
+      "source_commit": "cbaaea14e3ae73f058fca9a0a7bb99ee2a975f66",
+      "uncommitted_build_input": "Manifest versionCode 13; JsHudProbe, JsDiagnosticsRenderer, DashboardActivity, HudEventLog, translations/en.json and generated UiText.java; existing uncommitted changes included.",
+      "scope": "JS trial; private HUD observation log; installed over version 12, readback matched, Activity foreground and initial log events observed. CarPlay, camera data and HUD output unverified.",
+      "vehicle_install_observed": true,
+      "build_input_note": "2026-11-13 13:01:25 KST; JDK24 external wrapper maps Java 7 source/target to 8; API17 and Build Tools 36.1.0; Java 7 compilation unverified."
+    },
+    "java_host_programs": 18,
+    "hud_probe_python_tests": 1,
+    "v1_signature_valid": true,
+    "zipalign_valid": true,
+    "installation_readback_sha256_match": true,
+    "runtime_observation": "DashboardActivity foreground; private HUD event file contained route and provider registration and provider state. CarPlay and background persistence unverified.",
+    "camera_input_verified": false,
+    "hud_output_verified": false
+  },
+  "js_carplay_tab_trial_validation": {
+    "date": "2026-11-13",
+    "artifact": {
+      "file": "apks/JS-Dashboard-build-20261113-145700.apk",
+      "package": "com.veloster.dashboard",
+      "version_code": 14,
+      "version_name": "1.5-i18n",
+      "sha256": "84b573b55bd7a6d29ba17a604e1bb2da269577531d2a89261541d4c16673120d",
+      "bytes": 107493,
+      "source_commit": "cbaaea14e3ae73f058fca9a0a7bb99ee2a975f66",
+      "uncommitted_build_input": "Manifest versionCode 14; prior JsHudProbe, DashboardActivity, HudEventLog, i18n and renderer modifications; CarPlay tab in JsDiagnosticsRenderer and JsPitRenderer, translation catalog.",
+      "scope": "CarPlay diagnostic tab displays existing media snapshots; navigation and camera input unconnected. Host render tested; no installation or vehicle validation.",
+      "vehicle_install_observed": false,
+      "build_input_note": "2026-11-13 14:57 KST; JDK24 external wrapper maps Java 7 source/target to 8; API17, Build Tools 36.1.0; Java 7 compilation unverified."
+    },
+    "synthetic_renderer_cases": 100,
+    "java_host_programs": 18,
+    "v1_signature_valid": true,
+    "zipalign_valid": true,
+    "vehicle_install_observed": false,
+    "carplay_navigation_received": false
+  },
+  "js_carplay_media_log_validation": {
+    "date": "2026-11-13",
+    "artifact": {
+      "file": "apks/JS-Dashboard-build-20261113-150336.apk",
+      "package": "com.veloster.dashboard",
+      "version_code": 15,
+      "version_name": "1.5-i18n",
+      "sha256": "817658fae9275c093fbcaac483bcf58c96b1e6db0af3d5a2d5ad6ef33898dfdb",
+      "bytes": 108253,
+      "source_commit": "cbaaea14e3ae73f058fca9a0a7bb99ee2a975f66",
+      "uncommitted_build_input": "Dashboard manifest v15, prior probe/diagnostic/render/i18n modifications, DashboardActivity, DashboardView, MediaReceiver and HudEventLog; existing uncommitted inputs included.",
+      "scope": "Installed on JS over version 13; APK readback matched, Activity foreground, media observer registered and inactive mode logged. CarPlay media reception, pause behavior and HUD output unverified.",
+      "vehicle_install_observed": true,
+      "build_input_note": "2026-11-13 15:03 KST; JDK24 wrapper maps Java 7 source/target to 8; Android API17, Build Tools 36.1.0; Java7 compilation unverified."
+    },
+    "java_host_programs": 18,
+    "media_receiver_host_test": true,
+    "synthetic_renderer_cases": 100,
+    "v1_signature_valid": true,
+    "zipalign_valid": true,
+    "vehicle_install_observed": true,
+    "hud_output_verified": false,
+    "installation_readback_sha256_match": true,
+    "runtime_observation": "DashboardActivity foreground; private HUD_EVENT log recorded media observer registration and inactive CarPlay mode. Actual CarPlay media reception and pause behavior unverified."
+  },
+  "js_carplay_screen_probe_validation": {
+    "date": "2026-11-13",
+    "artifact": {
+      "file": "apks/JS-Dashboard-build-20261113-153447.apk",
+      "package": "com.veloster.dashboard",
+      "version_code": 16,
+      "version_name": "1.5-i18n",
+      "sha256": "503a4430638c94e4ba85dbbc1fea81d66017440e537062d5648cfeca2240218d",
+      "bytes": 109913,
+      "source_commit": "cbaaea14e3ae73f058fca9a0a7bb99ee2a975f66",
+      "uncommitted_build_input": "Prior JS Dashboard diagnostic, media log and UI changes; CarPlayScreenProbe, screen probe UI/state, manifest permissions and versionCode 16.",
+      "scope": "JS trial one-shot opt-in CarPlay foreground screen access test, no pixels stored. Installed, readback matched, framebuffer and tasks permissions granted. Actual capture, CarPlay content and navigation recognition unverified.",
+      "vehicle_install_observed": true,
+      "build_input_note": "2026-11-13 15:34 KST; JDK24 wrapper maps Java 7 source/target to 8; API17 Build Tools 36.1.0; Java 7 compile unverified."
+    },
+    "synthetic_screen_probe_test": true,
+    "synthetic_renderer_cases": 100,
+    "java_host_programs": 18,
+    "v1_signature_valid": true,
+    "zipalign_valid": true,
+    "vehicle_install_observed": true,
+    "installation_readback_sha256_match": true,
+    "permissions_granted": [
+      "android.permission.READ_FRAME_BUFFER",
+      "android.permission.GET_TASKS"
+    ],
+    "actual_screen_capture_verified": false,
+    "navigation_recognition_verified": false,
+    "note": "ADB disconnected before button test."
   }
 }
