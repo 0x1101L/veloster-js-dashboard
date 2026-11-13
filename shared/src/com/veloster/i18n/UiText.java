@@ -22,11 +22,16 @@ public final class UiText {
         EN.put(" 화면이 없거나 현재 앱에서 실행할 수 없습니다."," is unavailable or cannot be opened by this app.");
         EN.put(". 백업이 남아 있으면 원상복구하세요.",". Restore the original settings if a backup remains.");
         EN.put("1분","1 min");
+        EN.put("20초 뒤 CarPlay 화면 시험","Test CarPlay screen in 20s");
         EN.put("3 × 2 보기","3 x 2 grid");
         EN.put("4 × 3 보기","4 x 3 grid");
         EN.put("5분","5 min");
         EN.put("ABS 경고등","ABS warning");
         EN.put("AP 상태 13 확인. IP 주소와 iPhone의 SSID 검색을 다음으로 확인하세요.","AP state 13 confirmed. Next check the IP address and whether the iPhone sees the SSID.");
+        EN.put("Binder 연결됨","Binder connected");
+        EN.put("CarPlay 내비게이션","CarPlay navigation");
+        EN.put("CarPlay 미디어","CarPlay media");
+        EN.put("CarPlay 화면 아님","CarPlay not foreground");
         EN.put("DCT · 수신 경로","DCT · Input path");
         EN.put("DCT 온도","DCT temperature");
         EN.put("DiPlay 연결을 먼저 종료하세요. 시험 AP를 끄고 백업한 AP 설정과 Wi-Fi 켜짐 상태를 복원합니다.","Disconnect DiPlay first. The test AP will be turned off and the backed-up AP settings and Wi-Fi state restored.");
@@ -66,6 +71,7 @@ public final class UiText {
         EN.put("가속 페달","Accelerator pedal");
         EN.put("가속 페달 %","Accelerator pedal %");
         EN.put("가속 페달 / PEDAL","Pedal");
+        EN.put("가수","Artist");
         EN.put("가장자리 버튼 + 알림","Floating + notification");
         EN.put("가장자리 버튼 + 알림 / Floating + notification","Floating + notification");
         EN.put("가장자리 버튼을 표시할 수 없어 알림 바로가기를 유지합니다. 시스템의 다른 앱 위 표시 권한을 확인하세요.","The floating button could not be shown. The notification remains. Check permission to display over other apps.");
@@ -84,6 +90,8 @@ public final class UiText {
         EN.put("경로 방송 관찰","Route observer");
         EN.put("경로 방송값","Route broadcast value");
         EN.put("경로 변경 전후의 정수값과 수신 횟수를 대조하세요.","Compare raw values and reception counts before and after a route change.");
+        EN.put("곡 정보는 CarPlay가 현재 소스일 때 표시합니다.","Track details are shown when CarPlay is the current source.");
+        EN.put("곡명","Title");
         EN.put("권한 오류","Permission denied");
         EN.put("그래프","Graphs");
         EN.put("그래프 ","Graph ");
@@ -115,6 +123,8 @@ public final class UiText {
         EN.put("내비 수신","Navigation reception");
         EN.put("내비 알림","Nav notification");
         EN.put("내비 오류","Navigation error");
+        EN.put("내비 입력","Navigation input");
+        EN.put("내비 입력 경로는 아직 확인되지 않았습니다.","The navigation input path has not been established.");
         EN.put("내비게이션 시스템을 재시작합니다. 화면·음악·PC 연결이 잠시 끊깁니다. 정차 중에 사용하세요.","Restart the head unit. The display, music and PC connection will be interrupted briefly. Use while parked.");
         EN.put("내비게이션 재시작","Restart head unit");
         EN.put("내비게이션 재시작 요청을 전달했습니다.","Head-unit restart requested.");
@@ -143,7 +153,10 @@ public final class UiText {
         EN.put("무효 수신은 데이터가 들어와도 현재 조건에서 유효값으로 쓸 수 없다는 뜻입니다.","Received invalid means input arrived but the decoder rejected its current value.");
         EN.put("미검증","Unverified");
         EN.put("미등록","Not registered");
+        EN.put("미디어 관찰","Media observer");
+        EN.put("미디어 방송과 내비 입력은 별도입니다.","Media broadcasts and navigation input are separate.");
         EN.put("미수신","Not received");
+        EN.put("미실시","Not tested");
         EN.put("미연결","Not connected");
         EN.put("미확인","Unknown");
         EN.put("바로가기 끄기","Turn shortcut off");
@@ -152,6 +165,7 @@ public final class UiText {
         EN.put("바로가기 시작 실패. 설정 상태와 시스템 권한을 확인하세요.","Shortcut could not start. Check its settings and system permissions.");
         EN.put("바로가기: ","Shortcut: ");
         EN.put("방송 수신","Broadcast");
+        EN.put("방송 수신 횟수","Broadcast count");
         EN.put("방송 오류","Broadcast error");
         EN.put("방송 종류","Broadcast type");
         EN.put("방향 · 거리 수신","Maneuver / distance");
@@ -178,6 +192,7 @@ public final class UiText {
         EN.put("블루투스 켜짐","Bluetooth is on");
         EN.put("블루투스가 꺼져 있습니다.","Bluetooth is off.");
         EN.put("비작동","Inactive");
+        EN.put("사용 불가","Unavailable");
         EN.put("사용 안 함","Off");
         EN.put("사용 안 함 / Off","Off");
         EN.put("사용자 확인","User confirmed");
@@ -266,6 +281,7 @@ public final class UiText {
         EN.put("일반 설치 앱은 자동 표시됩니다. 목록에서 숨겨도 앱은 삭제되지 않습니다.","Ordinary installed apps appear automatically. Hiding an app does not uninstall it.");
         EN.put("작동","Active");
         EN.put("잘못된 방송 횟수","Invalid broadcasts");
+        EN.put("재생 시간","Playback time");
         EN.put("재시작","Restart");
         EN.put("재시작 요청 실패: ","Restart request failed: ");
         EN.put("재시작 요청이 취소되었습니다.","Restart request cancelled.");
@@ -273,6 +289,7 @@ public final class UiText {
         EN.put("저장 / Save","Save");
         EN.put("저장공간","Storage");
         EN.put("전체 기본 배치로 복원","Reset all gauges");
+        EN.put("전체 시간","Duration");
         EN.put("전체 조망","Overview");
         EN.put("정수 수신 횟수","Integer receptions");
         EN.put("정수 조회 횟수","Integer reads");
@@ -301,6 +318,8 @@ public final class UiText {
         EN.put("출력 (계산)","Power (calc.)");
         EN.put("취소","Cancel");
         EN.put("취소 / Cancel","Cancel");
+        EN.put("카메라 정보","Camera information");
+        EN.put("캡처됨 · 내용 미확인","Captured · content unverified");
         EN.put("켜기","Enable");
         EN.put("켜면 재부팅 뒤에도 작은 바로가기만 복원합니다. 앱 화면은 자동으로 열지 않습니다. 가장자리 버튼은 끌어서 옮길 수 있습니다.\n\n시스템이 다른 앱 위 표시를 허용하지 않으면 알림만 유지합니다. 순정 화면에서 알림을 열 수 없는 경우에는 별도 메뉴 진입점이 필요합니다. 강제 종료하면 직접 앱을 다시 열 때까지 자동 복원이 중지될 수 있습니다.\n\nWhen enabled, reboot restores only the shortcut. Drag the edge button to move it. If overlays are denied, a notification remains. If the factory UI hides notifications too, use a separate menu entry. Force-stop may block restoration until My Apps is opened again.","When enabled, reboot restores only the shortcut, not the full app screen. Drag the edge button to move it.\n\nIf overlays are denied, the notification remains. If the factory UI also hides notifications, use another entry point. Force-stop may prevent restoration until My Apps is opened again.");
         EN.put("켜지는 중","Enabling");
@@ -331,6 +350,7 @@ public final class UiText {
         EN.put("현재 차량 표시 제한으로 N 계기판을 열 수 없습니다.","N Dashboard is unavailable under the current vehicle display restriction.");
         EN.put("형식 오류","Invalid format");
         EN.put("홀수단","Odd");
+        EN.put("화면 시험","Screen test");
         EN.put("화면 잠금 상태를 추적할 수 없어 알림만 표시합니다.","Screen lock state cannot be tracked. Only the notification is shown.");
         EN.put("확인","OK");
         EN.put("활성 시험 백업이 없습니다. 기존 핫스팟 접속정보는 차량 설정에서 확인하세요.","No active test backup. Check existing hotspot credentials in the vehicle settings.");

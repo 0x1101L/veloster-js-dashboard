@@ -50,13 +50,16 @@ public class JsDiagnosticsPreview {
  public static void main(String[] args)throws Exception{
   int rendered=0;
   for(String language:new String[]{"ko","en"})for(int height:new int[]{480,425})
-   for(String state:new String[]{"waiting","received","invalid","held","expired"})for(int tab=0;tab<4;tab++){
+   for(String state:new String[]{"waiting","received","invalid","held","expired"})for(int tab=0;tab<5;tab++){
     UiText.configure(language,language);Telemetry t=fixture(state);JsDiagState d=observations(state);
     long now=state.equals("expired")?62000:2000;
     JsPitRenderer r=new JsPitRenderer();r.setDiagnosticPage(true,d.snapshot(now));
-    check(r.selectDiagnosticTab(40+tab*194,80,40+tab*194,80),"tab selected");
-    check(!r.selectDiagnosticTab(40,80,292,80)&&!r.selectDiagnosticTab(40,50,40,80),"cross-tab drag and header press rejected");
-    Canvas c=new Canvas(800,height);r.draw(c,800,height,false,t,now);
+    check(r.selectDiagnosticTab(40+tab*154,80,40+tab*154,80),"tab selected");
+    check(!r.selectDiagnosticTab(40,80,200,80)&&!r.selectDiagnosticTab(40,50,40,80),"cross-tab drag and header press rejected");
+    check(r.isScreenProbeTap(500,350,500,350)==(tab==1),"screen probe only on CarPlay tab");
+    MediaState media=new MediaState();
+    if(!state.equals("waiting")){media.mode(0x73);media.update(3,true,"Example Track",true,"Example Artist",true,12000,true,180000,false,1000);}
+    Canvas c=new Canvas(800,height);r.draw(c,800,height,false,t,now,ShiftGuide.DEFAULT,false,media.snapshot(now));
     for(String text:c.texts){
      check(!text.contains("NaN")&&!text.contains("Infinity"),"invalid numbers hidden");
      if(language.equals("en"))check(!text.matches(".*[가-힣].*"),"English catalog: "+text);
@@ -66,13 +69,17 @@ public class JsDiagnosticsPreview {
      if(state.equals("received"))check(c.texts.contains(UiText.t("초기 sticky"))&&c.texts.contains("-1")&&c.texts.contains("1.0s"),"sticky source, negative raw provider and app reception age");
      if(state.equals("invalid"))check(c.texts.contains(UiText.t("형식 오류"))&&c.texts.contains(UiText.t("권한 오류")),"failure reason retained");
     }else if(tab==1){
+     check(c.texts.contains(UiText.t("CarPlay 미디어"))&&c.texts.contains(UiText.t("CarPlay 내비게이션"))&&c.texts.contains(UiText.t("미연결")),"CarPlay media and unavailable navigation separated");
+     if(state.equals("waiting"))check(!c.texts.contains("Example Track"),"no invented media");
+     else check(c.texts.contains("Example Track")&&c.texts.contains("Example Artist"),"actual CarPlay media snapshot rendered");
+    }else if(tab==2){
      check(c.texts.contains(UiText.t("신호별 수신 · 유효성")),"signal page");
      String expected=state.equals("waiting")?"미수신":state.equals("invalid")?"무효 수신":state.equals("held")?"보관값":state.equals("expired")?"만료":"유효";
      check(c.texts.contains(UiText.t(expected)),"distinct signal state: "+state);
      if(state.equals("invalid"))check(!c.texts.contains("14.20 V")&&t.sample(Telemetry.BAT_VOLTAGE,now).receivedCount==1,"invalid-only reception is counted without a fabricated value");
      if(state.equals("held"))check(c.texts.contains("14.20 V")&&c.texts.contains("0.0s / 1.0s")&&t.sample(Telemetry.BAT_VOLTAGE,now).receivedCount==2,"held value keeps separate reception and valid ages");
      if(state.equals("expired"))check(!c.texts.contains("14.20 V"),"expired battery value hidden");
-    }else if(tab==3){
+    }else if(tab==4){
      check(c.texts.contains("bcm")&&c.texts.contains("media.4"),"binding sources rendered");
      if(!state.equals("waiting"))check(c.texts.contains("registered / 1 / 0.5s")||state.equals("expired"),"binding status and reception age rendered");
     }else{
@@ -139,7 +146,7 @@ def render(folder):
 class JsDiagnosticsRendererTests(unittest.TestCase):
     def test_observed_states(self):
         with tempfile.TemporaryDirectory() as folder:
-            self.assertIn("PASS 80", render(folder))
+            self.assertIn("PASS 100", render(folder))
 
 
 if __name__ == "__main__":

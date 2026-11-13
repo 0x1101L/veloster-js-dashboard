@@ -21,14 +21,13 @@ public final class JsDiagnosticsRenderer {
     private int diagnosticTab;
     private JsDiagState.Snapshot diagnostic;
     private Telemetry.Sample[] samples;
+    private MediaState.Snapshot media;
     public boolean select(float downX,float downY,float x,float y){int tab=diagnosticTabAt(x,y);if(tab<0||tab!=diagnosticTabAt(downX,downY))return false;diagnosticTab=tab;return true;}
-    public void draw(Canvas c,Telemetry.Sample[] samples,JsDiagState.Snapshot diagnostic,Telemetry.DctTemperatures dct){this.samples=samples;this.diagnostic=diagnostic;drawDiagnostics(c,dct);}
+    public void draw(Canvas c,Telemetry.Sample[] samples,JsDiagState.Snapshot diagnostic,Telemetry.DctTemperatures dct,MediaState.Snapshot media){this.samples=samples;this.diagnostic=diagnostic;this.media=media;drawDiagnostics(c,dct);}
+    public boolean isScreenProbeTap(float dx,float dy,float x,float y){return diagnosticTab==1&&dx>=423&&dx<=767&&x>=423&&x<=767&&dy>=338&&dy<=378&&y>=338&&y<=378;}
     private static int diagnosticTabAt(float x,float y){
         if(y<62||y>100)return -1;
-        if(x>=18&&x<=201)return 0;
-        if(x>=212&&x<=395)return 1;
-        if(x>=406&&x<=589)return 2;
-        if(x>=600&&x<=782)return 3;
+        for(int i=0;i<5;i++){float left=18+i*154;if(x>=left&&x<=left+148)return i;}
         return -1;
     }
     private void box(Canvas c,float l,float t,float r,float b,int color){paint.setColor(color);c.drawRect(l,t,r,b,paint);}
@@ -65,20 +64,22 @@ public final class JsDiagnosticsRenderer {
     }
     private String diagError(int error){return UiText.t(error==1?"권한 오류":error==2?"형식 오류":error==3?"조회 실패":"오류 없음");}
     private String observerState(int state){return state==2?UiText.t("조회 실패"):observed(state,"등록됨","미등록");}
-    private String serviceState(int state){return state==2?UiText.t("조회 실패"):observed(state,"서비스 확인","없음/접근 불가");}
+    private String serviceState(int state){return state==2?UiText.t("조회 실패"):observed(state,"Binder 연결됨","없음/접근 불가");}
     private String sampleState(Telemetry.Sample sample){
         return UiText.t(!sample.seen?"미수신":sample.stale?"만료":sample.held?"보관값":sample.valid?"유효":"무효 수신");
     }
     private void diagNote(Canvas c,String key,float y){fitted(c,UiText.t(key),32,y,13,736,MUTED);}
     private void drawDiagnostics(Canvas c,Telemetry.DctTemperatures dct){
-        button(c,UiText.t("HUD · 내비"),18,62,183,38,diagnosticTab==0,BLUE);
-        button(c,UiText.t("차량 신호"),212,62,183,38,diagnosticTab==1,BLUE);
-        button(c,"Wi-Fi · DCT",406,62,183,38,diagnosticTab==2,BLUE);
-        button(c,"Bindings",600,62,182,38,diagnosticTab==3,BLUE);
-        if(diagnosticTab==1){drawDiagnosticSignals(c);return;}
+        button(c,UiText.t("HUD · 내비"),18,62,148,38,diagnosticTab==0,BLUE);
+        button(c,"CarPlay",172,62,148,38,diagnosticTab==1,BLUE);
+        button(c,UiText.t("차량 신호"),326,62,148,38,diagnosticTab==2,BLUE);
+        button(c,"Wi-Fi · DCT",480,62,148,38,diagnosticTab==3,BLUE);
+        button(c,"Bindings",634,62,148,38,diagnosticTab==4,BLUE);
+        if(diagnosticTab==1){drawCarPlay(c);return;}
+        if(diagnosticTab==2){drawDiagnosticSignals(c);return;}
         panel(c,18,112,373,316,PANEL,LINE);panel(c,409,112,373,316,PANEL,LINE);
-        if(diagnosticTab==2){drawDiagnosticWifi(c,dct);return;}
-        if(diagnosticTab==3){drawBindings(c);return;}
+        if(diagnosticTab==3){drawDiagnosticWifi(c,dct);return;}
+        if(diagnosticTab==4){drawBindings(c);return;}
         text(c,UiText.t("내비 수신"),32,138,16,BLUE,true);
         text(c,UiText.t("서비스 · 확인 범위"),423,138,16,BLUE,true);
         String source=UiText.t(diagnostic.routeSource==1?"초기 sticky":diagnostic.routeSource==0?"방송 수신":"미확인");
@@ -95,6 +96,44 @@ public final class JsDiagnosticsRenderer {
         fitted(c,UiText.t("서비스 표시는 앱 시작 시 조회 결과"),423,399,13,344,MUTED);
         diagNote(c,"경로 변경 전후의 정수값과 수신 횟수를 대조하세요.",448);
         diagNote(c,"경과는 앱 수신 이후 시간입니다. sticky 원 발신 시각은 미확인입니다.",468);
+    }
+    private String mediaObserverState(String status){
+        if("registered".equals(status))return UiText.t("등록됨");
+        if("stopped".equals(status))return UiText.t("미등록");
+        if("permission denied".equals(status))return UiText.t("권한 오류");
+        if("error".equals(status))return UiText.t("조회 실패");
+        return UiText.t("미확인");
+    }
+    private String screenProbeState(String state){
+        if("armed".equals(state))return UiText.t("대기 중");
+        if("captured".equals(state))return UiText.t("캡처됨 · 내용 미확인");
+        if("wrong_foreground".equals(state))return UiText.t("CarPlay 화면 아님");
+        if("permission_denied".equals(state))return UiText.t("권한 오류");
+        if("unavailable".equals(state))return UiText.t("사용 불가");
+        if("error".equals(state))return UiText.t("조회 실패");
+        return UiText.t("미실시");
+    }
+    private void drawCarPlay(Canvas c){
+        panel(c,18,112,373,316,PANEL,LINE);panel(c,409,112,373,316,PANEL,LINE);
+        text(c,UiText.t("CarPlay 미디어"),32,138,16,BLUE,true);
+        text(c,UiText.t("CarPlay 내비게이션"),423,138,16,BLUE,true);
+        JsDiagState.SourceSnapshot source=diagnostic.source("media.3");
+        boolean active=media!=null&&"CarPlay".equals(media.source);
+        diagRow(c,18,170,"미디어 관찰",mediaObserverState(source.status));
+        diagRow(c,18,202,"방송 수신 횟수",String.valueOf(source.count));
+        diagRow(c,18,234,"마지막 방송 경과",diagAge(source.ageMs));
+        diagRow(c,18,266,"곡명",active&&media.title.length()>0?media.title:"—");
+        diagRow(c,18,298,"가수",active&&media.artist.length()>0?media.artist:"—");
+        diagRow(c,18,330,"재생 시간",active&&media.positionMs>=0?diagAge(media.positionMs):"—");
+        diagRow(c,18,362,"전체 시간",active&&media.durationMs>=0?diagAge(media.durationMs):"—");
+        diagRow(c,409,170,"내비 입력",UiText.t("미연결"));
+        diagRow(c,409,202,"방향 · 거리 수신",UiText.t("미수신"));
+        diagRow(c,409,234,"카메라 정보",UiText.t("미수신"));
+        fitted(c,UiText.t("미디어 방송과 내비 입력은 별도입니다."),423,285,13,344,MUTED);
+        diagRow(c,409,318,"화면 시험",screenProbeState(diagnostic.screenProbe));
+        button(c,UiText.t("20초 뒤 CarPlay 화면 시험"),423,338,344,40,false,BLUE);
+        diagNote(c,"곡 정보는 CarPlay가 현재 소스일 때 표시합니다.",448);
+        diagNote(c,"내비 입력 경로는 아직 확인되지 않았습니다.",468);
     }
     private void drawDiagnosticSignals(Canvas c){
         panel(c,18,112,764,316,PANEL,LINE);

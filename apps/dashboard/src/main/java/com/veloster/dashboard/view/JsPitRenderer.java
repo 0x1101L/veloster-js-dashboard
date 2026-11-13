@@ -53,6 +53,7 @@ public final class JsPitRenderer {
     public void setDiagnosticPage(boolean value,JsDiagState.Snapshot status){diagnosticPage=value;if(status!=null)diagnostic=status;}
     private final JsDiagnosticsRenderer diagnosticsRenderer=new JsDiagnosticsRenderer();
     public boolean selectDiagnosticTab(float downX,float downY,float x,float y){return diagnosticsRenderer.select(downX,downY,x,y);}
+    public boolean isScreenProbeTap(float dx,float dy,float x,float y){return diagnosticsRenderer.isScreenProbeTap(dx,dy,x,y);}
     public void setArtwork(Bitmap value){artwork=value;}
     public void setGaugeLayout(GaugeLayout value){gaugeLayout=value;}
     public void setGraphLayout(GraphLayout value){graphLayout=value;}
@@ -80,7 +81,7 @@ public final class JsPitRenderer {
         button(c,UiText.language().toUpperCase(Locale.US),534,8,48,38,false,BLUE);
         centered(c,clock(),620,33,22,WHITE,true);
         button(c,UiText.t("돌아가기"),666,8,116,38,false,BLUE);
-        if(diagnosticPage)diagnosticsRenderer.draw(c,samples,diagnostic,model.dctTemperatures(now));
+        if(diagnosticPage)diagnosticsRenderer.draw(c,samples,diagnostic,model.dctTemperatures(now),track);
         else if(performancePage)performanceRenderer.draw(c,model,now);
         else if(graphLayout!=null)graphRenderer.draw(c,model,now,graphLayout);
         else if(gaugeLayout!=null)gaugeRenderer.draw(c,model,now,gaugeLayout);

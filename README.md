@@ -1,5 +1,7 @@
 # Veloster Dashboard
 
+The versionCode 12 JS trial checks Binder responsiveness and displays “Binder connected”; this does not establish method permissions or HUD output. See [build status](docs/STATUS.md).
+
 *from [Veloster N Dashboard](https://github.com/reikop/veloster-n-dashboard)*
 
 **English** | [한국어](README_ko.md)
@@ -120,3 +122,11 @@ The JS source now exports those existing snapshots through versioned `JS_LOGGER`
 Project-authored code and documentation: [MIT](LICENSE). [Dependency and signing notices](NOTICE.md). The public AOSP test certificate is not a private publisher identity or an OTA key. Source builds are unsigned. OEM firmware/APKs, private logs, identifiers and signing keys are not distributed. Unofficial project; no manufacturer affiliation.
 
 Dashboard Java sources use `apps/dashboard/src/main/java`. The Activity is in `com.veloster.dashboard`, vehicle connections in `com.veloster.dashboard.vehicle`, and views and page renderers under `com.veloster.dashboard.view`. JS, PD and JSN decoders are under `apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/js` `pd` and `jsn`. The authored HUD probe and route listener use the single `src/0x1101L/java` root. The Bindings tab reports passive subscription status, callback counts and receive ages; these source changes are not in the existing APKs.
+
+For the JS HUD observation event log, retrieval, and limitations, see [HUD research](docs/JS_HUD_RESEARCH.md). This log does not establish camera data reception or HUD output.
+
+The JS diagnostics CarPlay tab displays existing media broadcast status and current track data; navigation and camera input remain unconnected. See [HUD research](docs/JS_HUD_RESEARCH.md).
+
+CarPlay media diagnostic events are recorded without track or artist text. On JS, media observation remains active during Activity pause and stops on destruction; actual CarPlay background behavior remains unverified.
+
+The JS CarPlay tab includes an opt-in delayed screen access probe that does not store screen pixels. It tests capture availability, not navigation reception or HUD output. See [HUD research](docs/JS_HUD_RESEARCH.md).

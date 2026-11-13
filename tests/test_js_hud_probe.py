@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 STUBS = {
     'android/os/Build.java': '''package android.os;public class Build {
  public static String PRODUCT="js_kr";public static class VERSION {public static String INCREMENTAL="eng.vmadmin.20260114.090656";}}''',
-    'android/os/IBinder.java': 'package android.os;public interface IBinder {String getInterfaceDescriptor();}',
+    'android/os/IBinder.java': 'package android.os;public interface IBinder {String getInterfaceDescriptor(); boolean pingBinder();}',
     'android/os/ServiceManager.java': '''package android.os;public class ServiceManager {
  public static IBinder binder;public static boolean fail;public static String last;
  public static IBinder getService(String name){last=name;if(fail)throw new SecurityException();return binder;}}''',
@@ -103,11 +103,12 @@ public class JsHudProbeHarness {
  static void service(){
   Context c=new Context();Output o=new Output();JsHudProbe p=new JsHudProbe(c,o);p.inspect();
   check(o.state.snapshot().clusterService==0&&ServiceManager.last.equals("com.hkmc.micom.cluster"),"owning cluster service queried");
-  ServiceManager.binder=new IBinder(){public String getInterfaceDescriptor(){return "com.hkmc.cluster.IClusterService";}};p.inspect();
+  ServiceManager.binder=new IBinder(){public boolean pingBinder(){return true;} public String getInterfaceDescriptor(){return "com.hkmc.cluster.IClusterService";}};p.inspect();
   check(o.state.snapshot().clusterService==1&&o.state.snapshot().tbt==-1,"descriptor is not TBT reception");
-  ServiceManager.binder=new IBinder(){public String getInterfaceDescriptor(){return "wrong";}};p.inspect();check(o.state.snapshot().clusterService==2,"wrong interface rejected");
+  ServiceManager.binder=new IBinder(){public boolean pingBinder(){return true;} public String getInterfaceDescriptor(){return "wrong";}};p.inspect();check(o.state.snapshot().clusterService==2,"wrong interface rejected");
+  ServiceManager.binder=new IBinder(){public boolean pingBinder(){return false;} public String getInterfaceDescriptor(){return "com.hkmc.cluster.IClusterService";}};p.inspect();check(o.state.snapshot().clusterService==2,"dead binder rejected");
   ServiceManager.fail=true;p.inspect();check(o.state.snapshot().clusterService==2,"denied service query contained");ServiceManager.fail=false;
-  ServiceManager.binder=new IBinder(){public String getInterfaceDescriptor(){throw new SecurityException();}};p.inspect();check(o.state.snapshot().clusterService==2,"descriptor failure contained");
+  ServiceManager.binder=new IBinder(){public boolean pingBinder(){return true;} public String getInterfaceDescriptor(){throw new SecurityException();}};p.inspect();check(o.state.snapshot().clusterService==2,"descriptor failure contained");
  }
  static void profile(){Build.PRODUCT="hyundaiB_kr";try{new JsHudProbe(new Context(),new Output());throw new AssertionError("profile gate");}catch(IllegalStateException expected){}finally{Build.PRODUCT="js_kr";}}
  public static void main(String[] args) throws Exception {queryAfterStop();lifecycle();independent();failedCleanup();sticky();service();profile();System.out.println("PASS passive HUD observation scenarios");}

@@ -100,8 +100,9 @@ public final class DashboardView extends View implements Runnable {
     public static void pauseStandalone(Activity a){
         DashboardView d=current.get();if(d==null||d.activity!=a)return;
         d.resumed=false;d.touching=false;d.removeCallbacks(d.editHold);
-        d.gaugeEditor.dismiss();d.graphEditor.dismiss();d.mediaReceiver.stop();d.artwork.close();
+        d.gaugeEditor.dismiss();d.graphEditor.dismiss();if(!DATA.jsProfile())d.mediaReceiver.stop();d.artwork.close();
     }
+    public static void stopStandaloneMedia(Activity a){DashboardView d=current.get();if(d!=null&&d.activity==a)d.mediaReceiver.stop();}
     private void showDashboard(){setVisibility(VISIBLE);if(entry!=null)entry.setVisibility(GONE);bringToFront();}
     private void close() { entryRequestUntil=0;removeCallbacks(editHold);touching=false;gaugeEditor.dismiss();graphEditor.dismiss();setVisibility(GONE); if(entry!=null) entry.setVisibility(blocked?GONE:VISIBLE); }
     public static void consumeEntryIntent(Activity a){entryIntent(a,a.getIntent());}
@@ -151,8 +152,12 @@ public final class DashboardView extends View implements Runnable {
     }
     public static void ignition(boolean on) { DATA.clear(); }
     public static void profile(boolean pd,boolean js,boolean jsn){DATA.profile(pd,js,jsn);}
+    public interface ScreenProbeStarter { void startCarPlayScreenProbe(); }
+    public interface DiagnosticEventSink { void event(String name,String detail); }
+    private static volatile DiagnosticEventSink diagnosticEventSink;
+    public static void setDiagnosticEventSink(DiagnosticEventSink sink){diagnosticEventSink=sink;}
     public static void diagReset(){DIAG.reset();}
-    public static void diagEvent(String name,String detail){DIAG.event(name,detail,SystemClock.elapsedRealtime());}
+    public static void diagEvent(String name,String detail){DIAG.event(name,detail,SystemClock.elapsedRealtime());DiagnosticEventSink sink=diagnosticEventSink;if(sink!=null&&("binding.media.3".equals(name)||name.startsWith("carplay.media.")))sink.event(name,detail);}
     public static void diagWifi(int feature,int service,int state,int watch){DIAG.wifi(feature,service,state,watch);}
     public static void diagHscan(int state){DIAG.hscan(state);}
     public static void rpm(byte[] data) { DATA.rpm(data,SystemClock.elapsedRealtime()); }
@@ -238,6 +243,7 @@ public final class DashboardView extends View implements Runnable {
         boolean tap=touching && Math.abs(x-downX)<16 && Math.abs(y-downY)<16;
         touching=false;
         if(standalone&&tap&&x>=666&&x<=782&&downX>=666&&downX<=782&&y>=8&&y<=46&&downY>=8&&downY<=46){activity.finish();return true;}
+        if(tap&&!blocked&&pageState.is(DashboardPage.DIAG)&&jsRenderer.isScreenProbeTap(downX,downY,x,y)&&activity instanceof ScreenProbeStarter){((ScreenProbeStarter)activity).startCarPlayScreenProbe();invalidate();return true;}
         if(tap&&!blocked&&pageState.is(DashboardPage.DIAG)&&jsRenderer.selectDiagnosticTab(downX,downY,x,y)){invalidate();return true;}
         if(tap&&!blocked&&!pageState.is(DashboardPage.DIAG)&&!pageState.is(DashboardPage.PERFORMANCE)&&!pageState.is(DashboardPage.F1)&&!pageState.is(DashboardPage.GAUGES)&&!pageState.is(DashboardPage.GRAPHS)&&overviewDown>=0&&overviewLayout.hit(x,y)==overviewDown&&!overviewCovered(y)){
             if(OverviewLayout.dctCard(overviewDown,DATA.jsProfile()))return true;

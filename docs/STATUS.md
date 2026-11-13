@@ -62,3 +62,7 @@ The research vehicle used a private Cover Art dashboard trial after the public v
 - 이후 연구 차량의 계기판은 비공개 Cover Art 시험본입니다. 해당 로그·화면을 공개 v6 그대로의 실차 검증으로 해석하지 않습니다.
 - Bluetooth 앨범아트는 SDP 단계에서 미해결이며 고정 볼륨 시험도 실패했습니다. SystemUI·하단 바 후보는 미설치입니다. 공개 배포 기능과 구분합니다.
 - 기존 ZIP·APK는 변경하지 않았습니다. 날짜가 붙은 배포 문서의 “미시험”은 배포 당시 상태이며 이후 확인은 이 문서를 기준으로 합니다. 개인 식별자·실차 원본 로그는 공개하지 않습니다.
+
+## JS Binder trial (2026-11-13)
+
+VersionCode 12 `apks/JS-Dashboard-build-20261113-102416.apk` checks Binder responsiveness; device installation and readback matched. Cluster and MICOM Binder pings succeeded. Method permissions and HUD output remain unverified.

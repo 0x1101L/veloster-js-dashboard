@@ -67,3 +67,26 @@ NaviClusterManager.sendCluster_TBT_INFO
 기존 미디어 위젯과 내비 provider 관찰은 유지했다. 자동 TBT·음악 송신은 추가하지 않았다. 기존 코드의 명시적 `sendTbt` 시험 메서드는 실제 출력 검증을 뜻하지 않는다.
 
 이 변경은 호스트 Java 합성 프로그램 16개, Python 테스트 56개, API17 대상 probe 컴파일로 확인했다. 변경이 포함된 APK는 생성·설치하지 않았고 실차 방송 수신이나 HUD 출력은 검증하지 않았다. 후속 확인은 동일 JS 빌드의 실제 방송·Binder 권한, 차량의 daemon 기동 인자와 MICOM 연결, 후단 HUD 표시 제어기·펌웨어에 필요하다.
+
+## HUD 관찰 이벤트의 내부 기록
+
+JS 전용 관찰 이벤트는 앱의 개인 파일 `files/diagnostics/hud-events.log`에 기록한다. 기존 `JS_LOGGER`와 별개이며, 경로 상태 정수·provider 정수, 관찰 등록/중지/오류 및 CarPlay 미디어 수신·처리·오류 집계와 모드·재생·표시 상태 전이를 허용한다. 미디어 횟수는 1, 2, 4, 8회처럼 제한적으로 기록하며 앱 프로세스 재시작 후 초기화한다. TBT 호출 반환 이벤트가 발생하면 반환 사실만 기록하며 물리 표시의 증거는 아니다. 카메라 단속 데이터 수신이나 80 시험 출력은 이 로그에 연결되지 않았다. 이벤트는 단조 시계 `elapsed_ms`를 사용하므로 재부팅을 넘는 절대 시각이 아니다. 동일 값 반복은 생략한다. 각 파일은 최대 64 KiB이고 이전 파일 하나로 순환하며 기간 만료는 적용하지 않는다. 파일은 앱 데이터 삭제 시 함께 제거된다. 쓰기 실패는 logcat `HudEventLog` 오류로만 표시된다.
+
+현재 manifest의 디버그 가능 빌드에서 CarPlay 종료 후 다음과 같이 가져올 수 있다. `adb shell run-as`는 JS Android 4.2 기기에서 확인했다. `adb exec-out`은 해당 기기에서 실패했다. 이전 파일은 순환 전에는 없을 수 있다.
+
+```sh
+adb shell run-as com.veloster.dashboard cat files/diagnostics/hud-events.log > hud-events.log
+adb shell run-as com.veloster.dashboard cat files/diagnostics/hud-events.previous.log > hud-events.previous.log
+```
+
+파일에는 목적지·좌표·원시 Intent나 미디어 텍스트를 쓰지 않는다. 관찰 상태 정수도 상황에 따른 민감 정보가 될 수 있으므로 공유 전 검토한다. 실제 기기 보존과 사후 가져오기는 미검증이다.
+
+## CarPlay 진단 탭
+
+Dashboard의 진단 화면에서 `HUD · 내비` 옆 `CarPlay` 탭은 기존 OEM CarPlay 미디어 위젯 방송의 수신 횟수·경과와 현재 소스가 CarPlay일 때의 곡명·가수·재생 시간·전체 시간을 표시한다. 값이 제공되지 않으면 `—`다. 이것은 앱이 기존에 처리하던 미디어 데이터이며 CarPlay 연결이나 내비 데이터 수신의 증거가 아니다. 내비 방향·거리와 카메라 데이터는 수신 경로가 아직 확인되지 않아 미연결·미수신으로 표시한다. JS 미디어 receiver는 Activity 일시 중지 동안 유지하고 Activity 파괴 시 해제한다. 프로세스 종료나 Activity 파괴 후의 백그라운드 수신은 보장되지 않는다. 기기에서 이 수명주기는 아직 검증하지 않았다.
+
+## CarPlay 화면 접근 시험
+
+CarPlay 진단 탭의 `20초 뒤 CarPlay 화면 시험`을 누른 뒤 20초 이내에 CarPlay 화면으로 전환하면, 앱은 해당 시점에 전면 Activity가 `com.daudio.app.dipo`일 때 화면 캡처를 한 번 시도한다. 결과는 내부 `HUD_EVENT` 로그의 `carplay.screen.probe`에 남긴다. 화면 원본·주소·픽셀·내비 정보는 저장하지 않는다. 캡처됨은 Bitmap 반환만 뜻하며, CarPlay Surface 내용이 포함됐는지와 내비 데이터 인식은 별도 확인이 필요하다. 다른 앱이 전면이면 캡처하지 않는다. Activity 파괴·프로세스 종료 시 예약은 취소된다.
+
+이 시험은 JS 지정 빌드에서만 켜며 API17의 `Surface.screenshot`과 플랫폼 서명 기반 `READ_FRAME_BUFFER`, 전면 앱 확인용 `GET_TASKS`를 사용한다. 두 권한의 기기 부여 여부와 실제 CarPlay 전면 검사는 확인이 필요하다. 화면이 보안 레이어이거나 OS가 차단하면 실패 또는 빈 화면이 반환될 수 있다. 이 시험은 길 안내 또는 HUD 출력 기능이 아니다.

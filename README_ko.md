@@ -1,5 +1,7 @@
 # Veloster Dashboard — 독립 차량 대시보드
 
+versionCode 12 JS 시험본은 Binder 응답을 확인해 `Binder 연결됨`으로 표시합니다. 메서드 권한이나 HUD 출력 성공을 뜻하지 않습니다. [검증 상태](docs/STATUS.md)
+
 *from [Veloster N Dashboard](https://github.com/reikop/veloster-n-dashboard)*
 
 [English](README.md) | **한국어**
@@ -118,3 +120,11 @@ JS 하드웨어·HSCAN 조사 도구는 앱과 분리된 [`diag/js_kr/`](diag/js
 Dashboard Java 소스는 `apps/dashboard/src/main/java`에 있습니다. Activity는 `com.veloster.dashboard`, 차량 연결은 `com.veloster.dashboard.vehicle`, 뷰와 페이지별 렌더러는 `com.veloster.dashboard.view` 하위 패키지에 있습니다. JS·PD·JSN 디코더는 `apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/js`, `pd`, `jsn`에 있습니다. 사용자 작성 HUD 조사기와 경로 리스너는 `src/0x1101L/java` 아래 역할별 패키지에 있습니다. Bindings 탭은 수동 수신의 상태·콜백 횟수·경과 시간을 표시합니다. 이 소스 변경은 기존 APK에 포함되지 않았습니다.
 
 JS 소스는 기존 진단·텔레메트리 snapshot을 버전 계약 `JS_LOGGER v1`로 기록하며 호스트 추출기는 CSV·요약 JSON·분석 초안을 생성합니다. 과거 `JS_SAMPLE` 기록과 출력 호환도 유지합니다. 확인된 callback/decoder 출처만 표시하고, 알 수 없으면 `unknown`으로 둡니다. 원시 payload, 내비 목적지·좌표, 미디어 정보와 장치 식별자는 수집하지 않습니다. Java 로거와 Python 파서는 한 버전 계약이므로 필드나 버전 변경 시 항상 함께 바꿔야 합니다. 새 시험 APK에 로거가 포함되어 있으나 짧은 기기 로그 수집을 확인했으나 신호 정확도는 미검증입니다. [수집 계약과 명령](docs/JS_DEBUG_CAPTURE.md).
+
+JS HUD 관찰 이벤트의 개인 저장·사후 가져오기 및 한계는 [HUD 조사 문서](docs/JS_HUD_RESEARCH.md#hud-관찰-이벤트의-내부-기록)를 참고한다. 이 기록은 카메라 데이터 수신이나 HUD 출력 성공을 뜻하지 않는다.
+
+JS 진단의 CarPlay 탭은 기존 CarPlay 미디어 방송 상태와 현재 곡 정보를 표시하며 내비·카메라 수신 경로는 아직 미연결이다. [HUD 조사](docs/JS_HUD_RESEARCH.md)를 참고한다.
+
+CarPlay 미디어 진단 이벤트는 곡명·가수 없이 앱 개인 로그에 기록한다. JS 미디어 수신은 화면 전환으로 Activity가 일시 중지되어도 유지하되 Activity 파괴 시 종료한다. 실기기 CarPlay 전환 검증은 남아 있다.
+
+JS CarPlay 진단 탭에는 원본 화면을 저장하지 않는 20초 지연 화면 접근 시험이 있다. 이 시험은 캡처 성공만 확인하며 내비 수신·HUD 출력 기능이 아니다. [HUD 조사](docs/JS_HUD_RESEARCH.md)를 참고한다.

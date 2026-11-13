@@ -28,7 +28,8 @@ public final class MediaReceiver {
             try{
                 Class<?> type=Class.forName("com.hkmc.mode.ModeManager");
                 Object manager=type.getConstructor(Context.class).newInstance(context);
-                state.mode(((Integer)type.getMethod("getCurrentMode").invoke(manager)).intValue());
+                int mode=((Integer)type.getMethod("getCurrentMode").invoke(manager)).intValue();
+                state.mode(mode);if(mode>=0)DashboardView.diagEvent("carplay.media.mode",mode==0x73?"active":"inactive");
             }catch(Exception e){android.util.Log.i("VehicleDash","Initial media mode unavailable; waiting for mode broadcast");}
         }
         catch(RuntimeException e){receiver=null;DashboardView.diagEvent("binding.media",e instanceof SecurityException?"permission denied":"error");mediaSources(e instanceof SecurityException?"permission denied":"error");android.util.Log.e("VehicleDash","Media receiver unavailable",e);}
@@ -48,7 +49,7 @@ public final class MediaReceiver {
         if(intent==null)return;
         if(MODE_CHANGED.equals(intent.getAction())){
             DashboardView.diagEvent("binding.media.mode","received");
-            try{if(intent.hasExtra("com.hkmc.mode.EXTRA_MODE_TYPE")){state.mode(intent.getIntExtra("com.hkmc.mode.EXTRA_MODE_TYPE",-1));DashboardView.diagEvent("binding.media.mode","processed");}
+            try{if(intent.hasExtra("com.hkmc.mode.EXTRA_MODE_TYPE")){int mode=intent.getIntExtra("com.hkmc.mode.EXTRA_MODE_TYPE",-1);state.mode(mode);if(mode>=0)DashboardView.diagEvent("carplay.media.mode",mode==0x73?"active":"inactive");DashboardView.diagEvent("binding.media.mode","processed");}
                 else DashboardView.diagEvent("binding.media.mode","invalid");}
             catch(RuntimeException e){DashboardView.diagEvent("binding.media.mode","invalid");android.util.Log.e("VehicleDash","Malformed mode update",e);}
             return;
@@ -72,6 +73,13 @@ public final class MediaReceiver {
             }else if(source!=1&&source!=4&&intent.hasExtra("playstate")){
                 // OEM partial widget broadcasts use -1 for an omitted field.
                 int status=intent.getIntExtra("playstate",-1);if(status==0||status==1)state.playback(source,status);
+            }
+            if(source==3){
+                if(intent.hasExtra("invisible"))DashboardView.diagEvent("carplay.media.visibility",intent.getBooleanExtra("invisible",false)?"hidden":"visible");
+                if(intent.hasExtra("playstate")){
+                    int status=intent.getIntExtra("playstate",-1);
+                    if(status==0||status==1)DashboardView.diagEvent("carplay.media.playback",status==1?"playing":"paused");
+                }
             }
             DashboardView.diagEvent("binding.media."+source,"processed");
         }catch(RuntimeException e){DashboardView.diagEvent("binding.media."+source,"invalid");android.util.Log.e("VehicleDash","Malformed media update",e);}

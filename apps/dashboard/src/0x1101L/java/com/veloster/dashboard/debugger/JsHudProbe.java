@@ -50,7 +50,8 @@ public final class JsHudProbe {
             Class<?> sm=Class.forName("android.os.ServiceManager");
             Object binder=sm.getMethod("getService",String.class).invoke(null,name);
             if(binder==null)output.event(label+".service","absent or inaccessible");
-            else if(expected==null)output.event(label+".service","present; descriptor and permissions unverified");
+            else if(!((android.os.IBinder)binder).pingBinder())output.event(label+".service.error","binder not responding");
+            else if(expected==null)output.event(label+".service","present; binder responds; descriptor and permissions unverified");
             else{
                 String descriptor=((android.os.IBinder)binder).getInterfaceDescriptor();
                 output.event(label+".service",expected.equals(descriptor)?
