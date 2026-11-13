@@ -8,6 +8,10 @@ from test_quick_entry_runtime import java_tools
 
 ROOT = Path(__file__).resolve().parents[1]
 STUBS = {
+    'com/veloster/dashboard/vehicle/HscanProfile.java': 'package com.veloster.dashboard.vehicle;public class HscanProfile {public enum Kind {JS, PD, UNSUPPORTED}}',
+    'com/veloster/dashboard/vehicle/js/JsDctClient.java': '''package com.veloster.dashboard.vehicle.js;
+public class JsDctClient {public interface Gate {boolean open();}public static Gate gate;public static int starts,stops;
+ public JsDctClient(Gate g){gate=g;}public void start(){starts++;}public void stop(){stops++;}}''',
     "com/veloster/diagnostics/ErrorLog.java": "package com.veloster.diagnostics;public class ErrorLog {public static void record(String s,Throwable e){}}",
     'android/content/Context.java': 'package android.content; public class Context {}',
     'android/util/Log.java': 'package android.util; public class Log {public static int e(String t,String m,Throwable e){return 0;}}',
@@ -28,7 +32,7 @@ public class DashboardView {public static int writes,clears; public static java.
  public static void speed(int s){writes++;}public static void rearView(int s){writes++;}
 }''',
     'com/veloster/dashboard/HscanDataClient.java': '''package com.veloster.dashboard.vehicle;
-final class HscanDataClient {interface Gate {boolean accepts();}static int fail,creates,starts,stops;static Gate gate;static boolean supported=true;static boolean pdProfile(){return false;}static boolean supportedProfile(){return supported;}
+final class HscanDataClient {interface Gate {boolean accepts();}static int fail,creates,starts,stops;static Gate gate;static boolean supported=true;static HscanProfile.Kind kind=HscanProfile.Kind.PD;static HscanProfile.Kind profile(){return kind;}static boolean pdProfile(){return false;}static boolean supportedProfile(){return supported;}
  boolean live;HscanDataClient(Gate g){creates++;if(fail-->0)throw new IllegalStateException("HSCAN unavailable");gate=g;}
  void start(){if(!live){live=true;starts++;}}void stop(){if(live){live=false;stops++;}}
 }''',
@@ -110,7 +114,8 @@ public class VehicleDataClientHarness {
  static void boundedRetry(){VehicleDataClient c=fresh();PgsManager.failCreate=100;c.start();for(int i=0;i<12;i++){c.run();check(Handler.jobs.size()==1&&Handler.delay<=30000,"bounded single retry");}check(Handler.delay==30000,"delay caps at 30 sec");c.stop();check(Handler.jobs.isEmpty(),"stop cancels retries");c.start();check(Handler.delay==2000,"fresh session resets backoff");c.stop();}
  static void unsupportedProfile(){VehicleDataClient c=fresh();HscanDataClient.supported=false;c.start();check(!HscanDataClient.gate.accepts(),"unknown product/build blocks all telemetry callbacks");NModeManager.current.onOilCoolantTemperature(new byte[0]);check(DashboardView.writes==0,"unknown profile cannot publish OEM data");c.stop();HscanDataClient.supported=true;}
  static void ignitionGate(){VehicleDataClient c=fresh();BCMManager.ignition=false;c.start();NModeManager.current.onOilCoolantTemperature(new byte[0]);check(DashboardView.writes==0&&HscanDataClient.starts==0,"off gates receive");BCMManager.current.onIgnitionChanged(true);check(HscanDataClient.starts==1,"ignition starts receive");NModeManager.current.onOilCoolantTemperature(new byte[0]);check(DashboardView.writes==1,"on delivers");BCMManager.current.onIgnitionChanged(false);check(HscanDataClient.stops==1&&!HscanDataClient.gate.accepts(),"off stops receive");c.stop();}
- public static void main(String[] a) throws Exception {missingAndCleanup();permissions();concurrentStop();ready();allCallbacks();delayedRear();delayedHscan();failedRegistration();failedCleanup();powerFailure();stopInvalidates();boundedRetry();unsupportedProfile();ignitionGate();System.out.println("PASS 14 vehicle subscription lifecycle scenarios");}
+ static void dctLifecycle(){HscanDataClient.kind=HscanProfile.Kind.JS;VehicleDataClient c=fresh();BCMManager.ignition=false;c.start();check(!com.veloster.dashboard.vehicle.js.JsDctClient.gate.open(),"DCT gated while ignition off");BCMManager.current.onIgnitionChanged(true);check(com.veloster.dashboard.vehicle.js.JsDctClient.gate.open(),"DCT enabled when ignition on");c.stop();check(!com.veloster.dashboard.vehicle.js.JsDctClient.gate.open()&&com.veloster.dashboard.vehicle.js.JsDctClient.stops>0,"DCT gated and stopped");HscanDataClient.kind=HscanProfile.Kind.PD;}
+ public static void main(String[] a) throws Exception {missingAndCleanup();permissions();concurrentStop();ready();allCallbacks();delayedRear();delayedHscan();failedRegistration();failedCleanup();powerFailure();stopInvalidates();boundedRetry();unsupportedProfile();ignitionGate();dctLifecycle();System.out.println("PASS 14 vehicle subscription lifecycle scenarios");}
 }'''
 
 class VehicleDataClientTests(unittest.TestCase):
