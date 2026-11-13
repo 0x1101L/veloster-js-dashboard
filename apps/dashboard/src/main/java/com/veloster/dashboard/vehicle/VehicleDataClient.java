@@ -11,8 +11,9 @@ import com.hkmc.micom.VehicleInfoManager;
 import com.hkmc.pgs.PgsManager;
 import com.hkmc.pgs.PgsStatusListener;
 import com.veloster.dashboard.view.DashboardView;
+import com.veloster.dashboard.vehicle.js.JsDctClient;
 
-/** Passive framework subscriptions only. No drive-mode setters, stream commands or OEM app IPC. */
+/** Vehicle subscriptions and JS-only DCT temperature reads. */
 public final class VehicleDataClient implements Runnable {
     private final Context context;
     private final Handler handler=new Handler();
@@ -20,6 +21,7 @@ public final class VehicleDataClient implements Runnable {
     private volatile int generation;
     private int retryMs=2000;
     private volatile HscanDataClient hscan;
+    private JsDctClient dct;
     private NModeManager nmode;
     private VehicleInfoManager vehicle;
     private BCMManager power;
@@ -29,7 +31,12 @@ public final class VehicleDataClient implements Runnable {
     private volatile BCMPowerListener plistener;
     private volatile PgsStatusListener rlistener;
     public VehicleDataClient(Context context){this.context=context;}
-    public synchronized void start(){if(active)return;active=true;generation++;retryMs=2000;ignition=false;DashboardView.ignition(false);run();}
+    public synchronized void start(){if(active)return;active=true;generation++;retryMs=2000;ignition=false;DashboardView.ignition(false);
+        if(HscanDataClient.profile()==HscanProfile.Kind.JS){
+            if(dct==null)dct=new JsDctClient(new JsDctClient.Gate(){public boolean open(){return active&&ignition&&HscanDataClient.profile()==HscanProfile.Kind.JS;}});
+            dct.start();
+        }
+        run();}
     private boolean accepts(int token){return active&&token==generation&&ignition&&HscanDataClient.supportedProfile();}
     public synchronized void run(){
         if(!active)return;
@@ -89,6 +96,7 @@ public final class VehicleDataClient implements Runnable {
     }
     public synchronized void stop(){
         if(!active)return;active=false;generation++;handler.removeCallbacks(this);
+        if(dct!=null)dct.stop();
         if(hscan!=null){hscan.stop();hscan=null;}
         releaseNmode();releaseVehicle();releasePower();releaseRear();retryMs=2000;
     }
