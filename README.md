@@ -98,7 +98,7 @@ JS source now uses a separate copy of the PD decoder and separate JS rendering. 
 
 When a valid JS DCT gear is received, the display combines the selector mode and number, such as D1 or M1. The JS sequential signal mapping still needs vehicle verification.
 
-The JS overview has a DCT temperature card. The source supports one candidate TCU11 value on the left and paired values only when a matching two-value diagnostic response is supplied. No JS TCU11 HSCAN slot has been established, so the single-value CAN entry point has no live source. Diagnostic collection is disabled; values and scales require JS verification. The source also contains an `0x0a` battery-voltage candidate that requires vehicle comparison. These source changes are not in the previously distributed trial APK.
+The JS overview has a DCT temperature card. The source supports one candidate TCU11 value on the left and paired values only when a matching two-value diagnostic response is supplied. No JS TCU11 HSCAN slot has been established, so the single-value CAN entry point has no live source. The current source attempts a diagnostic request while JS ignition is on; actual transport, values and scales require JS verification. The source also contains an `0x0a` battery-voltage candidate that requires vehicle comparison. These source changes are not in the previously distributed trial APK.
 
 The JS overview RPM card uses the standard accent in Normal and Smart, red in Sport, and green in Eco. Unknown or expired drive mode returns to the standard accent.
 
@@ -130,3 +130,5 @@ The JS diagnostics CarPlay tab displays existing media broadcast status and curr
 CarPlay media diagnostic events are recorded without track or artist text. On JS, media observation remains active during Activity pause and stops on destruction; actual CarPlay background behavior remains unverified.
 
 The JS CarPlay tab includes an opt-in delayed screen access probe that does not store screen pixels. It tests capture availability, not navigation reception or HUD output. See [HUD research](docs/JS_HUD_RESEARCH.md).
+
+In the JS Wi-Fi · DCT diagnostic tab, hold the transmission row to select and store DCT or MT. The choice persists across ignition and app restarts and can be changed from the same row. Clearing app data or reinstalling may remove it. Before selection the displayed trial estimate is unverified. Existing diagnostic requests for temperature remain separate.

@@ -85,8 +85,10 @@ adb shell run-as com.veloster.dashboard cat files/diagnostics/hud-events.previou
 
 Dashboard의 진단 화면에서 `HUD · 내비` 옆 `CarPlay` 탭은 기존 OEM CarPlay 미디어 위젯 방송의 수신 횟수·경과와 현재 소스가 CarPlay일 때의 곡명·가수·재생 시간·전체 시간을 표시한다. 값이 제공되지 않으면 `—`다. 이것은 앱이 기존에 처리하던 미디어 데이터이며 CarPlay 연결이나 내비 데이터 수신의 증거가 아니다. 내비 방향·거리와 카메라 데이터는 수신 경로가 아직 확인되지 않아 미연결·미수신으로 표시한다. JS 미디어 receiver는 Activity 일시 중지 동안 유지하고 Activity 파괴 시 해제한다. 프로세스 종료나 Activity 파괴 후의 백그라운드 수신은 보장되지 않는다. 기기에서 이 수명주기는 아직 검증하지 않았다.
 
-## CarPlay 화면 접근 시험
+## CarPlay 화면 접근 시험 중단
 
-CarPlay 진단 탭의 `20초 뒤 CarPlay 화면 시험`을 누른 뒤 20초 이내에 CarPlay 화면으로 전환하면, 앱은 해당 시점에 전면 Activity가 `com.daudio.app.dipo`일 때 화면 캡처를 한 번 시도한다. 결과는 내부 `HUD_EVENT` 로그의 `carplay.screen.probe`에 남긴다. 화면 원본·주소·픽셀·내비 정보는 저장하지 않는다. 캡처됨은 Bitmap 반환만 뜻하며, CarPlay Surface 내용이 포함됐는지와 내비 데이터 인식은 별도 확인이 필요하다. 다른 앱이 전면이면 캡처하지 않는다. Activity 파괴·프로세스 종료 시 예약은 취소된다.
+사용자 결정에 따라 CarPlay 화면의 비트맵 반환·캡처 시험은 앞으로 수행하지 않는다. 이전 versionCode 16 시험은 Bitmap 반환만 확인했고 화면 내용과 내비 데이터는 확인하지 못했다. 현재 소스에서 해당 시험을 제거했으며 설치된 기존 APK에는 반영되지 않았다.
 
-이 시험은 JS 지정 빌드에서만 켜며 API17의 `Surface.screenshot`과 플랫폼 서명 기반 `READ_FRAME_BUFFER`, 전면 앱 확인용 `GET_TASKS`를 사용한다. 두 권한의 기기 부여 여부와 실제 CarPlay 전면 검사는 확인이 필요하다. 화면이 보안 레이어이거나 OS가 차단하면 실패 또는 빈 화면이 반환될 수 있다. 이 시험은 길 안내 또는 HUD 출력 기능이 아니다.
+## CarPlay 원시 기록 기반
+
+`CarPlayRawLog`는 검증된 수신원이 제공하는 원시 바이트를 앱 개인 파일에 기록하기 위한 독립 저장 클래스다. **현재 생성·호출하는 수신원이나 앱 제어 화면은 없다.** 따라서 이번 소스 변경만으로 파일이 만들어지거나 CarPlay 내비 데이터가 수신되지 않는다. 파일당 최대 1 MiB, 현재·이전 두 파일이며 단일 payload는 최대 16 KiB다. 초과 입력은 잘라 저장하지 않고 `too_large`를 반환한다. 실행·기록·실차 검증은 별도다. 실제 필드와 기록·추출 범위는 연결된 프로젝트의 진단 데이터 로직 정본을 따른다.
