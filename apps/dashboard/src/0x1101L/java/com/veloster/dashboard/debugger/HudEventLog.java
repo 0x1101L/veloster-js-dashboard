@@ -56,8 +56,6 @@ public final class HudEventLog {
     }
 
     private static String value(String name, String detail) {
-        if (name.equals("carplay.screen.probe"))
-            return detail.equals("armed") || detail.equals("captured") || detail.equals("wrong_foreground") || detail.equals("permission_denied") || detail.equals("unavailable") || detail.equals("error") ? detail : null;
         if (name.equals("carplay.media.playback"))
             return detail.equals("playing") || detail.equals("paused") ? detail : null;
         if (name.equals("carplay.media.mode"))
