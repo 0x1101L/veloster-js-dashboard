@@ -19,9 +19,11 @@ public class JsRetainedTelemetryTest {
         js.temperatures(new byte[]{(byte)100,(byte)121},64000);
         check(js.sample(2,64000).changed&&js.sample(2,64500).lastChangedAgeMs==500,"change clock");
         js.profile(false,true,false);js.units(new byte[]{2,70,0},65000);js.speed(25,65000);
-        check(js.sample(7,66999).valid&&!js.sample(7,67000).valid,"short fast expiry");
-        js.speed(511,67001);js.units(new byte[]{2,70,0},67002);
-        check(!js.sample(7,67002).valid,"unit packet cannot resurrect invalid speed");
+        check(js.sample(7,66999).valid&&!js.sample(7,67000).valid&&js.sample(7,67000).held&&js.sample(7,67000).value==25,"unchanged speed retained as held after expiry");
+        check(js.sample(7,900000).held,"unchanged speed remains displayed");
+        js.speed(26,900001);check(js.sample(7,900001).valid&&!js.sample(7,900001).held&&js.sample(7,900001).value==26,"new speed replaces held value");
+        js.speed(511,900002);js.units(new byte[]{2,70,0},900003);
+        check(!js.sample(7,900003).valid&&!js.sample(7,900003).held,"invalid speed is not displayed or resurrected by units");
         js.units(new byte[]{2,70,0},70000);
         byte[] tires=new byte[40];tires[22]=1;tires[29]=35;tires[31]=36;tires[33]=37;tires[35]=38;
         js.additional(tires,70000);

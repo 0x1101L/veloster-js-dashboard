@@ -46,6 +46,18 @@ public class PerformancePreview {
   Canvas stale=new Canvas(800,480);new JsPitRenderer().draw(stale,800,480,true,t,now+2000);
   check(stale.pixel(299,125)==0xff91a5ae,"expired mode uses neutral color");
  }
+ static void jsSpeedRetained(){
+  Telemetry t=new Telemetry();t.profile(false,true,false);t.units(new byte[]{2,60,0},1000);t.speed(60,1000);
+  for(int page=0;page<6;page++){
+   Canvas c=new Canvas(800,480);JsPitRenderer r=new JsPitRenderer();
+   if(page==1)r.setPerformancePage(true);
+   if(page==2){GaugeLayout g=new GaugeLayout();g.set(0,7,2);r.setGaugeLayout(g);}
+   if(page==3){GraphLayout g=new GraphLayout();g.signal(0,7);r.setGraphLayout(g);}
+   r.draw(c,800,480,page>=4,t,5000,6000,page==5,null);
+   check(c.texts.contains(page==3?"60 km/h":"60"),"held speed shown without prefix on page "+page+": "+c.texts);
+   for(String text:c.texts)check(!text.contains("LAST 4s 60"),"speed has no LAST prefix");
+  }
+ }
  static void jsRpmAccent(String folder)throws Exception{
   Telemetry t=new Telemetry();t.profile(false,true,false);
   int[][] cases={{0x10,0xffa4d9ef},{0x30,0xffff4059},{0x20,0xff70d991},{0x50,0xffa4d9ef},{0x30,0xffff4059},{0xff,0xffa4d9ef}};
@@ -145,7 +157,7 @@ public class PerformancePreview {
   gear(gearbox,0x1d,5,4350);gear(gearbox,0x1e,6,4400);jsGearPages(gearbox,4400,"D","6");
   jsDctOverview(args[0]);
   jsTransmissionTrial();
-  jsRpmAccent(args[0]);jsF1Modes();
+  jsRpmAccent(args[0]);jsF1Modes();jsSpeedRetained();
   System.out.println("PASS "+rendered+" performance renders and 4 existing page renders");
  }
 }'''

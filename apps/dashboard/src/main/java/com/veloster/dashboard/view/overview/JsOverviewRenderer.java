@@ -25,7 +25,7 @@ public final class JsOverviewRenderer {
     private String value(String prefix){int i=index(prefix);if(i<0||i>=samples.length||!(samples[i].valid||samples[i].held))return "—";
         if(i==8)return JsGearState.valueLabel((int)samples[i].value);
         if(Telemetry.jsTenthSignal(i))return (samples[i].held?"LAST "+samples[i].lastValidAgeMs/1000+"s ":"")+Telemetry.jsTenth(samples[i].value,i==11||i==12);
-        return (samples[i].held?"LAST "+samples[i].lastValidAgeMs/1000+"s ":"")+String.format(Locale.US,i==0||i==7||(i>=Telemetry.TPMS_FL&&i<=Telemetry.BAT_SOC)||i==Telemetry.STEERING_SPEED?"%.0f":i==11||i==12?"%+.2f":i==13?"%+.1f":i==17?"%.2f":"%.1f",Telemetry.displayValue(i,samples[i].value));}
+        return (samples[i].held&&i!=7?"LAST "+samples[i].lastValidAgeMs/1000+"s ":"")+String.format(Locale.US,i==0||i==7||(i>=Telemetry.TPMS_FL&&i<=Telemetry.BAT_SOC)||i==Telemetry.STEERING_SPEED?"%.0f":i==11||i==12?"%+.2f":i==13?"%+.1f":i==17?"%.2f":"%.1f",Telemetry.displayValue(i,samples[i].value));}
     private String gearTitle(String title){return title;}
     private void box(Canvas c,float l,float t,float r,float b,int color){paint.setColor(color);c.drawRect(l,t,r,b,paint);}
     private void panel(Canvas c,float x,float y,float w,float h,int fill,int edge){

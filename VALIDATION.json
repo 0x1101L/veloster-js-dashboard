@@ -507,5 +507,44 @@
     "actual_screen_capture_verified": false,
     "navigation_recognition_verified": false,
     "note": "ADB disconnected before button test."
+  },
+  "js_version_17_trial_validation": {
+    "apk": "apks/JS-Dashboard-build-20261114-154605.apk",
+    "sha256": "d752cc5a158e4b6169211030506e72b6f390c2d9b55f6ff487b2fa1b85938aaf",
+    "source_commit": "7efd4e0dfaf6101a6ecc0c760111850149dcfad6",
+    "build_time_kst": "2026-11-14 15:46:05",
+    "version_code": 17,
+    "host_validation": "74 Python tests and 20 synthetic Java host test programs passed; Java test runner source list fixed after initial compile failure. API17 V1 signer and zip alignment verified.",
+    "limitations": "JDK24 wrapper maps Java 7 source/target to 8; Java 7 compilation, installation, runtime and vehicle operation unverified.",
+    "device_observation": "2026-11-14 KST: installation and readback hash matched; Activity foreground; 414 JS_LOGGER rows. App speed 37–50 km/h conflicted with earlier parked confirmation; actual movement and accuracy unverified; further device work stopped."
+  },
+  "js_version_18_trial_validation": {
+    "apk": "apks/JS-Dashboard-build-20261114-165002.apk",
+    "sha256": "5d89478a0c25bf0d0b992b517215b03be8d4484280f2c78117bf3ed33cb079a1",
+    "source_commit": "7efd4e0dfaf6101a6ecc0c760111850149dcfad6",
+    "build_time_kst": "2026-11-14 16:50:02",
+    "version_code": 18,
+    "host_validation": "20 synthetic Java host programs, two renderer tests and 100 Java2D preview images; API17 V1 signer and alignment verified.",
+    "limitations": "JDK24 wrapper maps Java 7 source/target to 8; Java 7 compilation, installation and vehicle operation unverified.",
+    "device_observation": "Installed 2026-11-14 KST; versionCode 18 and APK readback hash match; DashboardActivity foreground. Physical display and mode changes unverified."
+  },
+  "js_version_19_trial_validation": {
+    "apk": "apks/JS-Dashboard-build-20261114-175037.apk",
+    "sha256": "b0c91997218043ba29e18472551bb2122b7751347197bf12f69564ab0525926a",
+    "source_commit": "41c7cb68e963f7ce871b6f557fa84038e2b468de",
+    "build_time_kst": "2026-11-14 17:50:37",
+    "version_code": 19,
+    "host_validation": "20 Java host programs and 2 renderer tests passed; API17 V1 signature and alignment verified.",
+    "device_observation": "install success, versionCode 19 and DashboardActivity foreground; device-side SHA256 and MD5 unavailable, exec-out closed; installed APK hash not verified.",
+    "limitations": "JDK24 wrapper maps Java 7 source/target to 8; Java 7 compilation, unchanged speed behavior and vehicle display unverified."
+  },
+  "js_version_20_trial_validation": {
+    "apk": "apks/JS-Dashboard-build-20261114-215121.apk",
+    "sha256": "7e13f8c19383496f01c7c9ee67bb7f167f82f89f94e62b98c2f2a135958d414a",
+    "source_commit": "41c7cb68e963f7ce871b6f557fa84038e2b468de",
+    "build_time_kst": "2026-11-14 21:51:21",
+    "version_code": 20,
+    "host_validation": "20 Java host programs and 2 renderer tests, including numeric speed on six JS pages; API17 V1 signature and alignment verified.",
+    "limitations": "JDK24 wrapper maps Java 7 source/target to 8; Java 7 compilation, installation and vehicle behavior unverified."
   }
 }

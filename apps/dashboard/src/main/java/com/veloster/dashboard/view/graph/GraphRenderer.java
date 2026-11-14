@@ -42,7 +42,7 @@ public final class GraphRenderer {
         boolean jsGear=signal==8&&model.jsProfile();
         String title=UiText.t(Telemetry.LABELS[signal]);
         text(c,title,30,top+20,15,BLUE);
-        String value=current.valid?(jsGear?Telemetry.gearLabel((int)current.value):(model.jsProfile()&&Telemetry.jsTenthSignal(signal)?Telemetry.jsTenth(current.value,true):number(signal,displayValue(signal,current.value,jsGear)))):"—";
+        String value=(current.valid||(model.jsProfile()&&signal==7&&current.held))?(jsGear?Telemetry.gearLabel((int)current.value):(model.jsProfile()&&Telemetry.jsTenthSignal(signal)?Telemetry.jsTenth(current.value,true):number(signal,displayValue(signal,current.value,jsGear)))):"—";
         text(c,value+" "+Telemetry.UNITS[signal],622,top+20,16,WHITE);
         Telemetry.Series series=model.history(signal,now,layout.window());
         float lo=Float.POSITIVE_INFINITY,hi=Float.NEGATIVE_INFINITY;
