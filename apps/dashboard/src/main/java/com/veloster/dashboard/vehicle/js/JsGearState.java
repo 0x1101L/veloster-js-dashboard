@@ -28,12 +28,13 @@ public final class JsGearState {
             this.updated=updated;this.valid=valid;this.value=value;this.time=time;
         }
     }
-    private boolean selectorSeen,currentSeen;
+    private boolean selectorSeen,currentSeen,manualModeObserved;
+    public boolean manualModeObserved(){return manualModeObserved;}
     private int selector=-1,current=-1;
     private long selectorTime,currentTime,selectorEpoch,lastReceived=-1;
 
     public void clear(){
-        selectorSeen=false;currentSeen=false;selector=-1;current=-1;
+        selectorSeen=false;currentSeen=false;manualModeObserved=false;selector=-1;current=-1;
         selectorTime=0;currentTime=0;selectorEpoch=0;lastReceived=-1;
     }
 
@@ -48,6 +49,7 @@ public final class JsGearState {
                 currentSeen=false;current=-1;selectorEpoch=now;
             }
             selector=raw;selectorTime=now;selectorSeen=true;
+            if(raw==4||raw==8||raw==12)manualModeObserved=true;
         }else{
             current=raw;currentTime=now;currentSeen=true;
         }

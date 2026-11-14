@@ -15,7 +15,7 @@ public final class JsLogger {
 
     public static void emit(long recordedMs,Telemetry telemetry,JsDiagState.Snapshot diagnostics){
         Telemetry.Sample[] samples=telemetry.snapshot(recordedMs);
-        for(int i=0;i<samples.length;i++)emitSignal(recordedMs,i,samples[i]);
+        for(int i=0;i<SIGNAL_NAMES.length&&i<samples.length;i++)emitSignal(recordedMs,i,samples[i]);
         java.util.HashSet<String> emitted=new java.util.HashSet<String>();
         for(String key:BINDING_NAMES){emitBinding(recordedMs,diagnostics,key);emitted.add(key);}
         for(String key:diagnostics.sourceNames()){

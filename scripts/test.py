@@ -35,6 +35,7 @@ def main():
     tests = sorted((ROOT / "tests").glob("*Test.java"))
     sources += [ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/HudEventLog.java", ROOT / "shared/src/com/veloster/diagnostics/ErrorLog.java", ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view/DashboardPage.java", ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/JsDiagState.java"]
     sources += [ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/JsLogger.java",
+                ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/CarPlayRawLog.java",
                 ROOT / "tests/java_stubs/android/util/Log.java", ROOT / "tests/JsLoggerTest.java"]
     sources += tests
     with tempfile.TemporaryDirectory(prefix="vn-public-tests-") as temporary:

@@ -84,6 +84,11 @@ public final class HscanFrameDecoderTest {
         check(jsCount[0]==14,"wrong drive mode length rejected");
         js.accept(mode,0,264,6);pd.accept(mode,0,264,6);decoder.accept(mode,0,264,6);
         check(jsCount[0]==15&&pdCount[0]==14&&count[0]==before,"eight-byte drive mode frame is JS only");
+        byte[] fuelTrial=frame(0x22,new byte[6]);
+        js.accept(fuelTrial,0,264,7);pd.accept(fuelTrial,0,264,7);decoder.accept(fuelTrial,0,264,7);
+        check(jsCount[0]==16&&pdCount[0]==14&&count[0]==before,"six-byte trial is JS only");
+        js.accept(frame(0x21,new byte[8]),0,264,8);
+        check(jsCount[0]==16,"old JS eight-byte candidate rejected");
         System.out.println("PASS " + checks + " synthetic HSCAN decoder checks");
     }
 }

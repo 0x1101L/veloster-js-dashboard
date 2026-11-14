@@ -22,9 +22,9 @@ public final class JsDiagnosticsRenderer {
     private JsDiagState.Snapshot diagnostic;
     private Telemetry.Sample[] samples;
     private MediaState.Snapshot media;
+    public boolean transmissionHit(float x,float y){return diagnosticTab==3&&x>=640&&x<=770&&y>=118&&y<=154;}
     public boolean select(float downX,float downY,float x,float y){int tab=diagnosticTabAt(x,y);if(tab<0||tab!=diagnosticTabAt(downX,downY))return false;diagnosticTab=tab;return true;}
     public void draw(Canvas c,Telemetry.Sample[] samples,JsDiagState.Snapshot diagnostic,Telemetry.DctTemperatures dct,MediaState.Snapshot media){this.samples=samples;this.diagnostic=diagnostic;this.media=media;drawDiagnostics(c,dct);}
-    public boolean isScreenProbeTap(float dx,float dy,float x,float y){return diagnosticTab==1&&dx>=423&&dx<=767&&x>=423&&x<=767&&dy>=338&&dy<=378&&y>=338&&y<=378;}
     private static int diagnosticTabAt(float x,float y){
         if(y<62||y>100)return -1;
         for(int i=0;i<5;i++){float left=18+i*154;if(x>=left&&x<=left+148)return i;}
@@ -77,11 +77,11 @@ public final class JsDiagnosticsRenderer {
         button(c,"Bindings",634,62,148,38,diagnosticTab==4,BLUE);
         if(diagnosticTab==1){drawCarPlay(c);return;}
         if(diagnosticTab==2){drawDiagnosticSignals(c);return;}
-        panel(c,18,112,373,316,PANEL,LINE);panel(c,409,112,373,316,PANEL,LINE);
         if(diagnosticTab==3){drawDiagnosticWifi(c,dct);return;}
+        panel(c,18,112,373,316,PANEL,LINE);panel(c,409,112,373,316,PANEL,LINE);
         if(diagnosticTab==4){drawBindings(c);return;}
         text(c,UiText.t("내비 수신"),32,138,16,BLUE,true);
-        text(c,UiText.t("서비스 · 확인 범위"),423,138,16,BLUE,true);
+        text(c,UiText.t("HUD 정보"),423,138,16,BLUE,true);
         String source=UiText.t(diagnostic.routeSource==1?"초기 sticky":diagnostic.routeSource==0?"방송 수신":"미확인");
         String[] labels={"경로 방송 관찰","경로 방송값","방송 종류","정수 수신 횟수","마지막 방송 경과","잘못된 방송 횟수","방송 오류","내비 관찰","내비 상태값","정수 조회 횟수","변경 알림 횟수","조회 / 알림 경과","내비 오류"};
         String[] values={observerState(diagnostic.routeWatch),diagnostic.routeNotice==1?String.valueOf(diagnostic.routeValue):UiText.t(diagnostic.routeNotice==0?"대기 중":"미확인"),
@@ -89,11 +89,9 @@ public final class JsDiagnosticsRenderer {
             observerState(diagnostic.nav),diagnostic.navValueKnown?String.valueOf(diagnostic.navValue):UiText.t("미확인"),String.valueOf(diagnostic.navQueryCount),
             String.valueOf(diagnostic.navNoticeCount),diagAge(diagnostic.navAgeMs)+" / "+diagAge(diagnostic.navNoticeAgeMs),diagnostic.navDetachFailed?UiText.t("해제 실패"):diagError(diagnostic.navError)};
         for(int i=0;i<labels.length;i++)diagRow(c,18,160+i*20,labels[i],values[i]);
-        String[] checks={"클러스터 API","클러스터 서비스","TBT 메서드","MICOM 서비스","HSCAN 소켓","HUD 장착","방향 · 거리 수신","HUD 출력"};
-        String[] states={observed(diagnostic.cluster,"클래스 확인","조회 실패"),serviceState(diagnostic.clusterService),observed(diagnostic.tbt,"메서드 확인","조회 실패"),
-            serviceState(diagnostic.micom),diagnostic.hscan==2?UiText.t("연결 실패"):observed(diagnostic.hscan,"연결됨","연결 안 됨"),UiText.t("사용자 확인"),UiText.t("미검증"),UiText.t("미검증")};
-        for(int i=0;i<checks.length;i++)diagRow(c,409,162+i*28,checks[i],states[i]);
-        fitted(c,UiText.t("서비스 표시는 앱 시작 시 조회 결과"),423,399,13,344,MUTED);
+        String[] checks={"HUD 장착","방향 · 거리 수신","HUD 출력"};
+        String[] states={UiText.t("사용자 확인"),UiText.t("미검증"),UiText.t("미검증")};
+        for(int i=0;i<checks.length;i++)diagRow(c,409,170+i*36,checks[i],states[i]);
         diagNote(c,"경로 변경 전후의 정수값과 수신 횟수를 대조하세요.",448);
         diagNote(c,"경과는 앱 수신 이후 시간입니다. sticky 원 발신 시각은 미확인입니다.",468);
     }
@@ -103,15 +101,6 @@ public final class JsDiagnosticsRenderer {
         if("permission denied".equals(status))return UiText.t("권한 오류");
         if("error".equals(status))return UiText.t("조회 실패");
         return UiText.t("미확인");
-    }
-    private String screenProbeState(String state){
-        if("armed".equals(state))return UiText.t("대기 중");
-        if("captured".equals(state))return UiText.t("캡처됨 · 내용 미확인");
-        if("wrong_foreground".equals(state))return UiText.t("CarPlay 화면 아님");
-        if("permission_denied".equals(state))return UiText.t("권한 오류");
-        if("unavailable".equals(state))return UiText.t("사용 불가");
-        if("error".equals(state))return UiText.t("조회 실패");
-        return UiText.t("미실시");
     }
     private void drawCarPlay(Canvas c){
         panel(c,18,112,373,316,PANEL,LINE);panel(c,409,112,373,316,PANEL,LINE);
@@ -130,15 +119,12 @@ public final class JsDiagnosticsRenderer {
         diagRow(c,409,202,"방향 · 거리 수신",UiText.t("미수신"));
         diagRow(c,409,234,"카메라 정보",UiText.t("미수신"));
         fitted(c,UiText.t("미디어 방송과 내비 입력은 별도입니다."),423,285,13,344,MUTED);
-        diagRow(c,409,318,"화면 시험",screenProbeState(diagnostic.screenProbe));
-        button(c,UiText.t("20초 뒤 CarPlay 화면 시험"),423,338,344,40,false,BLUE);
         diagNote(c,"곡 정보는 CarPlay가 현재 소스일 때 표시합니다.",448);
         diagNote(c,"내비 입력 경로는 아직 확인되지 않았습니다.",468);
     }
     private void drawDiagnosticSignals(Canvas c){
         panel(c,18,112,764,316,PANEL,LINE);
         text(c,UiText.t("신호별 수신 · 유효성"),32,138,16,BLUE,true);
-        text(c,"HSCAN: "+(diagnostic.hscan==2?UiText.t("연결 실패"):observed(diagnostic.hscan,"연결됨","연결 안 됨")),575,138,14,MUTED,false);
         String[] headers={"신호","상태","현재 / 보관값","수신 횟수","수신 / 유효 경과"};
         float[] positions={32,190,302,510,610};
         for(int i=0;i<headers.length;i++)text(c,UiText.t(headers[i]),positions[i],163,13,MUTED,false);
@@ -156,30 +142,42 @@ public final class JsDiagnosticsRenderer {
         diagNote(c,"유효·무효는 디코더 판정입니다. 배터리 전압·가속도는 실차 대조가 필요합니다.",448);
         diagNote(c,"신호 횟수는 시동 경계에서 초기화됩니다. 보관값은 현재 실측값이 아닙니다.",468);
     }
+    private String connectionState(String status){
+        if("registered".equals(status)||"connected".equals(status))return UiText.t("연결됨");
+        if("unknown".equals(status)||"connecting".equals(status))return "—";
+        return UiText.t("연결 안 됨");
+    }
+    private String serviceAvailability(int state){
+        return state<0?"—":UiText.t(state==1?"연결 상태 미확인":"연결 안 됨");
+    }
     private void drawBindings(Canvas c){
-        String[] names={"bcm","nmode","speed","pgs","hscan","media","media.mode","media.0","media.1","media.2","media.3","media.4"};
-        for(int i=0;i<names.length;i++){
-            JsDiagState.SourceSnapshot item=diagnostic.source(names[i]);
-            float x=i<6?18:409,y=155+(i%6)*43;
-            diagRow(c,x,y,names[i],item.status+" / "+item.count+" / "+diagAge(item.ageMs)+(names[i].startsWith("media.")?" / "+item.processed+" / "+item.invalid:""));
-        }
-        fitted(c,"status / callbacks / age / processed / errors",32,414,13,736,MUTED);
+        text(c,UiText.t("차량 연결"),32,138,16,BLUE,true);
+        text(c,UiText.t("서비스"),423,138,16,BLUE,true);
+        String[] keys={"bcm","nmode","speed","pgs","hscan","media"};
+        String[] names={"BCM","N Mode","속도","후방 카메라","HSCAN","미디어"};
+        for(int i=0;i<keys.length;i++)diagRow(c,18,170+i*36,names[i],connectionState(diagnostic.source(keys[i]).status));
+        diagRow(c,409,170,"DCT 서비스",connectionState(diagnostic.dctService));
+        diagRow(c,409,206,"Wi-Fi 서비스",serviceAvailability(diagnostic.wifiService));
+        diagRow(c,409,242,"클러스터 서비스",serviceAvailability(diagnostic.clusterService));
+        diagRow(c,409,278,"MICOM 서비스",serviceAvailability(diagnostic.micom));
     }
     private void drawDiagnosticWifi(Canvas c,Telemetry.DctTemperatures dct){
+        panel(c,18,112,373,316,PANEL,LINE);
+        panel(c,409,112,373,150,PANEL,LINE);
+        panel(c,409,272,373,156,PANEL,LINE);
         text(c,UiText.t("Wi-Fi 관찰"),32,138,16,BLUE,true);
-        text(c,UiText.t("DCT · 수신 경로"),423,138,16,BLUE,true);
-        String[] labels={"Wi-Fi 기능","Wi-Fi 서비스","Wi-Fi 상태","Wi-Fi 알림","Wi-Fi 모듈"};
-        String[] states={observed(diagnostic.wifiFeature,"선언됨","선언 안 됨"),observed(diagnostic.wifiService,"서비스 확인","없음/접근 불가"),
-            wifiRadio(diagnostic.wifiState),observed(diagnostic.wifiWatch,"등록됨","미등록"),UiText.t("미검증")};
+        text(c,UiText.t("변속기 정보"),423,138,16,BLUE,true);
+        button(c,UiText.t("변속기 설정"),640,118,130,36,false,BLUE);
+        String[] labels={"Wi-Fi 기능","Wi-Fi 상태","Wi-Fi 알림","Wi-Fi 모듈"};
+        String[] states={observed(diagnostic.wifiFeature,"선언됨","선언 안 됨"),wifiRadio(diagnostic.wifiState),observed(diagnostic.wifiWatch,"등록됨","미등록"),UiText.t("미검증")};
         for(int i=0;i<labels.length;i++)diagRow(c,18,170+i*36,labels[i],states[i]);
-        diagRow(c,409,170,"DCT 온도",dctValue(dct));
-        diagRow(c,409,206,"실차 수신 경로",UiText.t("미연결"));
-        diagRow(c,409,242,"클러치 수명",UiText.t("미검증"));
-        diagRow(c,409,278,"차량 속도",diagnosticSample(7," km/h",false));
-        fitted(c,UiText.t("응답 해석만 구현 · 자동 진단 요청 없음"),423,329,13,344,MUTED);
+        diagRow(c,409,170,"변속기 종류",dct.transmissionSetting==1?"DCT":dct.transmissionSetting==2?"MT":dct.dctEstimate?"DCT (test)":"MT (test)");
+        diagRow(c,409,201,"DCT 온도",dctValue(dct));
+        diagRow(c,409,232,"클러치 수명",UiText.t("미검증"));
+        text(c,UiText.t("차량 정보"),423,297,16,BLUE,true);
+        diagRow(c,409,357,"차량 속도",diagnosticSample(7," km/h",false));
         fitted(c,UiText.t("Wi-Fi 켜짐은 통신 모듈 검증과 별개"),32,384,13,344,MUTED);
-        diagNote(c,"Wi-Fi 상태 변경을 대조하세요. DCT는 실제 수신 경로 확인이 남아 있습니다.",448);
-        diagNote(c,"진단 화면의 탭 전환은 차량 요청이나 송신을 실행하지 않습니다.",468);
+
     }
     private void text(Canvas c,String s,float x,float y,float size,int color,boolean bold){
         paint.setColor(color);paint.setTextSize(size);paint.setTypeface(bold?Typeface.DEFAULT_BOLD:Typeface.DEFAULT);c.drawText(s,x,y,paint);

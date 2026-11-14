@@ -10,6 +10,10 @@ public class AdditionalTelemetryTest {
     static void begin(Telemetry t){t.beginComputed(4000,50,50,500,PRE,AMP);}
     static void result(Telemetry t){t.computed(POWER,125,BOOST);}
     public static void main(String[] args){
+        check(Telemetry.jsTenth(1.29f,false).equals("1.2"),"positive tenth truncates");
+        check(Telemetry.jsTenth(-1.29f,true).equals("-1.2"),"negative tenth truncates toward zero");
+        check(Telemetry.jsTenth(0.7f,true).equals("+0.7"),"exact decimal boundary retained");
+        check(Telemetry.jsTenth(-0.09f,true).equals("+0.0"),"small negative displays zero");
         Telemetry t=new Telemetry();byte[] additional=new byte[40];additional[20]=(byte)255;additional[21]=121;
         t.additional(additional,1000);check(near(t.sample(Telemetry.STEERING,1000).value,-13.5f),"retained packet signed steering angle");
         additional[21]=120;t.additional(additional,1100);check(near(t.sample(Telemetry.STEERING,1100).value,-13.6f),"negative steering change");

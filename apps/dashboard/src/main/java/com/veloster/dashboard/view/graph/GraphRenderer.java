@@ -42,7 +42,7 @@ public final class GraphRenderer {
         boolean jsGear=signal==8&&model.jsProfile();
         String title=UiText.t(Telemetry.LABELS[signal]);
         text(c,title,30,top+20,15,BLUE);
-        String value=current.valid?(jsGear?Telemetry.gearLabel((int)current.value):number(signal,displayValue(signal,current.value,jsGear))):"—";
+        String value=current.valid?(jsGear?Telemetry.gearLabel((int)current.value):(model.jsProfile()&&Telemetry.jsTenthSignal(signal)?Telemetry.jsTenth(current.value,true):number(signal,displayValue(signal,current.value,jsGear)))):"—";
         text(c,value+" "+Telemetry.UNITS[signal],622,top+20,16,WHITE);
         Telemetry.Series series=model.history(signal,now,layout.window());
         float lo=Float.POSITIVE_INFINITY,hi=Float.NEGATIVE_INFINITY;
@@ -50,7 +50,7 @@ public final class GraphRenderer {
         if(lo==Float.POSITIVE_INFINITY){lo=GaugeRenderer.min(signal,Telemetry.UNITS[signal]);hi=GaugeRenderer.max(signal,Telemetry.UNITS[signal]);}
         else{if(signal==Telemetry.STEERING||signal==11||signal==12){lo=Math.min(lo,0);hi=Math.max(hi,0);}float pad=Math.max(span(signal)/2,(hi-lo)*0.12f);lo-=pad;hi+=pad;}
         final float left=82,right=766,plotTop=top+30,bottom=top+103;
-        for(int row=0;row<=2;row++){float y=plotTop+(bottom-plotTop)*row/2;line(c,left,y,right,y,LINE);text(c,number(signal,hi-(hi-lo)*row/2),27,y+4,10,MUTED);}
+        for(int row=0;row<=2;row++){float y=plotTop+(bottom-plotTop)*row/2;line(c,left,y,right,y,LINE);text(c,model.jsProfile()&&Telemetry.jsTenthSignal(signal)?Telemetry.jsTenth(hi-(hi-lo)*row/2,true):number(signal,hi-(hi-lo)*row/2),27,y+4,10,MUTED);}
         text(c,layout.window()==60000?UiText.t("−1분"):UiText.t("−5분"),left,top+117,10,MUTED);text(c,layout.window()==60000?UiText.t("−30초"):UiText.t("−2분30초"),392,top+117,10,MUTED);text(c,UiText.t("지금"),740,top+117,10,MUTED);
         if(lo<0&&hi>0)line(c,left,bottom-(0-lo)/(hi-lo)*(bottom-plotTop),right,bottom-(0-lo)/(hi-lo)*(bottom-plotTop),0xff49616c);
         path.reset();boolean connected=false;long previous=0;

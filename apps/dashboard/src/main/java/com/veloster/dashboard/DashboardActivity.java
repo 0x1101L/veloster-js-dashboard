@@ -6,7 +6,6 @@ import com.veloster.dashboard.vehicle.VehicleDataClient;
 
 import com.veloster.dashboard.debugger.JsHudProbe;
 import com.veloster.dashboard.debugger.HudEventLog;
-import com.veloster.dashboard.debugger.CarPlayScreenProbe;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -22,14 +21,13 @@ import com.veloster.dashboard.view.DashboardView;
 import com.veloster.i18n.LanguageSettings;
 
 /** Own package, own task and own data subscriptions. Never starts the OEM NMode app. */
-public final class DashboardActivity extends Activity implements DashboardView.ScreenProbeStarter {
+public final class DashboardActivity extends Activity {
     private VehicleDataClient client;
     private JsHudProbe hudProbe;
     private boolean wifiWatching,jsProfile;
     private android.os.HandlerThread hudLogThread;
     private volatile android.os.Handler hudLogHandler;
     private HudEventLog hudLog;
-    private volatile int screenProbeGeneration;
     private final BroadcastReceiver wifiReceiver=new BroadcastReceiver(){
         public void onReceive(Context context,Intent intent){refreshWifi();}
     };
@@ -69,17 +67,6 @@ public final class DashboardActivity extends Activity implements DashboardView.S
         if(handler!=null&&log!=null&&HudEventLog.accepts(name,detail))
             handler.post(new Runnable(){public void run(){if(!log.record(time,name,detail))android.util.Log.e("HudEventLog","Private event log write failed");}});
     }
-    public void startCarPlayScreenProbe(){
-        if(!jsProfile||hudLogHandler==null)return;
-        final int generation=++screenProbeGeneration;
-        DashboardView.diagEvent("carplay.screen.probe","armed");recordHudEvent("carplay.screen.probe","armed");
-        final Context context=getApplicationContext();
-        hudLogHandler.postDelayed(new Runnable(){public void run(){
-            if(generation!=screenProbeGeneration)return;
-            String result=CarPlayScreenProbe.run(context);
-            DashboardView.diagEvent("carplay.screen.probe",result);recordHudEvent("carplay.screen.probe",result);
-        }},20000);
-    }
     private void refreshWifi(){
         int feature=-1,service=-1,state=-1;
         try{feature=getPackageManager().hasSystemFeature("android.hardware.wifi")?1:0;}catch(RuntimeException ignored){}
@@ -95,7 +82,7 @@ public final class DashboardActivity extends Activity implements DashboardView.S
     private void stopWifiObserver(){if(wifiWatching){try{unregisterReceiver(wifiReceiver);}catch(RuntimeException ignored){}wifiWatching=false;}}
     protected void onPause(){stopWifiObserver();
         if(hudProbe!=null)hudProbe.close();client.stop();DashboardView.pauseStandalone(this);super.onPause();}
-    protected void onDestroy(){screenProbeGeneration++;stopWifiObserver();if(hudProbe!=null)hudProbe.close();if(client!=null)client.stop();if(jsProfile){DashboardView.stopStandaloneMedia(this);DashboardView.setDiagnosticEventSink(null);}if(hudLogThread!=null){final android.os.HandlerThread thread=hudLogThread;
+    protected void onDestroy(){stopWifiObserver();if(hudProbe!=null)hudProbe.close();if(client!=null)client.stop();if(jsProfile){DashboardView.stopStandaloneMedia(this);DashboardView.setDiagnosticEventSink(null);}if(hudLogThread!=null){final android.os.HandlerThread thread=hudLogThread;
             if(hudLogHandler==null||!hudLogHandler.post(new Runnable(){public void run(){thread.quit();}}))thread.quit();
             hudLogThread=null;hudLogHandler=null;}super.onDestroy();}
 }

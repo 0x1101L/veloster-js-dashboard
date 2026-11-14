@@ -59,7 +59,7 @@ final class HscanFrameDecoder {
                         ||function==0x0d||function==0x13||function==0x14||function==0x1d||function==0x1e
                         ||(profile==HscanProfile.Kind.JS&&function==0x04)))
                     ||((function==2||function==0x1c)&&size==4)||(function==0x19&&size==5)
-                    ||(function==0x20&&size==6);
+                    ||((function==0x20||(profile==HscanProfile.Kind.JS&&function==0x22))&&size==6);
             }else{
                 accepted=((function==7||function==0x23||function==0x5a||function==0x6e)&&size==8)
                     ||(function==0x53&&size==5);

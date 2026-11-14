@@ -1,6 +1,7 @@
 package com.veloster.dashboard.view;
 
 import com.veloster.dashboard.vehicle.*;
+import com.veloster.dashboard.vehicle.js.JsTransmissionSetting;
 import com.veloster.dashboard.debugger.JsDiagState;
 import com.veloster.dashboard.debugger.JsLogger;
 
@@ -30,6 +31,7 @@ public final class DashboardView extends View implements Runnable {
     private static final JsDiagState DIAG=new JsDiagState();
     private static WeakReference<DashboardView> current=new WeakReference<DashboardView>(null);
     private final Activity activity;
+    private final JsTransmissionSetting transmissionSetting;
     private final PitRenderer renderer=new PitRenderer();
     private final JsPitRenderer jsRenderer=new JsPitRenderer();
     private final MediaState mediaState=new MediaState();
@@ -59,7 +61,7 @@ public final class DashboardView extends View implements Runnable {
             if(slot>=0){touching=false;if(pageState.is(DashboardPage.GRAPHS))graphEditor.edit(slot);else gaugeEditor.edit(slot);}
         }
     }};
-    private DashboardView(Activity a) { super(a); activity=a; artwork=new ArtworkLoader(a,this);
+    private DashboardView(Activity a) { super(a); activity=a; transmissionSetting=new JsTransmissionSetting(a);DATA.jsTransmissionSetting(transmissionSetting.get()); artwork=new ArtworkLoader(a,this);
         gaugeEditor=new GaugeEditor(a,gaugeLayout,new Runnable(){public void run(){invalidate();}});
         graphEditor=new GraphEditor(a,graphLayout,new Runnable(){public void run(){invalidate();}});
         for(int i=0;i<Telemetry.LABELS.length;i++)try{
@@ -152,7 +154,6 @@ public final class DashboardView extends View implements Runnable {
     }
     public static void ignition(boolean on) { DATA.clear(); }
     public static void profile(boolean pd,boolean js,boolean jsn){DATA.profile(pd,js,jsn);}
-    public interface ScreenProbeStarter { void startCarPlayScreenProbe(); }
     public interface DiagnosticEventSink { void event(String name,String detail); }
     private static volatile DiagnosticEventSink diagnosticEventSink;
     public static void setDiagnosticEventSink(DiagnosticEventSink sink){diagnosticEventSink=sink;}
@@ -243,8 +244,10 @@ public final class DashboardView extends View implements Runnable {
         boolean tap=touching && Math.abs(x-downX)<16 && Math.abs(y-downY)<16;
         touching=false;
         if(standalone&&tap&&x>=666&&x<=782&&downX>=666&&downX<=782&&y>=8&&y<=46&&downY>=8&&downY<=46){activity.finish();return true;}
-        if(tap&&!blocked&&pageState.is(DashboardPage.DIAG)&&jsRenderer.isScreenProbeTap(downX,downY,x,y)&&activity instanceof ScreenProbeStarter){((ScreenProbeStarter)activity).startCarPlayScreenProbe();invalidate();return true;}
         if(tap&&!blocked&&pageState.is(DashboardPage.DIAG)&&jsRenderer.selectDiagnosticTab(downX,downY,x,y)){invalidate();return true;}
+        if(tap&&!blocked&&DATA.jsProfile()&&pageState.is(DashboardPage.DIAG)&&jsRenderer.transmissionHit(downX,downY)&&jsRenderer.transmissionHit(x,y)){
+            transmissionSetting.show(new Runnable(){public void run(){DATA.jsTransmissionSetting(transmissionSetting.get());invalidate();}});return true;
+        }
         if(tap&&!blocked&&!pageState.is(DashboardPage.DIAG)&&!pageState.is(DashboardPage.PERFORMANCE)&&!pageState.is(DashboardPage.F1)&&!pageState.is(DashboardPage.GAUGES)&&!pageState.is(DashboardPage.GRAPHS)&&overviewDown>=0&&overviewLayout.hit(x,y)==overviewDown&&!overviewCovered(y)){
             if(OverviewLayout.dctCard(overviewDown,DATA.jsProfile()))return true;
             overviewLayout.cycle(overviewDown);

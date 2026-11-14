@@ -8,7 +8,7 @@ from graphics_test_support import GRAPHICS
 from test_quick_entry_runtime import java_tools
 
 ROOT = Path(__file__).resolve().parents[1]
-UI_SOURCES = ('ArtworkLoader', 'ClusterRenderer', 'DashboardPage', 'GaugeEditor', 'GaugeLayout', 'GaugeRenderer', 'GraphEditor', 'GraphLayout', 'GraphRenderer', 'JsDiagnosticsRenderer', 'JsGaugeRenderer', 'JsOverviewRenderer', 'JsPerformanceRenderer', 'JsPitRenderer', 'OverviewLayout', 'OverviewRenderer', 'PerformanceRenderer', 'PitRenderer', 'DashboardView')
+UI_SOURCES = ('ArtworkLoader', 'ClusterRenderer', 'JsClusterRenderer', 'DashboardPage', 'GaugeEditor', 'GaugeLayout', 'GaugeRenderer', 'GraphEditor', 'GraphLayout', 'GraphRenderer', 'JsDiagnosticsRenderer', 'JsGaugeRenderer', 'JsOverviewRenderer', 'JsPerformanceRenderer', 'JsPitRenderer', 'OverviewLayout', 'OverviewRenderer', 'PerformanceRenderer', 'PitRenderer', 'DashboardView')
 HARNESS = '''import com.veloster.dashboard.vehicle.*;
 import com.veloster.dashboard.view.*;
 import com.veloster.dashboard.view.performance.*;
@@ -39,6 +39,7 @@ public class JsDiagnosticsPreview {
  static JsDiagState observations(String state){
   JsDiagState d=new JsDiagState();
   if(state.equals("waiting"))return d;
+  d.event("dct.service",state.equals("received")?"connected":state.equals("invalid")?"error":"stopped",1000);
   d.event("navigation.route.starting","start");d.event("navigation.route.source","sticky");d.event("navigation.route_state","3",1000);
   d.event("navigation.route.observer","registered");d.event("navigation.observer","registered");
   d.event("navigation.state_destination","-1",1300);d.event("navigation.notification","notice",1500);
@@ -56,7 +57,6 @@ public class JsDiagnosticsPreview {
     JsPitRenderer r=new JsPitRenderer();r.setDiagnosticPage(true,d.snapshot(now));
     check(r.selectDiagnosticTab(40+tab*154,80,40+tab*154,80),"tab selected");
     check(!r.selectDiagnosticTab(40,80,200,80)&&!r.selectDiagnosticTab(40,50,40,80),"cross-tab drag and header press rejected");
-    check(r.isScreenProbeTap(500,350,500,350)==(tab==1),"screen probe only on CarPlay tab");
     MediaState media=new MediaState();
     if(!state.equals("waiting")){media.mode(0x73);media.update(3,true,"Example Track",true,"Example Artist",true,12000,true,180000,false,1000);}
     Canvas c=new Canvas(800,height);r.draw(c,800,height,false,t,now,ShiftGuide.DEFAULT,false,media.snapshot(now));
@@ -65,7 +65,7 @@ public class JsDiagnosticsPreview {
      if(language.equals("en"))check(!text.matches(".*[가-힣].*"),"English catalog: "+text);
     }
     if(tab==0){
-     check(c.texts.contains(UiText.t("내비 수신"))&&c.texts.contains(UiText.t("서비스 · 확인 범위")),"navigation and service evidence separated");
+     check(c.texts.contains(UiText.t("내비 수신"))&&c.texts.contains(UiText.t("HUD 정보")),"navigation and service evidence separated");
      if(state.equals("received"))check(c.texts.contains(UiText.t("초기 sticky"))&&c.texts.contains("-1")&&c.texts.contains("1.0s"),"sticky source, negative raw provider and app reception age");
      if(state.equals("invalid"))check(c.texts.contains(UiText.t("형식 오류"))&&c.texts.contains(UiText.t("권한 오류")),"failure reason retained");
     }else if(tab==1){
@@ -80,14 +80,28 @@ public class JsDiagnosticsPreview {
      if(state.equals("held"))check(c.texts.contains("14.20 V")&&c.texts.contains("0.0s / 1.0s")&&t.sample(Telemetry.BAT_VOLTAGE,now).receivedCount==2,"held value keeps separate reception and valid ages");
      if(state.equals("expired"))check(!c.texts.contains("14.20 V"),"expired battery value hidden");
     }else if(tab==4){
-     check(c.texts.contains("bcm")&&c.texts.contains("media.4"),"binding sources rendered");
-     if(!state.equals("waiting"))check(c.texts.contains("registered / 1 / 0.5s")||state.equals("expired"),"binding status and reception age rendered");
+     check(c.texts.contains("BCM")&&c.texts.contains(UiText.t("DCT 서비스")),"connection sources rendered");
+     if(!state.equals("waiting"))check(c.texts.contains(UiText.t("연결 상태 미확인")),"service presence does not claim connection");
+     check(c.texts.contains(state.equals("received")?UiText.t("연결됨"):state.equals("waiting")?"—":UiText.t("연결 안 됨")),"connection state rendered");
     }else{
-     check(c.texts.contains(UiText.t("미연결"))&&c.texts.contains(UiText.t("응답 해석만 구현 · 자동 진단 요청 없음")),"DCT transport boundary explicit");
+     check(c.texts.contains(UiText.t("변속기 정보"))&&c.texts.contains(UiText.t("차량 정보"))&&c.texts.contains(UiText.t("변속기 종류"))&&c.texts.contains(UiText.t("변속기 설정"))&&c.texts.contains("MT (test)"),"separate transmission and receive panels");
      if(!state.equals("waiting"))check(c.texts.contains(UiText.t("꺼짐")),"Wi-Fi state 1 means disabled");
     }
     c.write(args[0]+"/diag-"+language+"-"+height+"-"+state+"-"+tab+".png");rendered++;
    }
+  Telemetry chosen=fixture("waiting");chosen.jsTransmissionSetting(1);chosen.clear();
+  check(chosen.dctTemperatures(1).transmissionSetting==1,"DCT choice survives ignition clear");
+  chosen.jsTransmissionSetting(2);check(chosen.dctTemperatures(1).transmissionSetting==2,"MT choice replaces DCT");
+  chosen.jsTransmissionSetting(99);check(chosen.dctTemperatures(1).transmissionSetting==0,"invalid choice becomes unknown");
+  for(int kind=1;kind<=2;kind++){
+   Telemetry selected=fixture("waiting");selected.jsTransmissionSetting(kind);selected.clear();
+   JsPitRenderer sr=new JsPitRenderer();sr.setDiagnosticPage(true,observations("waiting").snapshot(1000));sr.selectDiagnosticTab(500,80,500,80);
+   Canvas sc=new Canvas(800,480);sr.draw(sc,800,480,false,selected,1000,ShiftGuide.DEFAULT,false,new MediaState().snapshot(1000));
+   check(sc.texts.contains(kind==1?"DCT":"MT"),"saved transmission displayed");
+   check(!sc.texts.contains("MT (test)")&&!sc.texts.contains("DCT (test)"),"stored selection overrides trial");
+  }
+  JsPitRenderer hit=new JsPitRenderer();check(!hit.transmissionHit(756,137),"settings requires Wi-Fi DCT tab");
+  hit.selectDiagnosticTab(500,80,500,80);check(hit.transmissionHit(756,137)&&!hit.transmissionHit(450,170),"settings hit restricted to button");
   Telemetry t=fixture("held");long before=t.sample(Telemetry.BAT_VOLTAGE,2000).receivedCount;
   t.snapshot(9000);check(t.sample(Telemetry.BAT_VOLTAGE,9000).receivedCount==before,"redraw cannot simulate new reception");
   t.clear();check(t.sample(Telemetry.BAT_VOLTAGE,10000).receivedCount==0&&!t.sample(Telemetry.BAT_VOLTAGE,10000).seen,"ignition clears reception evidence");
@@ -117,10 +131,10 @@ def render(folder):
         harness.write_text(HARNESS)
         sources.append(harness)
         names = ("Telemetry", "PdPowertrain", "PdGearState", "JsPowertrain", "JsGearState",
-                 "JsTelemetryDecoder", "JsDiagState", "JsPitRenderer", "ClusterRenderer", "JsOverviewRenderer", "JsDiagnosticsRenderer", "JsGaugeRenderer",
+                 "JsTelemetryDecoder", "JsDiagState", "JsPitRenderer", "ClusterRenderer", "JsClusterRenderer", "JsOverviewRenderer", "JsDiagnosticsRenderer", "JsGaugeRenderer",
                  "JsPerformanceRenderer", "DashboardPage", "ShiftGuide", "MediaState",
                  "GaugeLayout", "GaugeRenderer", "OverviewLayout", "GraphLayout", "GraphRenderer")
-        groups = {'OverviewLayout': 'overview', 'OverviewRenderer': 'overview', 'JsOverviewRenderer': 'overview', 'GaugeEditor': 'gauge', 'GaugeLayout': 'gauge', 'GaugeRenderer': 'gauge', 'JsGaugeRenderer': 'gauge', 'GraphEditor': 'graph', 'GraphLayout': 'graph', 'GraphRenderer': 'graph', 'ClusterRenderer': 'cluster', 'JsDiagnosticsRenderer': 'diagnostics', 'PerformanceRenderer': 'performance', 'JsPerformanceRenderer': 'performance'}
+        groups = {'OverviewLayout': 'overview', 'OverviewRenderer': 'overview', 'JsOverviewRenderer': 'overview', 'GaugeEditor': 'gauge', 'GaugeLayout': 'gauge', 'GaugeRenderer': 'gauge', 'JsGaugeRenderer': 'gauge', 'GraphEditor': 'graph', 'GraphLayout': 'graph', 'GraphRenderer': 'graph', 'ClusterRenderer': 'cluster', 'JsClusterRenderer': 'cluster', 'JsDiagnosticsRenderer': 'diagnostics', 'PerformanceRenderer': 'performance', 'JsPerformanceRenderer': 'performance'}
         def source_path(name):
             if name in ("JsDiagState", "JsLogger", "JsDiagnosticsRenderer"): return ROOT / ("apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/view" if name == "JsDiagnosticsRenderer" else "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger") / (name + ".java")
             if name in groups: return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view" / ("f1" if groups[name] == "cluster" else groups[name]) / (name + ".java")

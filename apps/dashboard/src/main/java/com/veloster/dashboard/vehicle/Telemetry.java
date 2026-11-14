@@ -9,14 +9,19 @@ public final class Telemetry {
     public static final int STEERING=13,AMBIENT=14,POWER=15,TORQUE=16,BOOST=17;
     public static final int TPMS_FL=18,TPMS_FR=19,TPMS_RL=20,TPMS_RR=21;
     public static final int TCS=22,ESC=23,ABS=24,BAT_SOC=25,BAT_VOLTAGE=26,STEERING_SPEED=27,ELSD=28;
-    public static final int INTAKE=29,ACCEL_PEDAL=30,PD_TCS_ENABLED=31,PD_ESC_ENABLED=32,PD_ABS_WARNING=33;
-    public static final String[] LABELS = {"엔진 회전수", "오일 온도", "냉각수 온도", "앞 왼쪽 휠", "앞 오른쪽 휠", "뒤 왼쪽 휠", "뒤 오른쪽 휠", "차량 속도", "EMS 기어", "스로틀", "브레이크 압력", "횡가속", "종가속", "조향각", "외기 온도", "출력 (계산)", "토크 (계산)", "부스트 (계산)", "앞 왼쪽 공기압", "앞 오른쪽 공기압", "뒤 왼쪽 공기압", "뒤 오른쪽 공기압", "TCS", "ESC", "ABS", "배터리 SOC", "배터리 전압", "조향 속도", "e-LSD 수치", "흡기 온도", "가속 페달", "TCS 사용 상태", "ESC 사용 상태", "ABS 경고등"};
-    public static final String[] UNITS = {"rpm", "°C", "°C", "km/h", "km/h", "km/h", "km/h", "km/h", "", "%", "bar", "G", "G", "°", "°C", "PS", "N·m", "bar", "psi", "psi", "psi", "psi", "", "", "", "%", "V", "°/s", "", "°C", "%", "", "", ""};
+    public static final int INTAKE=29,ACCEL_PEDAL=30,PD_TCS_ENABLED=31,PD_ESC_ENABLED=32,PD_ABS_WARNING=33,CLUSTER_FUEL=34,CLUSTER_RANGE=35;
+    public static final String[] LABELS = {"엔진 회전수", "오일 온도", "냉각수 온도", "앞 왼쪽 휠", "앞 오른쪽 휠", "뒤 왼쪽 휠", "뒤 오른쪽 휠", "차량 속도", "EMS 기어", "스로틀", "브레이크 압력", "횡가속", "종가속", "조향각", "외기 온도", "출력 (계산)", "토크 (계산)", "부스트 (계산)", "앞 왼쪽 공기압", "앞 오른쪽 공기압", "뒤 왼쪽 공기압", "뒤 오른쪽 공기압", "TCS", "ESC", "ABS", "배터리 SOC", "배터리 전압", "조향 속도", "e-LSD 수치", "흡기 온도", "가속 페달", "TCS 사용 상태", "ESC 사용 상태", "ABS 경고등", "계기판 연비", "주행가능거리"};
+    public static final String[] UNITS = {"rpm", "°C", "°C", "km/h", "km/h", "km/h", "km/h", "km/h", "", "%", "bar", "G", "G", "°", "°C", "PS", "N·m", "bar", "psi", "psi", "psi", "psi", "", "", "", "%", "V", "°/s", "", "°C", "%", "", "", "", "km/L", "km"};
     public static final long STALE_MS = 60000; // UI freshness threshold, not an OEM timeout.
     public static final long HISTORY_MS=300000,HISTORY_STEP_MS=250;
     private final History[] history=new History[LABELS.length];
     /** Display orientation follows the driver's reported left/right convention. Raw SAS stays unchanged. */
     public static float displayValue(int signal,float raw){return signal==STEERING?(raw==0?0:-raw):raw;}
+    public static boolean jsTenthSignal(int signal){return signal==11||signal==12||signal==BOOST;}
+    public static String jsTenth(float value,boolean signed){
+        String result=new java.math.BigDecimal(Float.toString(value)).setScale(1,java.math.RoundingMode.DOWN).toPlainString();
+        return signed&&!result.startsWith("-")?"+"+result:result;
+    }
     public static final class Series {
         public final long[] times;
         public final float[] values;
@@ -57,6 +62,26 @@ public final class Telemetry {
         if(signal<0||signal>=LABELS.length||window<=0||window>HISTORY_MS)throw new IllegalArgumentException("history range");
         return history[signal]==null?new Series(0):history[signal].snapshot(now,window);
     }
+    private double trialDistanceKm,trialFuelLitres;
+    private long trialAt=-1;
+    private float trialSpeed,trialFuelRate;
+    private int trialBatchSamples;
+    private void clearFuelTrial(){trialDistanceKm=0;trialFuelLitres=0;trialAt=-1;trialBatchSamples=0;}
+    /** Experimental PD-derived formula on a different JS record; never a validated fuel measurement. */
+    private void fuelTrial(byte[] b,long now){
+        if(b.length!=6||now<0)return;
+        Sample speed=sample(7,now);int raw=(b[0]&255)|((b[1]&255)<<8);
+        if(!speed.valid||raw==65535||speed.value<0||Float.isNaN(speed.value)){clearFuelTrial();return;}
+        float rate=raw*0.04608f;
+        if(trialAt>=0&&(now<trialAt||now-trialAt>JS_FAST_STALE_MS))clearFuelTrial();
+        if(trialAt==now){trialFuelRate+=(rate-trialFuelRate)/++trialBatchSamples;trialSpeed=speed.value;return;}
+        if(trialAt>=0){double hours=(now-trialAt)/3600000.0;trialDistanceKm+=trialSpeed*hours;trialFuelLitres+=trialFuelRate*hours;}
+        trialAt=now;trialSpeed=speed.value;trialFuelRate=rate;trialBatchSamples=1;
+    }
+    public synchronized float jsFuelTrial(long now){
+        if(!js||trialAt<0||now<trialAt||now-trialAt>=JS_FAST_STALE_MS||!sample(7,now).valid||trialFuelLitres<=0)return Float.NaN;
+        return (float)(trialDistanceKm/trialFuelLitres);
+    }
     private int speedUnit=-1, rearView, rawSpeed;
     private boolean pd,js,jsn,supported;
     private final PdTelemetryDecoder pdDecoder=new PdTelemetryDecoder(new PdTelemetryDecoder.Sink(){
@@ -78,11 +103,16 @@ public final class Telemetry {
     public synchronized JsDriveMode jsDriveMode(long now){return js?jsDecoder.driveMode(now):JsDriveMode.UNKNOWN;}
     private static final long JS_DCT_STALE_MS=5000;
     private DctTemperatures dctTemperatures=DctTemperatures.UNKNOWN;
+    private boolean jsDualTemperatureObserved;
+    private int jsTransmissionSetting;
+    public synchronized void jsTransmissionSetting(int value){jsTransmissionSetting=value==1||value==2?value:0;}
     public static final class DctTemperatures {
         public static final float MIN_C=-40,MAX_C=300;
         static final DctTemperatures UNKNOWN=new DctTemperatures(Float.NaN,Float.NaN,-1,true);
         public final float oddC,evenC;
         public final boolean single;
+        public boolean dctEstimate;
+        public int transmissionSetting;
         private final long at;
         private DctTemperatures(float oddC,float evenC,long at,boolean single){this.oddC=oddC;this.evenC=evenC;this.at=at;this.single=single;}
         private static float temperature(byte[] reply,int offset){
@@ -96,6 +126,7 @@ public final class Telemetry {
         if(!js||now<0||now<dctTemperatures.at||reply==null||reply.length<36
             ||reply[0]!=0x62||reply[1]!=0x01||(reply[2]&255)!=0xa4)return;
         dctTemperatures=new DctTemperatures(DctTemperatures.temperature(reply,32),DctTemperatures.temperature(reply,34),now,false);
+        if(jsTransmissionSetting==0&&!Float.isNaN(dctTemperatures.oddC)&&!Float.isNaN(dctTemperatures.evenC))jsDualTemperatureObserved=true;
     }
     /** Candidate opendbc hyundai_can.dbc TCU11 TEMP_AT; no JS HSCAN slot is assumed. */
     public synchronized void jsTcu11Frame(int canId,byte[] frame,long now){
@@ -105,11 +136,15 @@ public final class Telemetry {
     }
     public synchronized DctTemperatures dctTemperatures(long now){
         if(!js)return DctTemperatures.UNKNOWN;
-        return dctTemperatures.at>=0&&now>=dctTemperatures.at&&now-dctTemperatures.at<JS_DCT_STALE_MS
-            ?dctTemperatures:new DctTemperatures(Float.NaN,Float.NaN,-1,dctTemperatures.single);
+        DctTemperatures result=dctTemperatures.at>=0&&now>=dctTemperatures.at&&now-dctTemperatures.at<JS_DCT_STALE_MS
+            ?new DctTemperatures(dctTemperatures.oddC,dctTemperatures.evenC,dctTemperatures.at,dctTemperatures.single)
+            :new DctTemperatures(Float.NaN,Float.NaN,-1,dctTemperatures.single);
+        result.dctEstimate=jsTransmissionSetting==0&&(jsDualTemperatureObserved||jsDecoder.manualModeObserved());
+        result.transmissionSetting=jsTransmissionSetting;
+        return result;
     }
     private static boolean jsNoTimeExpiry(int i){return i==AMBIENT||i>=TPMS_FL&&i<=TPMS_RR;}
-    public static boolean jsFast(int i){return !(i==1||i==2||i==AMBIENT||i>=TPMS_FL&&i<=TPMS_RR||i==BAT_SOC||i==BAT_VOLTAGE||i==INTAKE);}
+    public static boolean jsFast(int i){return !(i==1||i==2||i==AMBIENT||i>=TPMS_FL&&i<=TPMS_RR||i==BAT_SOC||i==BAT_VOLTAGE||i==INTAKE||i==CLUSTER_FUEL||i==CLUSTER_RANGE);}
 
     public synchronized boolean pdProfile(){return pd;}
     public synchronized boolean jsProfile(){return js;}
@@ -167,6 +202,8 @@ public final class Telemetry {
     public synchronized void clear() {
         speedUnit=-1; rearView=0; rawSpeed=0;
         dctTemperatures=DctTemperatures.UNKNOWN;
+        jsDualTemperatureObserved=false;
+        clearFuelTrial();
         pdDecoder.clear();jsDecoder.clear();
         epoch++;ptValid=false;gfValid=false;stdSeen=false;lastComputedPt=-1;lastComputedGf=-1;
         calculation.remove();
@@ -252,6 +289,7 @@ public final class Telemetry {
         if(cid!=0xc7||b==null)return;
         writeSource="hscan_js";
         pd=false;js=true;
+        if(function==0x22)fuelTrial(b,now);
         jsDecoder.receive(cid,function,b,now);
     }
     /** Only new IL frames from the verified JSN HSCAN bridge. */

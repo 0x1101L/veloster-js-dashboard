@@ -15,6 +15,7 @@ public final class JsTelemetryDecoder {
     public JsTelemetryDecoder(Sink sink){this.sink=sink;}
     private void put(int i,float v,boolean valid,long at){sink.put(i,v,valid,at);}
     public void clear(){jsPowertrain.clear();jsGear.clear();speedUnit=0;driveMode=JsDriveMode.UNKNOWN;driveModeAt=-1;}
+    public boolean manualModeObserved(){return jsGear.manualModeObserved();}
     public JsDriveMode driveMode(long now){
         return driveModeAt>=0&&now-driveModeAt<JS_FAST_STALE_MS?driveMode:JsDriveMode.UNKNOWN;
     }
@@ -31,6 +32,10 @@ public final class JsTelemetryDecoder {
                 default: driveMode=JsDriveMode.UNKNOWN;
             }
             driveModeAt=now;
+            int avg=((b[0]&255)>>6)|((b[1]&255)<<2),unit=(b[0]>>3)&3;
+            int range=(b[3]&255)|((b[4]&3)<<8);
+            put(CLUSTER_FUEL,avg*0.1f,avg<1023&&unit==0,now);
+            put(CLUSTER_RANGE,range,range<1023,now);
             return;
         }
         if(function==8&&b.length==8){

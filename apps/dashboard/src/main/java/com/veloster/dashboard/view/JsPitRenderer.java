@@ -9,7 +9,7 @@ import com.veloster.dashboard.view.gauge.GaugeLayout;
 import com.veloster.dashboard.view.gauge.JsGaugeRenderer;
 import com.veloster.dashboard.view.graph.GraphLayout;
 import com.veloster.dashboard.view.graph.GraphRenderer;
-import com.veloster.dashboard.view.f1.ClusterRenderer;
+import com.veloster.dashboard.view.f1.JsClusterRenderer;
 import com.veloster.dashboard.debugger.view.JsDiagnosticsRenderer;
 import com.veloster.dashboard.view.performance.JsPerformanceRenderer;
 
@@ -29,7 +29,7 @@ public final class JsPitRenderer {
     private final Path shape=new Path();
     private final Shader background=new LinearGradient(0,0,800,480,0xff111315,0xff030405,Shader.TileMode.CLAMP);
     private static final int BG=0xff040506,PANEL=0xff101315,LINE=0xff303638,BLUE=0xffa4d9ef,WHITE=0xffe1edf2,MUTED=0xff91a5ae,RED=0xffff4059;
-    private final ClusterRenderer clusterRenderer=new ClusterRenderer(true);
+    private final JsClusterRenderer clusterRenderer=new JsClusterRenderer();
     private Bitmap artwork;
     private final JsOverviewRenderer overviewRenderer=new JsOverviewRenderer();
     private final JsGaugeRenderer gaugeRenderer=new JsGaugeRenderer();
@@ -52,8 +52,8 @@ public final class JsPitRenderer {
     public void setPerformancePage(boolean value){performancePage=value;}
     public void setDiagnosticPage(boolean value,JsDiagState.Snapshot status){diagnosticPage=value;if(status!=null)diagnostic=status;}
     private final JsDiagnosticsRenderer diagnosticsRenderer=new JsDiagnosticsRenderer();
+    public boolean transmissionHit(float x,float y){return diagnosticsRenderer.transmissionHit(x,y);}
     public boolean selectDiagnosticTab(float downX,float downY,float x,float y){return diagnosticsRenderer.select(downX,downY,x,y);}
-    public boolean isScreenProbeTap(float dx,float dy,float x,float y){return diagnosticsRenderer.isScreenProbeTap(dx,dy,x,y);}
     public void setArtwork(Bitmap value){artwork=value;}
     public void setGaugeLayout(GaugeLayout value){gaugeLayout=value;}
     public void setGraphLayout(GraphLayout value){graphLayout=value;}
@@ -66,7 +66,7 @@ public final class JsPitRenderer {
     }
     public void draw(Canvas c,int width,int height,boolean cluster,Telemetry model,long now,int target,boolean media,MediaState.Snapshot track){
         boolean mediaPage=cluster&&media,pdProfile=model.pdProfile(),jsProfile=model.jsProfile();
-        overviewLayout.pdProfile(pdProfile||jsProfile);performanceRenderer.profile(pdProfile,jsProfile,model.jsnProfile(),model.supportedProfile());
+        overviewLayout.pdProfile(pdProfile||jsProfile);overviewLayout.jsProfile(jsProfile);performanceRenderer.profile(pdProfile,jsProfile,model.jsnProfile(),model.supportedProfile());
         Telemetry.Sample[] samples=model.snapshot(now);
         clusterRenderer.prepare(model,samples,now,ShiftGuide.clamp(target,model.pdLayoutProfile()),mediaPage,track,artwork);
         c.save();c.scale(width/800f,height/480f);c.drawColor(BG);
@@ -85,7 +85,7 @@ public final class JsPitRenderer {
         else if(performancePage)performanceRenderer.draw(c,model,now);
         else if(graphLayout!=null)graphRenderer.draw(c,model,now,graphLayout);
         else if(gaugeLayout!=null)gaugeRenderer.draw(c,model,now,gaugeLayout);
-        else if(mediaPage)clusterRenderer.drawCombined(c);else if(cluster)clusterRenderer.drawCluster(c);else overviewRenderer.draw(c,samples,overviewLayout,pdProfile,jsProfile,model.dctTemperatures(now),model.jsDriveMode(now));
+        else if(mediaPage)clusterRenderer.drawCombined(c);else if(cluster)clusterRenderer.drawCluster(c);else overviewRenderer.draw(c,samples,overviewLayout,pdProfile,jsProfile,model.dctTemperatures(now),model.jsDriveMode(now),model.jsFuelTrial(now));
         if(!diagnosticPage&&!performancePage&&graphLayout==null&&!mediaPage && track!=null && track.notice)clusterRenderer.drawMedia(c);
         if(cluster&&gaugeLayout==null&&graphLayout==null)clusterRenderer.drawArtworkToggle(c);
         c.restore();

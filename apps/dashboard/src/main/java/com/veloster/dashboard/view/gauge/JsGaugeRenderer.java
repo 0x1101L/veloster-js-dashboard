@@ -50,7 +50,7 @@ public final class JsGaugeRenderer {
             String title=UiText.t(Telemetry.LABELS[i]);
             text(c,title,cx,t+25,17,BLUE);
             float displayed=Telemetry.displayValue(i,s.value);
-            String value=(ok||s.held)?(i==8?JsGearState.valueLabel((int)s.value):String.format(Locale.US,"rpm".equals(u)||"km/h".equals(u)?"%.0f":"G".equals(u)?"%+.2f":i==Telemetry.STEERING?"%+.1f":"%.1f",displayed)):"—";
+            String value=(ok||s.held)?(i==8?JsGearState.valueLabel((int)s.value):(Telemetry.jsTenthSignal(i)?Telemetry.jsTenth(displayed,i==11||i==12):String.format(Locale.US,"rpm".equals(u)||"km/h".equals(u)?"%.0f":"G".equals(u)?"%+.2f":i==Telemetry.STEERING?"%+.1f":"%.1f",displayed))):"—";
             if(s.held)value="LAST "+(s.lastValidAgeMs/1000)+"s "+value;
             float lo=min(i,u),hi=max(i,u),f=ok?Math.max(0,Math.min(1,(displayed-lo)/(hi-lo))):0;
             if(style==0){

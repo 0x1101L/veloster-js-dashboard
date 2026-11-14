@@ -7,7 +7,7 @@ from graphics_test_support import GRAPHICS
 from test_quick_entry_runtime import java_tools
 
 ROOT = Path(__file__).resolve().parents[1]
-UI_SOURCES = ('ArtworkLoader', 'ClusterRenderer', 'DashboardPage', 'GaugeEditor', 'GaugeLayout', 'GaugeRenderer', 'GraphEditor', 'GraphLayout', 'GraphRenderer', 'JsDiagnosticsRenderer', 'JsGaugeRenderer', 'JsOverviewRenderer', 'JsPerformanceRenderer', 'JsPitRenderer', 'OverviewLayout', 'OverviewRenderer', 'PerformanceRenderer', 'PitRenderer', 'DashboardView')
+UI_SOURCES = ('ArtworkLoader', 'ClusterRenderer', 'JsClusterRenderer', 'DashboardPage', 'GaugeEditor', 'GaugeLayout', 'GaugeRenderer', 'GraphEditor', 'GraphLayout', 'GraphRenderer', 'JsDiagnosticsRenderer', 'JsGaugeRenderer', 'JsOverviewRenderer', 'JsPerformanceRenderer', 'JsPitRenderer', 'OverviewLayout', 'OverviewRenderer', 'PerformanceRenderer', 'PitRenderer', 'DashboardView')
 HARNESS = '''import com.veloster.dashboard.vehicle.*;
 import com.veloster.dashboard.view.*;
 import com.veloster.dashboard.view.performance.*;
@@ -28,6 +28,23 @@ public class PerformancePreview {
  }
  static void gear(Telemetry t,int function,int value,long time){
   t.hscanJs(0xc7,function,new byte[]{0,(byte)value,0,0,0,0,0,0},time);
+ }
+ static void jsF1Modes()throws Exception{
+  Telemetry t=new Telemetry();t.profile(false,true,false);
+  int[][] modes={{0x10,0xffa4d9ef},{0x30,0xffff4059},{0x20,0xff70d991},{0x50,0xffa4d9ef},{0xff,0xff91a5ae}};
+  long now=1000;
+  for(int[] mode:modes){
+   t.hscanJs(0xc7,0x04,new byte[]{0,0,0,0,0,(byte)mode[0],0,0},now);
+   for(boolean media:new boolean[]{false,true}){
+    Canvas c=new Canvas(800,480);new JsPitRenderer().draw(c,800,480,true,t,now,6000,media,null);
+    check(c.pixel(media?185:299,media?150:125)==mode[1],"F1 mode color "+mode[0]+" media="+media);
+    check(c.texts.contains("BOOST")&&c.texts.contains("INTAKE")&&!c.texts.contains("OIL TEMP"),"F1 replacement labels");
+   }
+   now+=10;
+  }
+  t.hscanJs(0xc7,0x04,new byte[]{0,0,0,0,0,0x30,0,0},now);
+  Canvas stale=new Canvas(800,480);new JsPitRenderer().draw(stale,800,480,true,t,now+2000);
+  check(stale.pixel(299,125)==0xff91a5ae,"expired mode uses neutral color");
  }
  static void jsRpmAccent(String folder)throws Exception{
   Telemetry t=new Telemetry();t.profile(false,true,false);
@@ -67,6 +84,19 @@ public class PerformancePreview {
   check(single.texts.contains("Temp")&&single.texts.contains("60 °C")&&!single.texts.contains("Odd")&&!single.texts.contains("Even")&&!single.texts.contains("R"),"single TCU11 value displays only on the left");
   Telemetry pd=new Telemetry();pd.profile(true,false,false);pd.jsDctTemperatureReply(reply,1000);
   check(Float.isNaN(pd.dctTemperatures(1000).oddC),"PD does not accept JS DCT reply");
+ }
+ static void jsTransmissionTrial(){
+  Telemetry t=new Telemetry();t.profile(false,true,false);
+  check(!t.dctTemperatures(100).dctEstimate,"initial MT trial");
+  byte[] r=new byte[36];r[0]=0x62;r[1]=1;r[2]=(byte)0xa4;r[34]=(byte)0xff;r[35]=(byte)0xff;
+  t.jsDctTemperatureReply(r,100);check(!t.dctTemperatures(100).dctEstimate,"one channel does not imply DCT");
+  r[34]=0;r[35]=30;t.jsDctTemperatureReply(r,101);check(t.dctTemperatures(101).dctEstimate,"two channels imply DCT trial");
+  check(t.dctTemperatures(7000).dctEstimate,"trial persists after temperature expires");
+  t.clear();check(!t.dctTemperatures(7000).dctEstimate,"ignition clears trial");
+  gear(t,0x1d,8,7100);check(t.dctTemperatures(7100).dctEstimate,"manual gate implies DCT trial");
+  gear(t,0x1d,5,7200);check(t.dctTemperatures(7200).dctEstimate,"DCT trial remains latched");
+  t.clear();gear(t,0x1d,5,7300);check(!t.dctTemperatures(7300).dctEstimate,"ordinary D does not imply DCT");
+  Telemetry pd=new Telemetry();pd.profile(true,false,false);pd.jsDctTemperatureReply(r,100);check(!pd.dctTemperatures(100).dctEstimate,"PD excluded");
  }
  static void jsGearPages(Telemetry t,long now,String mode,String number){
   for(int page=0;page<6;page++){
@@ -114,7 +144,8 @@ public class PerformancePreview {
   gear(gearbox,0x1e,7,4300);jsGearPages(gearbox,4300,"M","7");
   gear(gearbox,0x1d,5,4350);gear(gearbox,0x1e,6,4400);jsGearPages(gearbox,4400,"D","6");
   jsDctOverview(args[0]);
-  jsRpmAccent(args[0]);
+  jsTransmissionTrial();
+  jsRpmAccent(args[0]);jsF1Modes();
   System.out.println("PASS "+rendered+" performance renders and 4 existing page renders");
  }
 }'''
@@ -134,7 +165,7 @@ def render(folder):
         p = root / 'PerformancePreview.java'
         p.write_text(HARNESS)
         sources.append(p)
-        groups = {'OverviewLayout': 'overview', 'OverviewRenderer': 'overview', 'JsOverviewRenderer': 'overview', 'GaugeEditor': 'gauge', 'GaugeLayout': 'gauge', 'GaugeRenderer': 'gauge', 'JsGaugeRenderer': 'gauge', 'GraphEditor': 'graph', 'GraphLayout': 'graph', 'GraphRenderer': 'graph', 'ClusterRenderer': 'cluster', 'JsDiagnosticsRenderer': 'diagnostics', 'PerformanceRenderer': 'performance', 'JsPerformanceRenderer': 'performance'}
+        groups = {'OverviewLayout': 'overview', 'OverviewRenderer': 'overview', 'JsOverviewRenderer': 'overview', 'GaugeEditor': 'gauge', 'GaugeLayout': 'gauge', 'GaugeRenderer': 'gauge', 'JsGaugeRenderer': 'gauge', 'GraphEditor': 'graph', 'GraphLayout': 'graph', 'GraphRenderer': 'graph', 'ClusterRenderer': 'cluster', 'JsClusterRenderer': 'cluster', 'JsDiagnosticsRenderer': 'diagnostics', 'PerformanceRenderer': 'performance', 'JsPerformanceRenderer': 'performance'}
         def source_path(name):
             if name in ("JsDiagState", "JsLogger", "JsDiagnosticsRenderer"): return ROOT / ("apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/view" if name == "JsDiagnosticsRenderer" else "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger") / (name + ".java")
             if name in groups: return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view" / ("f1" if groups[name] == "cluster" else groups[name]) / (name + ".java")
@@ -142,7 +173,7 @@ def render(folder):
             if name in ("JsPowertrain", "JsGearState", "JsTelemetryDecoder"): return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/js" / (name + ".java")
             if name in ("PdPowertrain", "PdGearState"): return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd" / (name + ".java")
             return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle" / (name + ".java")
-        sources += [source_path(name) for name in ('Telemetry','PdPowertrain','PdGearState','JsPowertrain','JsGearState','JsTelemetryDecoder','JsDiagState','JsPitRenderer','ClusterRenderer','OverviewRenderer','JsOverviewRenderer','JsDiagnosticsRenderer','JsGaugeRenderer','JsPerformanceRenderer','PitRenderer','PerformanceRenderer','DashboardPage','ShiftGuide','MediaState','GaugeLayout','GaugeRenderer','OverviewLayout','GraphLayout','GraphRenderer')]
+        sources += [source_path(name) for name in ('Telemetry','PdPowertrain','PdGearState','JsPowertrain','JsGearState','JsTelemetryDecoder','JsDiagState','JsPitRenderer','ClusterRenderer','JsClusterRenderer','OverviewRenderer','JsOverviewRenderer','JsDiagnosticsRenderer','JsGaugeRenderer','JsPerformanceRenderer','PitRenderer','PerformanceRenderer','DashboardPage','ShiftGuide','MediaState','GaugeLayout','GaugeRenderer','OverviewLayout','GraphLayout','GraphRenderer')]
         sources += [ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd/PdTelemetryDecoder.java", ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/jsn/JsnTelemetryDecoder.java"]
         sources.append(ROOT / 'shared/src/com/veloster/i18n/UiText.java')
         result = subprocess.run([javac,'-encoding','UTF-8','-d',str(root),*map(str,sources)],capture_output=True,text=True)

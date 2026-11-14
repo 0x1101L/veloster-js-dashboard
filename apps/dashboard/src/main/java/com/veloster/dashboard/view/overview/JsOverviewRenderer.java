@@ -17,13 +17,15 @@ import java.util.Locale;
 public final class JsOverviewRenderer {
  private final Paint paint=new Paint(3);private final Path shape=new Path();
  private static final int PANEL=0xff101315,LINE=0xff303638,BLUE=0xffa4d9ef,WHITE=0xffe1edf2,MUTED=0xff91a5ae,RED=0xffff4059,ECO_GREEN=0xff70d991;
+ private float trialFuel=Float.NaN;
  private Telemetry.Sample[] samples;private OverviewLayout overviewLayout;private boolean pdProfile,jsProfile;
- public void draw(Canvas c,Telemetry.Sample[] samples,OverviewLayout layout,boolean pd,boolean js,Telemetry.DctTemperatures dct,Telemetry.JsDriveMode mode){this.samples=samples;overviewLayout=layout;pdProfile=pd;jsProfile=js;drawDashboard(c,dct,mode);}
-    private static final String[] PREFIX={"엔진 RPM","오일 온도","냉각수 온도","앞 왼쪽 휠","앞 오른쪽 휠","뒤 왼쪽 휠","뒤 오른쪽 휠","속도 km/h","현재 기어","스로틀 %","브레이크 압력 bar","횡가속","종가속","조향각","외기 온도","출력 (계산)","토크 (계산)","부스트 (계산)","앞 왼쪽 공기압","앞 오른쪽 공기압","뒤 왼쪽 공기압","뒤 오른쪽 공기압","TCS","ESC","ABS","배터리 SOC","배터리 전압","조향 속도","e-LSD 수치","흡기 온도","가속 페달 %","TCS 사용 상태","ESC 사용 상태","ABS 경고등"};
+ public void draw(Canvas c,Telemetry.Sample[] samples,OverviewLayout layout,boolean pd,boolean js,Telemetry.DctTemperatures dct,Telemetry.JsDriveMode mode,float trial){this.trialFuel=trial;this.samples=samples;overviewLayout=layout;pdProfile=pd;jsProfile=js;drawDashboard(c,dct,mode);}
+    private static final String[] PREFIX={"엔진 RPM","오일 온도","냉각수 온도","앞 왼쪽 휠","앞 오른쪽 휠","뒤 왼쪽 휠","뒤 오른쪽 휠","속도 km/h","현재 기어","스로틀 %","브레이크 압력 bar","횡가속","종가속","조향각","외기 온도","출력 (계산)","토크 (계산)","부스트 (계산)","앞 왼쪽 공기압","앞 오른쪽 공기압","뒤 왼쪽 공기압","뒤 오른쪽 공기압","TCS","ESC","ABS","배터리 SOC","배터리 전압","조향 속도","e-LSD 수치","흡기 온도","가속 페달 %","TCS 사용 상태","ESC 사용 상태","ABS 경고등","계기판 연비","주행가능거리"};
     private int index(String prefix){for(int i=0;i<PREFIX.length;i++)if(PREFIX[i].equals(prefix))return i;return -1;}
     private String value(String prefix){int i=index(prefix);if(i<0||i>=samples.length||!(samples[i].valid||samples[i].held))return "—";
         if(i==8)return JsGearState.valueLabel((int)samples[i].value);
-        return (samples[i].held?"LAST "+samples[i].lastValidAgeMs/1000+"s ":"")+String.format(Locale.US,i==0||i==7||(i>=Telemetry.TPMS_FL&&i<=Telemetry.BAT_SOC)||i==Telemetry.STEERING_SPEED?"%.0f":i==11||i==12?"%+.2f":i==13?"%+.1f":i==17||i==Telemetry.BAT_VOLTAGE?"%.2f":"%.1f",Telemetry.displayValue(i,samples[i].value));}
+        if(Telemetry.jsTenthSignal(i))return (samples[i].held?"LAST "+samples[i].lastValidAgeMs/1000+"s ":"")+Telemetry.jsTenth(samples[i].value,i==11||i==12);
+        return (samples[i].held?"LAST "+samples[i].lastValidAgeMs/1000+"s ":"")+String.format(Locale.US,i==0||i==7||(i>=Telemetry.TPMS_FL&&i<=Telemetry.BAT_SOC)||i==Telemetry.STEERING_SPEED?"%.0f":i==11||i==12?"%+.2f":i==13?"%+.1f":i==17?"%.2f":"%.1f",Telemetry.displayValue(i,samples[i].value));}
     private String gearTitle(String title){return title;}
     private void box(Canvas c,float l,float t,float r,float b,int color){paint.setColor(color);c.drawRect(l,t,r,b,paint);}
     private void panel(Canvas c,float x,float y,float w,float h,int fill,int edge){
@@ -87,7 +89,12 @@ public final class JsOverviewRenderer {
     private void groupCard(Canvas c,int i){
         float x=overviewLayout.left(i),y=overviewLayout.top(i),w=overviewLayout.width(i);
         overviewFrame(c,x,y,w,overviewLayout.height(i),BLUE);
-        if(i==Telemetry.TPMS_FL){
+        if(i==Telemetry.CLUSTER_FUEL){
+            fitted(c,UiText.t("연비"),x+10,y+19,13,w-20,MUTED);
+            fuelRow(c,UiText.t("실주행 시험"),Float.isNaN(trialFuel)?"—":String.format(Locale.US,"%.1f km/L",trialFuel),x,y+40,w);
+            fuelRow(c,UiText.t("계기판"),fuelValue(Telemetry.CLUSTER_FUEL,"%.1f km/L"),x,y+62,w);
+            fuelRow(c,UiText.t("주행가능"),fuelValue(Telemetry.CLUSTER_RANGE,"%.0f km"),x,y+84,w);
+        }else if(i==Telemetry.TPMS_FL){
             fitted(c,UiText.t("타이어 공기압"),x+10,y+20,13,w-20,MUTED);
             String[] corners={"FL","FR","RL","RR"};
             for(int n=0;n<4;n++){
@@ -111,6 +118,8 @@ public final class JsOverviewRenderer {
             }
         }
     }
+    private String fuelValue(int index,String format){Telemetry.Sample s=samples[index];if(!s.valid&&!s.held)return "—";return (s.held?"LAST "+s.lastValidAgeMs/1000+"s ":"")+String.format(Locale.US,format,s.value);}
+    private void fuelRow(Canvas c,String label,String value,float x,float y,float w){fitted(c,label,x+10,y,10,53,MUTED);fitted(c,value,x+65,y,13,w-75,BLUE);}
     private void overviewCard(Canvas c,int i,String title,int accent){
         float x=overviewLayout.left(i),y=overviewLayout.top(i),w=overviewLayout.width(i),h=overviewLayout.height(i);
         boolean head=overviewLayout.headline(i),ok=samples[i].valid&&!Float.isNaN(samples[i].value)&&!Float.isInfinite(samples[i].value);
