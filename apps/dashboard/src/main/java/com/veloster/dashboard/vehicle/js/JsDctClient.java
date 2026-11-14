@@ -23,11 +23,13 @@ public final class JsDctClient implements Runnable {
     public synchronized void start(){if(active)return;if(worker!=null){restart=true;return;}active=true;worker=new Thread(this,"js-dct-read");worker.start();}
     public synchronized void stop(){restart=false;active=false;synchronized(lock){lock.notifyAll();}if(worker!=null)worker.interrupt();}
     public void run(){
-        IBinder service=null,token=new Binder(),listener=new Listener();boolean registered=false;
+        IBinder service=null,token=new Binder(),listener=new Listener();boolean registered=false,failed=false;
+        DashboardView.diagEvent("dct.service","connecting");
         try{
             service=(IBinder)Class.forName("android.os.ServiceManager").getMethod("getService",String.class).invoke(null,SERVICE);
             if(service==null||!SIFACE.equals(service.getInterfaceDescriptor()))throw new IllegalStateException("service unavailable");
             call(service,1,listener,token);registered=true;
+            DashboardView.diagEvent("dct.service","connected");
             int failures=0;
             while(active){
                 if(!gate.open()){Thread.sleep(500);continue;}
@@ -43,8 +45,8 @@ public final class JsDctClient implements Runnable {
                 Thread.sleep(3500);
             }
         }catch(InterruptedException ignored){Thread.currentThread().interrupt();}
-        catch(Throwable e){Log.e("JsDctClient","DCT read unavailable",e);}
-        finally{if(registered)try{call(service,2,listener,token);}catch(Exception e){Log.e("JsDctClient","listener removal failed",e);}synchronized(this){active=false;worker=null;if(restart){restart=false;start();}}}
+        catch(Throwable e){failed=true;Log.e("JsDctClient","DCT read unavailable",e);}
+        finally{if(registered)try{call(service,2,listener,token);}catch(Exception e){failed=true;Log.e("JsDctClient","listener removal failed",e);}DashboardView.diagEvent("dct.service",failed?"error":"stopped");synchronized(this){active=false;worker=null;if(restart){restart=false;start();}}}
     }
     private static void call(IBinder s,int code,IBinder listener,IBinder token)throws RemoteException{
         Parcel in=Parcel.obtain(),out=Parcel.obtain();try{in.writeInterfaceToken(SIFACE);in.writeStrongBinder(listener);in.writeStrongBinder(token);if(!s.transact(code,in,out,0))throw new RemoteException("transaction rejected");out.readException();}finally{in.recycle();out.recycle();}
