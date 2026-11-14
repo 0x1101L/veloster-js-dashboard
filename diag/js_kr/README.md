@@ -12,6 +12,19 @@ python3 diag/js_kr/hardware_inventory.py --serial DEVICE_SERIAL
 
 Wi-Fi를 실제로 켤 수 있는지 확인하려면 명시적으로 `--try-enable`을 추가한다. 원래 상태가 OFF라고 확인될 때만 켜기를 시도하고 종료 시 OFF 복원을 요청한다. 원래 상태를 모르면 상태 변경을 건너뛴다. `restored`가 `disabled`인지 확인해야 하며, 실제 무선 연결 여부는 이 시험만으로 확인되지 않는다.
 
+## CarPlay ADB 관찰 항목
+
+별도 스크립트가 정확한 JS 제품·빌드·API 17을 확인한 뒤 등록된 읽기 전용 항목을 실행한다. 항목은 도구에서 관리하므로 절차 문서에 개별 테스트를 나열하지 않는다.
+
+```sh
+python3 diag/js_kr/carplay_adb_probe.py --list
+python3 diag/js_kr/carplay_adb_probe.py --serial DEVICE_SERIAL
+python3 diag/js_kr/carplay_adb_probe.py --serial DEVICE_SERIAL --check packages
+python3 diag/js_kr/carplay_adb_probe.py --serial DEVICE_SERIAL --check raw-current
+```
+
+`--check`를 반복해 항목을 선택하며 생략하면 `packages`, `services`만 실행한다. `raw-current`와 `raw-previous`는 명시적 선택 시에만 민감한 원시 로그를 JSON의 `records`로 표준 출력한다. 비공개 경로에 저장하고 공유 전 확인한다. 현재 수신원이 연결되지 않아 파일이 없으며 `unknown` 또는 `error`는 데이터가 없다는 증명이 아니다. JSON의 항목별 `ok`, `unknown`, `denied`, `error`와 최종 `complete`/`incomplete`를 구분한다. 출력에 serial과 전체 패키지·서비스 목록은 넣지 않는다. 원격 shell이 오류를 종료 코드로 알리지 않는 구형 ADB 특성상 빈 출력과 알려진 오류 문구는 성공으로 취급하지 않지만, 모든 실패 유형을 판별한다고 보장하지 않는다. 확인된 장치의 패키지·서비스 존재만 조사한다. 기본 항목은 CarPlay 연결, 내비·iAP2 메시지 수신이나 HUD 출력을 확인하지 않고 원시 payload를 수집하지 않는다. 원시 파일 선택 항목은 이미 기록된 파일만 읽으며 연결된 수신원을 만들지 않는다. CarPlay와 ADB의 동시 연결은 별도 검증이 필요하다. 이 스크립트는 호스트 모의 검사만 했고 실차 실행은 미검증이다.
+
 ## HSCAN 원시 스트림
 
 ```sh
