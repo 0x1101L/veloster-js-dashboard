@@ -23,7 +23,7 @@ public final class JsPerformanceRenderer {
     private String vehicleName(){return pd?"i30 N Line":js?"Veloster (WIP)":jsn?"VELOSTER N":supported?"Dashboard":"UNSUPPORTED";}
     private boolean valid(int i){return samples[i].valid&&!Float.isNaN(samples[i].value)&&!Float.isInfinite(samples[i].value);}
     private float number(int i){return Telemetry.displayValue(i,samples[i].value);}
-    private String value(int i,String format){if(!valid(i)&&!samples[i].held)return "—";String text=Telemetry.jsTenthSignal(i)?Telemetry.jsTenth(number(i),i==11||i==12):String.format(Locale.US,format,number(i));return samples[i].held?"LAST "+(samples[i].lastValidAgeMs/1000)+"s "+text:text;}
+    private String value(int i,String format){if(!valid(i)&&!samples[i].held)return "—";String text=Telemetry.jsTenthSignal(i)?Telemetry.jsTenth(number(i),i==11||i==12):String.format(Locale.US,format,number(i));return samples[i].held&&i!=7?"LAST "+(samples[i].lastValidAgeMs/1000)+"s "+text:text;}
     private float clamp(float v,float lo,float hi){return Math.max(lo,Math.min(hi,v));}
     private void text(Canvas c,String s,float x,float y,float size,int color,Paint.Align align,boolean bold){
         p.setStyle(Paint.Style.FILL);p.setColor(color);p.setTextAlign(align);p.setTextSize(size);p.setTypeface(bold?Typeface.DEFAULT_BOLD:Typeface.DEFAULT);c.drawText(s,x,y,p);

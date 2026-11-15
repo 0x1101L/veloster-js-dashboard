@@ -84,7 +84,7 @@ public final class JsClusterRenderer {
     private String value(String prefix){int i=index(prefix);if(i<0||i>=samples.length||!(samples[i].valid||(jsPresentation&&samples[i].held)))return "—";
         if(i==8)return jsPresentation?JsGearState.valueLabel((int)samples[i].value):Telemetry.gearLabel((int)samples[i].value);
         if(jsPresentation&&Telemetry.jsTenthSignal(i))return (samples[i].held?"LAST "+samples[i].lastValidAgeMs/1000+"s ":"")+Telemetry.jsTenth(samples[i].value,i==11||i==12);
-        return (jsPresentation&&samples[i].held?"LAST "+samples[i].lastValidAgeMs/1000+"s ":"")+String.format(Locale.US,i==0||i==7||(i>=Telemetry.TPMS_FL&&i<=Telemetry.BAT_SOC)||i==Telemetry.STEERING_SPEED?"%.0f":i==11||i==12?"%+.2f":i==13?"%+.1f":i==17||i==Telemetry.BAT_VOLTAGE&&!jsPresentation?"%.2f":"%.1f",Telemetry.displayValue(i,samples[i].value));}
+        return (jsPresentation&&samples[i].held&&i!=7?"LAST "+samples[i].lastValidAgeMs/1000+"s ":"")+String.format(Locale.US,i==0||i==7||(i>=Telemetry.TPMS_FL&&i<=Telemetry.BAT_SOC)||i==Telemetry.STEERING_SPEED?"%.0f":i==11||i==12?"%+.2f":i==13?"%+.1f":i==17||i==Telemetry.BAT_VOLTAGE&&!jsPresentation?"%.2f":"%.1f",Telemetry.displayValue(i,samples[i].value));}
     private float numeric(String prefix){int i=index(prefix);return i>=0&&i<samples.length&&samples[i].valid?Telemetry.displayValue(i,samples[i].value):0;}
     private String gearTitle(String title){return title;}
     public void drawMedia(Canvas c){

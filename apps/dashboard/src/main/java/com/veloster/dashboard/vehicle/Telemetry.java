@@ -217,7 +217,7 @@ public final class Telemetry {
         long changedAge=js&&jsHasValue[i]?Math.max(0,now-jsChangedAt[i]):Long.MAX_VALUE;
         boolean stale=js?jsHasValue[i]&&!jsNoTimeExpiry(i)&&validAge>=(jsFast(i)?JS_FAST_STALE_MS:STALE_MS):seen[i]&&age>=STALE_MS;
         boolean current=valid[i]&&!stale;
-        boolean held=js&&jsHasValue[i]&&!current&&!stale&&!jsFast(i);
+        boolean held=js&&jsHasValue[i]&&!current&&((i==7&&valid[i]&&stale)||(!stale&&!jsFast(i)));
         String source=(current||held)&&js?validSources[i]:sources[i];
         return new Sample(values[i],current,changed[i]&&current,seen[i],stale,age,held,validAge,changedAge,counts[i],source==null?"unknown":source);
     }
