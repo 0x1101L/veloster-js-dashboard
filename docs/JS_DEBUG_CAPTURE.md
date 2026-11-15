@@ -22,15 +22,15 @@ After the debugging agent has authorization and a diagnostic app is installed, e
 
     python3 scripts/extract_js_debug_samples.py --serial YOUR_ADB_SERIAL --seconds 60 --out-dir /private/path/js-review
 
-This checks the connected head unit's product and build, reads its uptime, and observes VehicleDash logcat for up to 600 seconds. It does not clear log buffers or alter device state. The capture starts at invocation time and ignores older buffered samples. The serial is never written to output.
+This checks the connected head unit's product and build, reads its uptime, and observes `JSLogger` plus the legacy `DashboardView` log tag for up to 600 seconds. It does not clear log buffers or alter device state. The capture starts at invocation time and ignores older buffered samples. The serial is never written to output.
 
 For an already exported logcat file, run:
 
     python3 scripts/extract_js_debug_samples.py --input /private/path/js-logcat.txt --out-dir /private/path/js-review
 
-The input-file mode is offline. Live mode checks the exact JS product/build and reads only `JSLogger` and legacy `VehicleDash` log tags for the bounded capture. A wrong contract version, malformed record, or another profile/build is an error. Do not commit raw logs or generated captures.
+The input-file mode is offline. Live mode checks the exact JS product/build and reads only `JSLogger` and legacy `DashboardView` log tags for the bounded capture. A wrong contract version, malformed record, or another profile/build is an error. Do not commit raw logs or generated captures.
 
-The debugging agent reviews the summary against the capture conditions and independent vehicle reference readings, then records only interpreted, evidence-backed findings in the [JS investigation record](../@memory/20_documents/js_debugging.md), using the [record template](../@memory/20_documents/js_debug_record_template.md). Update the signal matrix only when the evidence changes a signal's support or validation status. The generated draft is not itself proof of correctness.
+The debugging agent reviews the summary against the capture conditions and independent vehicle reference readings, then records only interpreted, evidence-backed findings in the connected private project-memory investigation record and template. Those records are intentionally outside this repository. Update the signal matrix only when evidence changes a signal's support or validation status. The generated draft is not itself proof of correctness.
 
 ## Evidence boundary
 

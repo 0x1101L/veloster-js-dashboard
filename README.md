@@ -40,7 +40,7 @@ The readable version above is abbreviated from the model-specific `*.KOR.SOP.V14
 - **PD profile and signal-table reference (PD-1):** [Linuchan5468/i30-pd-dashboard](https://github.com/Linuchan5468/i30-pd-dashboard). Its PD decoder and signal table are the starting reference for the JS decoder.
 - **JS vehicle identification:** owner-provided head-unit photo and the matching local firmware catalog; firmware binaries are not included in this repository.
 
-Current evidence and decisions are in the [project memory index](@memory/_index.md), available through the local project memory link.
+Current repository status and shared instructions are in the [documentation index](docs/README.md) and [verification status](docs/STATUS.md). Detailed vehicle and firmware evidence lives in the connected private project-memory workspace and is intentionally not included in this repository.
 
 A JS trial-build runtime crash caused by reverse lookup of a PD-baseline overview signal remapping has been fixed. The versionCode 7 candidate was installed on the matching JS head unit and remained active during a brief launch check; longer operation and signal accuracy remain unverified.
 

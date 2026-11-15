@@ -1,6 +1,31 @@
 # JS (`js_kr`) 독립 진단 도구
 
+## CarPlay ADB 관찰 항목
+
+`carplay_adb_probe.py`는 등록된 읽기 전용 항목만 실행합니다. 연결된 ADB 기기가 온라인인지 확인한 뒤 제품·API·정확한 incremental을 확인하고, 대상이 `js_kr` / API 17 / `eng.vmadmin.20260114.090656`와 일치할 때만 inventory 또는 선택한 진단 이벤트 로그 회수를 진행합니다.
+
+한 번에 대상 확인 후 패키지와 서비스 inventory를 순서대로 실행하려면 [2026-11-15 단계별 시험 계획](../../docs/CARPLAY_TBT_TEST_PLAN_20261115.md)과 runner를 사용합니다. 이 준비 단계에는 연결·TBT payload·raw iAP2·HUD 시험이 포함되지 않습니다.
+
+```sh
+python3 diag/js_kr/carplay_adb_probe.py --serial DEVICE_SERIAL
+python3 diag/js_kr/carplay_adb_probe.py --serial DEVICE_SERIAL --check packages
+python3 diag/js_kr/carplay_adb_probe.py --serial DEVICE_SERIAL --check services
+python3 diag/js_kr/carplay_adb_probe.py --serial DEVICE_SERIAL --check events-current --check events-previous
+sh diag/js_kr/run_carplay_tbt_preflight.sh DEVICE_SERIAL inventory
+sh diag/js_kr/run_carplay_tbt_preflight.sh DEVICE_SERIAL events
+```
+
+등록 항목은 `packages`(정해진 CarPlay/DiPO/iAP2 패키지 이름의 존재 여부), `services`(정해진 cluster 서비스 이름의 존재 여부), `events-current`/`events-previous`(Dashboard의 bounded private `HUD_EVENT` 파일에서 허용된 시각·이벤트·요약값만 읽기)입니다. `--list`로 항목을 확인할 수 있습니다. 이벤트 회수는 사용자가 사전에 실행한 Dashboard APK의 로그만 읽으며 TBT 입력을 만들지 않습니다. 원시 CarPlay log는 읽지 않고 제목·가수·목적지 등 개인 메타데이터를 출력하지 않습니다. 결과는 stdout JSON이며 serial과 전체 패키지·서비스 목록은 출력하지 않습니다. 대상 불일치·권한 오류·ADB 실패는 성공 관찰과 구분합니다.
+
+기본 inventory는 `adb get-state`, 대상 확인용 `getprop`, `pm list packages`, `service list`를 사용합니다. 명시적 이벤트 회수 선택 시에만 `run-as com.veloster.dashboard cat files/diagnostics/hud-events*.log`를 각각 읽습니다. 설정 변경, 설치·실행, logcat, 소켓 접근, 네트워크 ADB/포워딩, 원시 iAP2 로그·CarPlay 안내 데이터 수집은 하지 않습니다. package/service inventory는 TBT를 입증하지 않으며, event 파일의 미기록·회수 실패도 TBT 부재를 입증하지 않습니다. 현재는 호스트 모의 검증만 하며 실기기 검증은 미실시입니다. 실행 시 정차 상태와 승인된 USB ADB 연결을 전제로 하고, 결과의 기기·환경 식별값은 공유 전에 검토하세요.
+
 대상은 `js_kr` / `eng.vmadmin.20260114.090656`이다. Dashboard APK와 별개이며 이 도구 작성만으로 빌드·설치·실차 동작이 검증된 것은 아니다. ADB serial을 명시하고 정차 상태에서 사용한다. 원시 HSCAN은 차량 정보를 포함할 수 있으므로 저장소 밖 비공개 경로에 보관한다.
+
+## 진단 화면 예시
+
+아래 이미지는 저장소의 미리보기 자료이며, 차량에서 촬영한 실화면이나 실차 검증 증거가 아닙니다.
+
+![JS diagnostics page preview](diag-page-example.png)
 
 ## 장치와 Wi-Fi
 
@@ -11,19 +36,6 @@ python3 diag/js_kr/hardware_inventory.py --serial DEVICE_SERIAL
 기본 동작은 제품·빌드를 확인한 뒤 시스템 속성, Android 기능, CPU 정보, 입력·오디오·영상·저장장치·USB의 sysfs 목록, 관련 서비스, 네트워크 인터페이스, 로드된 모듈과 Wi-Fi 상태를 조회한다. 접근이 거부된 항목은 확인되지 않은 상태로 남는다. 목록이 모든 하드웨어의 완전한 목록이나 실제 무선 모듈·활성화 가능성의 증거는 아니다. SSID·비밀번호·MAC 주소를 출력하지 않도록 Wi-Fi 원문 대신 상태 단어만 남긴다. Android의 구형 ADB가 명령 실패 종료 코드를 전달하지 않을 수 있어 빈 값·권한 오류는 별도 확인한다.
 
 Wi-Fi를 실제로 켤 수 있는지 확인하려면 명시적으로 `--try-enable`을 추가한다. 원래 상태가 OFF라고 확인될 때만 켜기를 시도하고 종료 시 OFF 복원을 요청한다. 원래 상태를 모르면 상태 변경을 건너뛴다. `restored`가 `disabled`인지 확인해야 하며, 실제 무선 연결 여부는 이 시험만으로 확인되지 않는다.
-
-## CarPlay ADB 관찰 항목
-
-별도 스크립트가 정확한 JS 제품·빌드·API 17을 확인한 뒤 등록된 읽기 전용 항목을 실행한다. 항목은 도구에서 관리하므로 절차 문서에 개별 테스트를 나열하지 않는다.
-
-```sh
-python3 diag/js_kr/carplay_adb_probe.py --list
-python3 diag/js_kr/carplay_adb_probe.py --serial DEVICE_SERIAL
-python3 diag/js_kr/carplay_adb_probe.py --serial DEVICE_SERIAL --check packages
-python3 diag/js_kr/carplay_adb_probe.py --serial DEVICE_SERIAL --check raw-current
-```
-
-`--check`를 반복해 항목을 선택하며 생략하면 `packages`, `services`만 실행한다. `raw-current`와 `raw-previous`는 명시적 선택 시에만 민감한 원시 로그를 JSON의 `records`로 표준 출력한다. 비공개 경로에 저장하고 공유 전 확인한다. 현재 수신원이 연결되지 않아 파일이 없으며 `unknown` 또는 `error`는 데이터가 없다는 증명이 아니다. JSON의 항목별 `ok`, `unknown`, `denied`, `error`와 최종 `complete`/`incomplete`를 구분한다. 출력에 serial과 전체 패키지·서비스 목록은 넣지 않는다. 원격 shell이 오류를 종료 코드로 알리지 않는 구형 ADB 특성상 빈 출력과 알려진 오류 문구는 성공으로 취급하지 않지만, 모든 실패 유형을 판별한다고 보장하지 않는다. 확인된 장치의 패키지·서비스 존재만 조사한다. 기본 항목은 CarPlay 연결, 내비·iAP2 메시지 수신이나 HUD 출력을 확인하지 않고 원시 payload를 수집하지 않는다. 원시 파일 선택 항목은 이미 기록된 파일만 읽으며 연결된 수신원을 만들지 않는다. CarPlay와 ADB의 동시 연결은 별도 검증이 필요하다. 이 스크립트는 호스트 모의 검사만 했고 실차 실행은 미검증이다.
 
 ## HSCAN 원시 스트림
 
