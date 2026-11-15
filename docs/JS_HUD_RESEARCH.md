@@ -89,6 +89,8 @@ Dashboard의 진단 화면에서 `HUD · 내비` 옆 `CarPlay` 탭은 기존 OEM
 
 사용자 결정에 따라 CarPlay 화면의 비트맵 반환·캡처 시험은 앞으로 수행하지 않는다. 이전 versionCode 16 시험은 Bitmap 반환만 확인했고 화면 내용과 내비 데이터는 확인하지 못했다. 현재 소스에서 해당 시험을 제거했으며 설치된 기존 APK에는 반영되지 않았다.
 
-## CarPlay 원시 기록 기반
+## CarPlay 원본 캡처의 앱 내부 보관
 
-`CarPlayRawLog`는 검증된 수신원이 제공하는 원시 바이트를 앱 개인 파일에 기록하기 위한 독립 저장 클래스다. **현재 생성·호출하는 수신원이나 앱 제어 화면은 없다.** 따라서 이번 소스 변경만으로 파일이 만들어지거나 CarPlay 내비 데이터가 수신되지 않는다. 파일당 최대 1 MiB, 현재·이전 두 파일이며 단일 payload는 최대 16 KiB다. 초과 입력은 잘라 저장하지 않고 `too_large`를 반환한다. 실행·기록·실차 검증은 별도다. 실제 필드와 기록·추출 범위는 연결된 프로젝트의 진단 데이터 로직 정본을 따른다.
+versionCode 21 소스의 CarPlay 진단 탭은 **캡처 파일 가져오기**를 제공한다. USB를 ADB로 전환해 외부 저장소에 올린 CPRAW1 파일을 선택하면 `CarPlayRawLog.importCapture()`가 컨테이너 header, 레코드 길이, DROP footer를 검사한 뒤 원본 전체를 수정 없이 `files/diagnostics/carplay-raw/carplay-iap2-<elapsed>.cpraw`에 저장한다. 크기는 최대 16 MiB이며 저장 디렉터리는 DCT/HSCAN 원시 데이터와 HUD 이벤트 요약 파일에서 분리된다. 탭에는 마지막 저장 파일명과 크기를 표시한다.
+
+이는 native 수신 hook을 앱 프로세스에 직접 연결한 구현이 아니다. 현재 흐름은 **후보 Frida hook → 헤드유닛의 제한된 임시 파일 → ADB 재연결 후 외부 저장소로 회수 → 앱에서 검증·내부 보관**이다. hook에는 세 모드가 있다: callback 조각(`I2RX`), `libiap2.so`에서 호출한 libc `read()` 반환(`RDRX`), 두 지점 동시 캡처(`both`). 두 지점은 source marker로 구분해 중복·경계를 비교한다. read는 해당 라이브러리의 다른 read도 담을 수 있다. `CarPlayRawLog`의 이전 text-record API는 이 native hook의 producer가 아니며, 실제 Tmap 안내 데이터 수신을 뜻하지 않는다. 앱 picker의 API17 동작, 파일 회수, Frida attach/영구 실행·정지, 실제 callback은 아직 기기에서 검증되지 않았다. Host test는 합성 파일과 marker만 확인한다.

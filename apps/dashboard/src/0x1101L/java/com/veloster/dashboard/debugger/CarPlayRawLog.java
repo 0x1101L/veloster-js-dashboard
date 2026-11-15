@@ -2,13 +2,76 @@ package com.veloster.dashboard.debugger;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.DataInputStream;
+import java.io.EOFException;
 
-/** Private, bounded raw record sink. A verified CarPlay producer must call record(). */
+/** Private CarPlay capture archive; CPRAW1 files are validated and preserved byte-for-byte. */
 public final class CarPlayRawLog {
     public static final int FILE_LIMIT = 1024 * 1024;
     public static final int PAYLOAD_LIMIT = 16384;
     private final File directory;
+
+    /** Imports the original CPRAW1 file byte-for-byte into app-private storage. */
+    public synchronized File importCapture(InputStream source, long nowMs) throws IOException {
+        if (source == null || nowMs < 0) throw new IOException("invalid capture input");
+        File rawDirectory = new File(directory, "carplay-raw");
+        if (!rawDirectory.isDirectory() && !rawDirectory.mkdirs()) throw new IOException("cannot create private capture directory");
+        File temporary = File.createTempFile(".incoming-", ".cpraw", rawDirectory);
+        long total = 0;
+        try {
+            BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(temporary));
+            try {
+                byte[] buffer = new byte[8192]; int count;
+                while ((count = source.read(buffer)) != -1) {
+                    total += count;
+                    if (total > 16L * 1024 * 1024) throw new IOException("capture exceeds 16 MiB");
+                    out.write(buffer, 0, count);
+                }
+            } finally { out.close(); }
+            validateCapture(temporary);
+            File target = new File(rawDirectory, "carplay-iap2-" + nowMs + ".cpraw");
+            if (target.exists() || !temporary.renameTo(target)) throw new IOException("cannot finalize private capture");
+            return target;
+        } finally { try { source.close(); } catch (IOException ignored) {} if (temporary.exists()) temporary.delete(); }
+    }
+
+    private static void validateCapture(File file) throws IOException {
+        DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
+        try {
+            byte[] magic = new byte[8]; in.readFully(magic);
+            if (!new String(magic, "US-ASCII").equals("CPRAW1\r\n")) throw new IOException("not a CPRAW1 capture");
+            boolean footer = false; long records = 0; int previousSequence = 0;
+            while (!footer) {
+                byte[] marker = new byte[4]; in.readFully(marker); String kind = new String(marker, "US-ASCII");
+                if ("DROP".equals(kind)) {
+                    in.readInt(); int reason = in.readInt();
+                    if (reason < 0 || reason > 3 || in.read() != -1) throw new IOException("invalid CPRAW1 footer");
+                    footer = true;
+                } else if ("I2RX".equals(kind) || "RDRX".equals(kind)) {
+                    int sequence = in.readInt(); in.readLong(); int length = in.readInt();
+                    if (sequence <= previousSequence) throw new IOException("non-increasing CPRAW1 sequence");
+                    previousSequence = sequence;
+                    if (length <= 0 || length > 65536) throw new IOException("invalid iAP2 record length");
+                    long skipped = 0; while (skipped < length) { int n = in.skipBytes((int)Math.min(length-skipped, 8192)); if (n <= 0) throw new EOFException("truncated iAP2 record"); skipped += n; }
+                    records++;
+                } else throw new IOException("invalid CPRAW1 record marker");
+            }
+            if (records == 0) throw new IOException("capture contains no iAP2 receive records");
+        } finally { in.close(); }
+    }
+
+    public synchronized String latestCaptureSummary() {
+        File dir = new File(directory, "carplay-raw"); File[] files = dir.listFiles();
+        if (files == null) return "내부 저장 캡처 없음";
+        File latest = null;
+        for (File file : files) if (file.isFile() && file.getName().endsWith(".cpraw") && (latest == null || file.lastModified() > latest.lastModified())) latest = file;
+        return latest == null ? "내부 저장 캡처 없음" : latest.getName() + " · " + latest.length() + " bytes";
+    }
 
     public CarPlayRawLog(File directory) { this.directory = directory; }
 

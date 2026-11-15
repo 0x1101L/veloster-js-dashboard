@@ -125,7 +125,7 @@ Dashboard Java sources use `apps/dashboard/src/main/java`. The Activity is in `c
 
 For the JS HUD observation event log, retrieval, and limitations, see [HUD research](docs/JS_HUD_RESEARCH.md). This log does not establish camera data reception or HUD output.
 
-The JS diagnostics CarPlay tab displays existing media broadcast status and current track data; navigation and camera input remain unconnected. See [HUD research](docs/JS_HUD_RESEARCH.md).
+The JS diagnostics CarPlay tab displays existing media status and provides a CPRAW1 import action that validates and stores the unchanged capture in a dedicated app-private directory, separate from DCT/HSCAN and HUD event summaries. The candidate native iAP2 hook, API17 file picker, and actual vehicle capture remain unverified. See [HUD research](docs/JS_HUD_RESEARCH.md).
 
 CarPlay media diagnostic events are recorded without track or artist text. On JS, media observation remains active during Activity pause and stops on destruction; actual CarPlay background behavior remains unverified.
 

@@ -32,7 +32,7 @@ For the existing JSN app, this guide covers compatibility, ADB, installation, an
 | [JS debugging guide](JS_DEBUGGING_GUIDE.md) | ADB tools, in-app instrumentation, host tests and evidence boundaries / ADB 도구·앱 내부 계측·호스트 테스트의 구분 |
 | [JS HUD research](JS_HUD_RESEARCH.md) | OEM components, MICOM path and applied observations / 순정 구성요소·MICOM 경로·적용 내역 |
 | [CarPlay navigation research](CARPLAY_NAVIGATION_DASHBOARD_RESEARCH.md) | Current-source feasibility and evidence review / 현 소스 기준 구현 가능성·근거 검토 |
-| [CarPlay TBT test plan](CARPLAY_TBT_TEST_PLAN_20261115.md) | Ordered read-only ADB preflight and gates for any later TBT test / ADB 사전 확인 순서와 후속 TBT 시험 게이트 |
+| [CarPlay TBT test plan](CARPLAY_TBT_TEST_PLAN_20261115.md) | iAP2 capture candidate, single-USB handoff, app-private import and verification gates / iAP2 캡처 후보·단일 USB 전환·앱 내부 가져오기 절차와 검증 경계 |
 | [NEMESIS review](NEMESIS_REVIEW.md) | Platform differences and reusable ideas / 적용 가능성·참고 코드 |
 | [Experiments](../experimental/README.md) | AVRCP and SystemUI work outside released apps / 미배포 실험 |
 | [Installation audit, 2026-10-26](INSTALL_AUDIT.md) | Historical v9 entry-point findings / 당시 진입점 개선 기록 |

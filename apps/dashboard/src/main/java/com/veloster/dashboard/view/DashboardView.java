@@ -1,9 +1,11 @@
 package com.veloster.dashboard.view;
 
 import com.veloster.dashboard.vehicle.*;
+import com.veloster.dashboard.DashboardActivity;
 import com.veloster.dashboard.vehicle.js.JsTransmissionSetting;
 import com.veloster.dashboard.debugger.JsDiagState;
 import com.veloster.dashboard.debugger.JsLogger;
+import com.veloster.dashboard.debugger.CarPlayRawLog;
 
 import com.veloster.dashboard.view.overview.OverviewLayout;
 import com.veloster.dashboard.view.gauge.GaugeEditor;
@@ -14,6 +16,7 @@ import com.veloster.dashboard.view.graph.GraphLayout;
 import com.veloster.i18n.UiText;
 import com.veloster.i18n.LanguageSettings;
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Canvas;
 import android.os.SystemClock;
 import android.view.Gravity;
@@ -30,6 +33,8 @@ public final class DashboardView extends View implements Runnable {
     private static final Telemetry DATA=new Telemetry();
     private static final JsDiagState DIAG=new JsDiagState();
     private static WeakReference<DashboardView> current=new WeakReference<DashboardView>(null);
+    public static void carPlayRawStatus(String status){DashboardView view=current.get();if(view!=null){view.jsRenderer.setCarPlayRawStatus(status);view.invalidate();}}
+    public static void carPlayRuntimeStatus(String library,String process){DashboardView view=current.get();if(view!=null){view.jsRenderer.setCarPlayRuntimeStatus(library,process);view.invalidate();}}
     private final Activity activity;
     private final JsTransmissionSetting transmissionSetting;
     private final PitRenderer renderer=new PitRenderer();
@@ -245,6 +250,11 @@ public final class DashboardView extends View implements Runnable {
         touching=false;
         if(standalone&&tap&&x>=666&&x<=782&&downX>=666&&downX<=782&&y>=8&&y<=46&&downY>=8&&downY<=46){activity.finish();return true;}
         if(tap&&!blocked&&pageState.is(DashboardPage.DIAG)&&jsRenderer.selectDiagnosticTab(downX,downY,x,y)){invalidate();return true;}
+        if(tap&&!blocked&&DATA.jsProfile()&&pageState.is(DashboardPage.DIAG)&&jsRenderer.carPlayImportHit(downX,downY)&&jsRenderer.carPlayImportHit(x,y)){
+            try{Intent intent=new Intent(Intent.ACTION_GET_CONTENT);intent.setType("application/octet-stream");activity.startActivityForResult(Intent.createChooser(intent,UiText.t("CarPlay 캡처 선택")),DashboardActivity.REQUEST_CARPLAY_CAPTURE);}
+            catch(RuntimeException e){Toast.makeText(activity,UiText.t("파일 선택기를 열 수 없습니다"),Toast.LENGTH_SHORT).show();}
+            return true;
+        }
         if(tap&&!blocked&&DATA.jsProfile()&&pageState.is(DashboardPage.DIAG)&&jsRenderer.transmissionHit(downX,downY)&&jsRenderer.transmissionHit(x,y)){
             transmissionSetting.show(new Runnable(){public void run(){DATA.jsTransmissionSetting(transmissionSetting.get());invalidate();}});return true;
         }

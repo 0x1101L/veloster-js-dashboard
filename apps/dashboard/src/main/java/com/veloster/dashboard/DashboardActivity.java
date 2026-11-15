@@ -6,6 +6,8 @@ import com.veloster.dashboard.vehicle.VehicleDataClient;
 
 import com.veloster.dashboard.debugger.JsHudProbe;
 import com.veloster.dashboard.debugger.HudEventLog;
+import com.veloster.dashboard.debugger.CarPlayRawLog;
+import com.veloster.dashboard.debugger.CarPlayRuntimeProbe;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -22,12 +24,14 @@ import com.veloster.i18n.LanguageSettings;
 
 /** Own package, own task and own data subscriptions. Never starts the OEM NMode app. */
 public final class DashboardActivity extends Activity {
+    public static final int REQUEST_CARPLAY_CAPTURE=0x4350;
     private VehicleDataClient client;
     private JsHudProbe hudProbe;
     private boolean wifiWatching,jsProfile;
     private android.os.HandlerThread hudLogThread;
     private volatile android.os.Handler hudLogHandler;
     private HudEventLog hudLog;
+    private CarPlayRawLog carPlayRawLog;
     private final BroadcastReceiver wifiReceiver=new BroadcastReceiver(){
         public void onReceive(Context context,Intent intent){refreshWifi();}
     };
@@ -43,11 +47,13 @@ public final class DashboardActivity extends Activity {
         if(jsProfile){
             DashboardView.diagReset();
             hudLog=new HudEventLog(new java.io.File(getFilesDir(),"diagnostics"));
+            carPlayRawLog=new CarPlayRawLog(new java.io.File(getFilesDir(),"diagnostics"));
             hudLogThread=new android.os.HandlerThread("hud-event-log");hudLogThread.start();
             hudLogHandler=new android.os.Handler(hudLogThread.getLooper());
             DashboardView.setDiagnosticEventSink(new DashboardView.DiagnosticEventSink(){
                 public void event(String name,String detail){recordHudEvent(name,detail);}
             });
+            DashboardView.carPlayRuntimeStatus("조회 대기 중", "조회 대기 중");
         }
         DashboardView.attachStandalone(this);
         client=new VehicleDataClient(this);
@@ -77,6 +83,11 @@ public final class DashboardActivity extends Activity {
         DashboardView.diagWifi(feature,service,state,wifiWatching?1:0);
     }
     protected void onResume(){super.onResume();LanguageSettings.init(this);DashboardView.resumeStandalone(this);client.start();
+        if(jsProfile&&carPlayRawLog!=null)DashboardView.carPlayRawStatus(carPlayRawLog.latestCaptureSummary());
+        if(jsProfile)new Thread(new Runnable(){public void run(){
+            CarPlayRuntimeProbe.Snapshot status=CarPlayRuntimeProbe.inspect();
+            DashboardView.carPlayRuntimeStatus(status.library,status.process);
+        }},"carplay-runtime-probe").start();
         if(hudProbe!=null)hudProbe.startNavigationObservation();
         if(jsProfile){try{registerReceiver(wifiReceiver,new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));wifiWatching=true;}catch(RuntimeException e){wifiWatching=false;}refreshWifi();}}
     private void stopWifiObserver(){if(wifiWatching){try{unregisterReceiver(wifiReceiver);}catch(RuntimeException ignored){}wifiWatching=false;}}
@@ -85,4 +96,16 @@ public final class DashboardActivity extends Activity {
     protected void onDestroy(){stopWifiObserver();if(hudProbe!=null)hudProbe.close();if(client!=null)client.stop();if(jsProfile){DashboardView.stopStandaloneMedia(this);DashboardView.setDiagnosticEventSink(null);}if(hudLogThread!=null){final android.os.HandlerThread thread=hudLogThread;
             if(hudLogHandler==null||!hudLogHandler.post(new Runnable(){public void run(){thread.quit();}}))thread.quit();
             hudLogThread=null;hudLogHandler=null;}super.onDestroy();}
+    protected void onActivityResult(int requestCode,int resultCode,Intent data){
+        super.onActivityResult(requestCode,resultCode,data);
+        if(requestCode!=REQUEST_CARPLAY_CAPTURE||resultCode!=RESULT_OK||data==null||data.getData()==null)return;
+        try{
+            if(carPlayRawLog==null)throw new java.io.IOException("JS CarPlay storage is unavailable");
+            java.io.InputStream input=getContentResolver().openInputStream(data.getData());
+            if(input==null)throw new java.io.IOException("selected capture cannot be opened");
+            java.io.File saved=carPlayRawLog.importCapture(input,android.os.SystemClock.elapsedRealtime());
+            DashboardView.carPlayRawStatus(saved.getName()+" · "+saved.length()+" bytes");
+            android.widget.Toast.makeText(this,"CarPlay 원본 캡처를 앱 내부에 저장했습니다",android.widget.Toast.LENGTH_LONG).show();
+        }catch(Exception e){android.util.Log.e("CarPlayRawLog","Capture import failed",e);android.widget.Toast.makeText(this,"캡처 검증 또는 내부 저장 실패: "+e.getMessage(),android.widget.Toast.LENGTH_LONG).show();}
+    }
 }

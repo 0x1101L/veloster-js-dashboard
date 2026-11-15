@@ -28,8 +28,8 @@ public final class UiText {
         EN.put("ABS 경고등","ABS warning");
         EN.put("AP 상태 13 확인. IP 주소와 iPhone의 SSID 검색을 다음으로 확인하세요.","AP state 13 confirmed. Next check the IP address and whether the iPhone sees the SSID.");
         EN.put("Binder 연결됨","Binder connected");
-        EN.put("CarPlay 내비게이션","CarPlay navigation");
         EN.put("CarPlay 미디어","CarPlay media");
+        EN.put("CarPlay 캡처 선택","Choose CarPlay capture");
         EN.put("DCT · 수신 경로","DCT · Input path");
         EN.put("DCT 서비스","DCT service");
         EN.put("DCT 온도","DCT temperature");
@@ -37,6 +37,7 @@ public final class UiText {
         EN.put("DiPlay와 iPhone에 입력","Enter in DiPlay and iPhone");
         EN.put("EMS 기어","EMS gear");
         EN.put("ESC 사용 상태","ESC enabled");
+        EN.put("Frida 후킹","Frida hook");
         EN.put("GPS·오디오 등 실제 연결은 해당 앱에서 진행합니다. 기기를 선택해 확인할 때만 페어링을 요청합니다.","Use the relevant app for GPS or audio connections. Pairing is requested only after you select and confirm a device.");
         EN.put("HSCAN 소켓","HSCAN socket");
         EN.put("HUD · 내비","HUD · Navigation");
@@ -65,6 +66,9 @@ public final class UiText {
         EN.put("Wi-Fi 켜짐은 통신 모듈 검증과 별개","Wi-Fi on does not verify a communication module");
         EN.put("Wi-Fi/AP 상태가 안정된 꺼짐/켜짐 상태가 아닙니다. 변경하지 않았습니다.","Wi-Fi/AP is not in a stable on/off state. No changes were made.");
         EN.put("e-LSD 수치","e-LSD value");
+        EN.put("iAP2 연결 진단","iAP2 connection diagnostics");
+        EN.put("libiap2.so 파일","libiap2.so file");
+        EN.put("maps 접근 제한 · 미확인","Maps restricted · Unknown");
         EN.put("−1분","-1 min");
         EN.put("−2분30초","-2m30s");
         EN.put("−30초","-30 s");
@@ -76,6 +80,7 @@ public final class UiText {
         EN.put("가장자리 버튼 + 알림","Floating + notification");
         EN.put("가장자리 버튼 + 알림 / Floating + notification","Floating + notification");
         EN.put("가장자리 버튼을 표시할 수 없어 알림 바로가기를 유지합니다. 시스템의 다른 앱 위 표시 권한을 확인하세요.","The floating button could not be shown. The notification remains. Check permission to display over other apps.");
+        EN.put("가져온 원본","Imported raw capture");
         EN.put("강제 재시작","Restart head unit");
         EN.put("개발자 설정","Developer options");
         EN.put("검색 요청 실패: ","Discovery request failed: ");
@@ -115,12 +120,14 @@ public final class UiText {
         EN.put("기존 설정 복구","Restore original settings");
         EN.put("기존 핫스팟 설정을 읽지 못했습니다. 백업 불가로 변경하지 않았습니다.","Could not read the existing hotspot configuration. No backup or changes were made.");
         EN.put("기존 핫스팟이 이미 켜져 있습니다. 설정을 변경하지 않았습니다.","The existing hotspot is already on. No settings were changed.");
+        EN.put("기준본 해시 일치","Reference hash matches");
         EN.put("꺼지는 중","Disabling");
         EN.put("꺼짐","Off");
         EN.put("내 앱","My Apps");
         EN.put("내 앱 / My Apps","My Apps");
         EN.put("내 앱 열기 · 길게 끌어서 위치 변경 / My Apps","Open My Apps; drag to move");
         EN.put("내 앱에 표시할 앱","Apps to show in My Apps");
+        EN.put("내부 저장 캡처 없음","No capture imported");
         EN.put("내비 관찰","Nav observer");
         EN.put("내비 상태값","Nav state code");
         EN.put("내비 수신","Navigation reception");
@@ -145,6 +152,8 @@ public final class UiText {
         EN.put("뒤 왼쪽 공기압","Rear-left pressure");
         EN.put("뒤 왼쪽 휠","Rear-left wheel");
         EN.put("등록됨","Registered");
+        EN.put("라이브러리 로드 확인과 Frida 후킹·원본 수신은 별개입니다.","Library mapping, Frida hooking, and raw reception are separate checks.");
+        EN.put("로드 관측 · PID","Mapping observed · PID");
         EN.put("마지막 방송 경과","Last broadcast age");
         EN.put("막대","Bar");
         EN.put("만료","Expired");
@@ -159,6 +168,7 @@ public final class UiText {
         EN.put("미디어","Media");
         EN.put("미디어 관찰","Media observer");
         EN.put("미디어 방송과 내비 입력은 별도입니다.","Media broadcasts and navigation input are separate.");
+        EN.put("미디어 방송은 CarPlay 링크나 TBT 원본의 증거가 아닙니다.","Media broadcasts do not prove a CarPlay link or raw TBT data.");
         EN.put("미수신","Not received");
         EN.put("미실시","Not tested");
         EN.put("미연결","Not connected");
@@ -259,6 +269,7 @@ public final class UiText {
         EN.put("앞 왼쪽 휠","Front-left wheel");
         EN.put("앱","Apps");
         EN.put("앱 관리","Manage apps");
+        EN.put("앱 연동 없음 · 미확인","No app bridge · Unknown");
         EN.put("앱 화면을 열지 못했습니다. 알림에서 다시 시도하세요.","Could not open My Apps. Try the notification.");
         EN.put("언어 설정을 저장하지 못했습니다.","Could not save the language setting.");
         EN.put("없음/접근 불가","Absent / inaccessible");
@@ -299,6 +310,7 @@ public final class UiText {
         EN.put("이전 확인","Previously confirmed");
         EN.put("일반 블루투스(Classic)를 사용합니다. BLE 검색과 GPS 데이터 수신 기능은 포함하지 않습니다.","Uses Classic Bluetooth. BLE discovery and GPS data reception are not included.");
         EN.put("일반 설치 앱은 자동 표시됩니다. 목록에서 숨겨도 앱은 삭제되지 않습니다.","Ordinary installed apps appear automatically. Hiding an app does not uninstall it.");
+        EN.put("일부 maps 접근 제한 · 미확인","Some maps restricted · Unknown");
         EN.put("작동","Active");
         EN.put("잘못된 방송 횟수","Invalid broadcasts");
         EN.put("재생 시간","Playback time");
@@ -318,6 +330,7 @@ public final class UiText {
         EN.put("조향 속도","Steering rate");
         EN.put("조향각","Steering angle");
         EN.put("조회 / 알림 경과","Read / notice age");
+        EN.put("조회 대기 중","Waiting for check");
         EN.put("조회 실패","Check failed");
         EN.put("종가속","Longitudinal G");
         EN.put("주변 기기 검색","Find nearby devices");
@@ -344,6 +357,7 @@ public final class UiText {
         EN.put("취소","Cancel");
         EN.put("취소 / Cancel","Cancel");
         EN.put("카메라 정보","Camera information");
+        EN.put("캡처 파일 가져오기","Import capture file");
         EN.put("켜기","Enable");
         EN.put("켜면 재부팅 뒤에도 작은 바로가기만 복원합니다. 앱 화면은 자동으로 열지 않습니다. 가장자리 버튼은 끌어서 옮길 수 있습니다.\n\n시스템이 다른 앱 위 표시를 허용하지 않으면 알림만 유지합니다. 순정 화면에서 알림을 열 수 없는 경우에는 별도 메뉴 진입점이 필요합니다. 강제 종료하면 직접 앱을 다시 열 때까지 자동 복원이 중지될 수 있습니다.\n\nWhen enabled, reboot restores only the shortcut. Drag the edge button to move it. If overlays are denied, a notification remains. If the factory UI hides notifications too, use a separate menu entry. Force-stop may block restoration until My Apps is opened again.","When enabled, reboot restores only the shortcut, not the full app screen. Drag the edge button to move it.\n\nIf overlays are denied, the notification remains. If the factory UI also hides notifications, use another entry point. Force-stop may prevent restoration until My Apps is opened again.");
         EN.put("켜지는 중","Enabling");
@@ -354,6 +368,10 @@ public final class UiText {
         EN.put("클러치 수명","Clutch life");
         EN.put("타이어 공기압","Tire pressure");
         EN.put("토크 (계산)","Torque (calc.)");
+        EN.put("파일 선택기를 열 수 없습니다","Could not open the file picker");
+        EN.put("파일 없음","File not found");
+        EN.put("파일 읽기 불가","File unreadable");
+        EN.put("파일 있음 · 기준본과 해시 다름","File found · hash differs");
         EN.put("퍼포먼스","Performance");
         EN.put("페어링","Pair");
         EN.put("페어링 요청 실패: ","Pairing request failed: ");
@@ -365,11 +383,14 @@ public final class UiText {
         EN.put("페어링을 요청했습니다. PIN 확인 창이 나타나면 차량 화면에서 확인하세요.","Pairing requested. Confirm the PIN on the head-unit screen if prompted.");
         EN.put("표시 항목","Signal");
         EN.put("표시할 설치 앱이 없습니다. 앱 설치 뒤 다시 열거나 목록 편집에서 선택하세요.","No installed apps to show. Reopen after installing an app or select one in Edit app list.");
+        EN.put("프로세스 로드","Process mapping");
+        EN.put("프로세스 목록 접근 제한 · 미확인","Process list restricted · Unknown");
         EN.put("핫스팟 끄기 확인 실패. 백업을 보존했습니다. 다시 복구하세요.","Could not confirm hotspot shutdown. Backup retained; retry restoration.");
         EN.put("핫스팟 요청 실패/시간 초과. 성공으로 판정하지 않습니다. 원상복구하세요.","Hotspot request failed or timed out. Success is not confirmed; restore the original settings.");
         EN.put("해제 실패","Detach failed");
         EN.put("현재 / 보관값","Current / Held value");
         EN.put("현재 기어","Current gear");
+        EN.put("현재 로드 미관측","No mapping observed");
         EN.put("현재 재생 소스에서 음악을 제어할 수 없습니다","Playback control is unavailable for this source");
         EN.put("현재 차량 표시 제한으로 N 계기판을 열 수 없습니다.","N Dashboard is unavailable under the current vehicle display restriction.");
         EN.put("형식 오류","Invalid format");

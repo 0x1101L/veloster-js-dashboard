@@ -69,7 +69,7 @@ public class JsDiagnosticsPreview {
      if(state.equals("received"))check(c.texts.contains(UiText.t("초기 sticky"))&&c.texts.contains("-1")&&c.texts.contains("1.0s"),"sticky source, negative raw provider and app reception age");
      if(state.equals("invalid"))check(c.texts.contains(UiText.t("형식 오류"))&&c.texts.contains(UiText.t("권한 오류")),"failure reason retained");
     }else if(tab==1){
-     check(c.texts.contains(UiText.t("CarPlay 미디어"))&&c.texts.contains(UiText.t("CarPlay 내비게이션"))&&c.texts.contains(UiText.t("미연결")),"CarPlay media and unavailable navigation separated");
+     check(c.texts.contains(UiText.t("CarPlay 미디어"))&&c.texts.contains(UiText.t("iAP2 연결 진단"))&&c.texts.contains(UiText.t("프로세스 로드"))&&c.texts.contains(UiText.t("Frida 후킹"))&&c.texts.contains(UiText.t("미확인")),"CarPlay media and native iAP2 evidence separated");
      if(state.equals("waiting"))check(!c.texts.contains("Example Track"),"no invented media");
      else check(c.texts.contains("Example Track")&&c.texts.contains("Example Artist"),"actual CarPlay media snapshot rendered");
     }else if(tab==2){

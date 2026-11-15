@@ -22,9 +22,13 @@ public final class JsDiagnosticsRenderer {
     private JsDiagState.Snapshot diagnostic;
     private Telemetry.Sample[] samples;
     private MediaState.Snapshot media;
+    private String carPlayRawStatus="내부 저장 캡처 없음";
+    private String carPlayLibraryStatus="미확인";
+    private String carPlayProcessStatus="미확인";
     public boolean transmissionHit(float x,float y){return diagnosticTab==3&&x>=640&&x<=770&&y>=118&&y<=154;}
     public boolean select(float downX,float downY,float x,float y){int tab=diagnosticTabAt(x,y);if(tab<0||tab!=diagnosticTabAt(downX,downY))return false;diagnosticTab=tab;return true;}
-    public void draw(Canvas c,Telemetry.Sample[] samples,JsDiagState.Snapshot diagnostic,Telemetry.DctTemperatures dct,MediaState.Snapshot media){this.samples=samples;this.diagnostic=diagnostic;this.media=media;drawDiagnostics(c,dct);}
+    public void draw(Canvas c,Telemetry.Sample[] samples,JsDiagState.Snapshot diagnostic,Telemetry.DctTemperatures dct,MediaState.Snapshot media,String rawStatus,String libraryStatus,String processStatus){this.samples=samples;this.diagnostic=diagnostic;this.media=media;this.carPlayRawStatus=rawStatus;this.carPlayLibraryStatus=libraryStatus;this.carPlayProcessStatus=processStatus;drawDiagnostics(c,dct);}
+    public boolean carPlayImportHit(float x,float y){return diagnosticTab==1&&x>=425&&x<=770&&y>=310&&y<=354;}
     private static int diagnosticTabAt(float x,float y){
         if(y<62||y>100)return -1;
         for(int i=0;i<5;i++){float left=18+i*154;if(x>=left&&x<=left+148)return i;}
@@ -105,7 +109,7 @@ public final class JsDiagnosticsRenderer {
     private void drawCarPlay(Canvas c){
         panel(c,18,112,373,316,PANEL,LINE);panel(c,409,112,373,316,PANEL,LINE);
         text(c,UiText.t("CarPlay 미디어"),32,138,16,BLUE,true);
-        text(c,UiText.t("CarPlay 내비게이션"),423,138,16,BLUE,true);
+        text(c,UiText.t("iAP2 연결 진단"),423,138,16,BLUE,true);
         JsDiagState.SourceSnapshot source=diagnostic.source("media.3");
         boolean active=media!=null&&"CarPlay".equals(media.source);
         diagRow(c,18,170,"미디어 관찰",mediaObserverState(source.status));
@@ -115,12 +119,13 @@ public final class JsDiagnosticsRenderer {
         diagRow(c,18,298,"가수",active&&media.artist.length()>0?media.artist:"—");
         diagRow(c,18,330,"재생 시간",active&&media.positionMs>=0?diagAge(media.positionMs):"—");
         diagRow(c,18,362,"전체 시간",active&&media.durationMs>=0?diagAge(media.durationMs):"—");
-        diagRow(c,409,170,"내비 입력",UiText.t("미연결"));
-        diagRow(c,409,202,"방향 · 거리 수신",UiText.t("미수신"));
-        diagRow(c,409,234,"카메라 정보",UiText.t("미수신"));
-        fitted(c,UiText.t("미디어 방송과 내비 입력은 별도입니다."),423,285,13,344,MUTED);
-        diagNote(c,"곡 정보는 CarPlay가 현재 소스일 때 표시합니다.",448);
-        diagNote(c,"내비 입력 경로는 아직 확인되지 않았습니다.",468);
+        diagRow(c,409,170,"libiap2.so 파일",UiText.t(carPlayLibraryStatus));
+        diagRow(c,409,202,"프로세스 로드",UiText.t(carPlayProcessStatus));
+        diagRow(c,409,234,"Frida 후킹",UiText.t("앱 연동 없음 · 미확인"));
+        diagRow(c,409,266,"가져온 원본",UiText.t(carPlayRawStatus));
+        button(c,UiText.t("캡처 파일 가져오기"),423,310,344,42,true,BLUE);
+        diagNote(c,"미디어 방송은 CarPlay 링크나 TBT 원본의 증거가 아닙니다.",448);
+        diagNote(c,"라이브러리 로드 확인과 Frida 후킹·원본 수신은 별개입니다.",468);
     }
     private void drawDiagnosticSignals(Canvas c){
         panel(c,18,112,764,316,PANEL,LINE);
