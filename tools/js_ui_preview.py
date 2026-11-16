@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tests'))
 import test_js_diagnostics_renderer as renderer
 
-PAGES = ('전체 조망', 'HUD·내비', 'CarPlay', '차량 신호', 'Wi-Fi·DCT', 'Bindings', '퍼포먼스', 'F1', '게이지', '그래프')
+PAGES = ('전체 조망', 'HUD·내비', 'CarPlay', '차량', '연결', 'Bindings', '퍼포먼스', 'F1', '게이지', '그래프')
 STATES = ('waiting', 'received', 'invalid', 'held', 'expired')
 LANGUAGES = ('ko', 'en')
 
@@ -52,7 +52,7 @@ class Renderer:
    UiText.configure(v[2],v[2]);Telemetry t=fixture(state);JsDiagState d=observations(state);
    long now=state.equals("expired")?62000:2000;
    JsPitRenderer r=new JsPitRenderer();
-   if(page>=1&&page<=5){r.setDiagnosticPage(true,d.snapshot(now));r.selectDiagnosticTab(40+(page-1)*154,80,40+(page-1)*154,80);}
+   if(page>=1&&page<=5){r.setDiagnosticPage(true,d.snapshot(now));float x=40+(page-1)*154;r.selectDiagnosticTab(x,80,x,80);}
    if(page==6)r.setPerformancePage(true);
    if(page==8)r.setGaugeLayout(new GaugeLayout());
    if(page==9)r.setGraphLayout(new GraphLayout());
@@ -72,11 +72,14 @@ class Renderer:
                   'JsPerformanceRenderer':'view/performance', 'JsPowertrain':'vehicle/js',
                   'JsGearState':'vehicle/js', 'JsTelemetryDecoder':'vehicle/js',
                   'PdPowertrain':'vehicle/pd', 'PdGearState':'vehicle/pd'}
-        names = ('Telemetry','PdPowertrain','PdGearState','JsPowertrain','JsGearState',
+        names = ('Telemetry','PdPowertrain','PdGearState','JsPowertrain','JsGearState','BluetoothRuntimeProbe',
                  'JsTelemetryDecoder','JsPitRenderer','ClusterRenderer','JsClusterRenderer','JsOverviewRenderer',
                  'JsGaugeRenderer','JsPerformanceRenderer','DashboardPage','ShiftGuide','MediaState',
                  'GaugeLayout','GaugeRenderer','OverviewLayout','GraphLayout','GraphRenderer')
         for name in names:
+            if name == 'BluetoothRuntimeProbe':
+                sources.append(ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/BluetoothRuntimeProbe.java')
+                continue
             group = groups.get(name, 'view' if name in ('JsPitRenderer','DashboardPage') else 'vehicle')
             sources.append(base / group / (name + '.java'))
         sources.extend([base / 'vehicle/pd/PdTelemetryDecoder.java', base / 'vehicle/jsn/JsnTelemetryDecoder.java',

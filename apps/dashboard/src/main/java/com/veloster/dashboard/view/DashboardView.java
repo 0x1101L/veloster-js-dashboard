@@ -6,6 +6,7 @@ import com.veloster.dashboard.vehicle.js.JsTransmissionSetting;
 import com.veloster.dashboard.debugger.JsDiagState;
 import com.veloster.dashboard.debugger.JsLogger;
 import com.veloster.dashboard.debugger.CarPlayRawLog;
+import com.veloster.dashboard.debugger.BluetoothRuntimeProbe;
 
 import com.veloster.dashboard.view.overview.OverviewLayout;
 import com.veloster.dashboard.view.gauge.GaugeEditor;
@@ -35,6 +36,7 @@ public final class DashboardView extends View implements Runnable {
     private static WeakReference<DashboardView> current=new WeakReference<DashboardView>(null);
     public static void carPlayRawStatus(String status){DashboardView view=current.get();if(view!=null){view.jsRenderer.setCarPlayRawStatus(status);view.invalidate();}}
     public static void carPlayRuntimeStatus(String library,String process){DashboardView view=current.get();if(view!=null){view.jsRenderer.setCarPlayRuntimeStatus(library,process);view.invalidate();}}
+    public static void bluetoothStatus(BluetoothRuntimeProbe.Snapshot status){DashboardView view=current.get();if(view!=null){view.jsRenderer.setBluetoothStatus(status);view.invalidate();}}
     private final Activity activity;
     private final JsTransmissionSetting transmissionSetting;
     private final PitRenderer renderer=new PitRenderer();

@@ -55,8 +55,10 @@ public class JsDiagnosticsPreview {
     UiText.configure(language,language);Telemetry t=fixture(state);JsDiagState d=observations(state);
     long now=state.equals("expired")?62000:2000;
     JsPitRenderer r=new JsPitRenderer();r.setDiagnosticPage(true,d.snapshot(now));
-    check(r.selectDiagnosticTab(40+tab*154,80,40+tab*154,80),"tab selected");
-    check(!r.selectDiagnosticTab(40,80,200,80)&&!r.selectDiagnosticTab(40,50,40,80),"cross-tab drag and header press rejected");
+    if(!state.equals("waiting"))r.setBluetoothStatus(BluetoothRuntimeProbe.parse("11-17 01:00:00.000 I/bt_vendor( 123): kosti!! read local name for chipID\\n11-17 01:00:00.010 I/bt_vendor( 123): kosti!! read local name result is BCM4335\\n11-17 01:00:00.020 I/bt_vendor( 123): Found patchfile: /vendor/firmware/bcm4335.hcd\\n11-17 01:00:00.030 I/bt_vendor( 123): vendor lib fwcfg completed"));
+    float categoryX=40+tab*154;
+    check(r.selectDiagnosticTab(categoryX,80,categoryX,80),"category selected");
+    check(!r.selectDiagnosticTab(30,80,200,80)&&!r.selectDiagnosticTab(30,50,30,80),"cross-tab drag and header press rejected");
     MediaState media=new MediaState();
     if(!state.equals("waiting")){media.mode(0x73);media.update(3,true,"Example Track",true,"Example Artist",true,12000,true,180000,false,1000);}
     Canvas c=new Canvas(800,height);r.draw(c,800,height,false,t,now,ShiftGuide.DEFAULT,false,media.snapshot(now));
@@ -74,18 +76,23 @@ public class JsDiagnosticsPreview {
      else check(c.texts.contains("Example Track")&&c.texts.contains("Example Artist"),"actual CarPlay media snapshot rendered");
     }else if(tab==2){
      check(c.texts.contains(UiText.t("신호별 수신 · 유효성")),"signal page");
+     check(c.texts.contains(UiText.t("DCT 관측"))&&c.texts.contains(UiText.t("변속기 종류"))&&c.texts.contains(UiText.t("변속기 설정")),"vehicle signal and DCT share one page");
      String expected=state.equals("waiting")?"미수신":state.equals("invalid")?"무효 수신":state.equals("held")?"보관값":state.equals("expired")?"만료":"유효";
      check(c.texts.contains(UiText.t(expected)),"distinct signal state: "+state);
      if(state.equals("invalid"))check(!c.texts.contains("14.20 V")&&t.sample(Telemetry.BAT_VOLTAGE,now).receivedCount==1,"invalid-only reception is counted without a fabricated value");
-     if(state.equals("held"))check(c.texts.contains("14.20 V")&&c.texts.contains("0.0s / 1.0s")&&t.sample(Telemetry.BAT_VOLTAGE,now).receivedCount==2,"held value keeps separate reception and valid ages");
+     if(state.equals("held"))check(c.texts.contains("14.20 V")&&c.texts.contains("2 · 0.0s / 1.0s")&&t.sample(Telemetry.BAT_VOLTAGE,now).receivedCount==2,"held value keeps separate reception and valid ages");
      if(state.equals("expired"))check(!c.texts.contains("14.20 V"),"expired battery value hidden");
+    }else if(tab==3){
+     check(c.texts.contains(UiText.t("Wi-Fi 상태"))&&c.texts.contains(UiText.t("Wi-Fi 서비스")),"Wi-Fi status rendered");
+     check(c.texts.contains(UiText.t("Bluetooth HAL 관찰"))&&c.texts.contains(UiText.t("컨트롤러"))&&c.texts.contains(UiText.t("로그 기록만으로는 미확정")),"Wi-Fi and Bluetooth share one page");
+     if(state.equals("waiting"))check(c.texts.contains(UiText.t("Bluetooth HAL 기록 없음")),"missing log remains unknown");
+     else check(c.texts.contains("BCM4335")&&c.texts.contains("bcm4335.hcd")&&c.texts.contains(UiText.t("HAL 펌웨어 초기화 완료")),"successful controller and patch evidence displayed");
     }else if(tab==4){
      check(c.texts.contains("BCM")&&c.texts.contains(UiText.t("DCT 서비스")),"connection sources rendered");
      if(!state.equals("waiting"))check(c.texts.contains(UiText.t("연결 상태 미확인")),"service presence does not claim connection");
      check(c.texts.contains(state.equals("received")?UiText.t("연결됨"):state.equals("waiting")?"—":UiText.t("연결 안 됨")),"connection state rendered");
     }else{
-     check(c.texts.contains(UiText.t("변속기 정보"))&&c.texts.contains(UiText.t("차량 정보"))&&c.texts.contains(UiText.t("변속기 종류"))&&c.texts.contains(UiText.t("변속기 설정"))&&c.texts.contains("MT (test)"),"separate transmission and receive panels");
-     if(!state.equals("waiting"))check(c.texts.contains(UiText.t("꺼짐")),"Wi-Fi state 1 means disabled");
+     throw new AssertionError("uncovered diagnostics page");
     }
     c.write(args[0]+"/diag-"+language+"-"+height+"-"+state+"-"+tab+".png");rendered++;
    }
@@ -95,13 +102,13 @@ public class JsDiagnosticsPreview {
   chosen.jsTransmissionSetting(99);check(chosen.dctTemperatures(1).transmissionSetting==0,"invalid choice becomes unknown");
   for(int kind=1;kind<=2;kind++){
    Telemetry selected=fixture("waiting");selected.jsTransmissionSetting(kind);selected.clear();
-   JsPitRenderer sr=new JsPitRenderer();sr.setDiagnosticPage(true,observations("waiting").snapshot(1000));sr.selectDiagnosticTab(500,80,500,80);
+   JsPitRenderer sr=new JsPitRenderer();sr.setDiagnosticPage(true,observations("waiting").snapshot(1000));sr.selectDiagnosticTab(350,80,350,80);
    Canvas sc=new Canvas(800,480);sr.draw(sc,800,480,false,selected,1000,ShiftGuide.DEFAULT,false,new MediaState().snapshot(1000));
    check(sc.texts.contains(kind==1?"DCT":"MT"),"saved transmission displayed");
    check(!sc.texts.contains("MT (test)")&&!sc.texts.contains("DCT (test)"),"stored selection overrides trial");
   }
-  JsPitRenderer hit=new JsPitRenderer();check(!hit.transmissionHit(756,137),"settings requires Wi-Fi DCT tab");
-  hit.selectDiagnosticTab(500,80,500,80);check(hit.transmissionHit(756,137)&&!hit.transmissionHit(450,170),"settings hit restricted to button");
+  JsPitRenderer hit=new JsPitRenderer();check(!hit.transmissionHit(756,171),"settings requires vehicle category");
+  hit.selectDiagnosticTab(350,80,350,80);check(hit.transmissionHit(756,171)&&!hit.transmissionHit(450,170),"settings hit restricted to DCT button");
   Telemetry t=fixture("held");long before=t.sample(Telemetry.BAT_VOLTAGE,2000).receivedCount;
   t.snapshot(9000);check(t.sample(Telemetry.BAT_VOLTAGE,9000).receivedCount==before,"redraw cannot simulate new reception");
   t.clear();check(t.sample(Telemetry.BAT_VOLTAGE,10000).receivedCount==0&&!t.sample(Telemetry.BAT_VOLTAGE,10000).seen,"ignition clears reception evidence");
@@ -131,12 +138,12 @@ def render(folder):
         harness.write_text(HARNESS)
         sources.append(harness)
         names = ("Telemetry", "PdPowertrain", "PdGearState", "JsPowertrain", "JsGearState",
-                 "JsTelemetryDecoder", "JsDiagState", "JsPitRenderer", "ClusterRenderer", "JsClusterRenderer", "JsOverviewRenderer", "JsDiagnosticsRenderer", "JsGaugeRenderer",
+                 "JsTelemetryDecoder", "JsDiagState", "BluetoothRuntimeProbe", "JsPitRenderer", "ClusterRenderer", "JsClusterRenderer", "JsOverviewRenderer", "JsDiagnosticsRenderer", "JsGaugeRenderer",
                  "JsPerformanceRenderer", "DashboardPage", "ShiftGuide", "MediaState",
                  "GaugeLayout", "GaugeRenderer", "OverviewLayout", "GraphLayout", "GraphRenderer")
         groups = {'OverviewLayout': 'overview', 'OverviewRenderer': 'overview', 'JsOverviewRenderer': 'overview', 'GaugeEditor': 'gauge', 'GaugeLayout': 'gauge', 'GaugeRenderer': 'gauge', 'JsGaugeRenderer': 'gauge', 'GraphEditor': 'graph', 'GraphLayout': 'graph', 'GraphRenderer': 'graph', 'ClusterRenderer': 'cluster', 'JsClusterRenderer': 'cluster', 'JsDiagnosticsRenderer': 'diagnostics', 'PerformanceRenderer': 'performance', 'JsPerformanceRenderer': 'performance'}
         def source_path(name):
-            if name in ("JsDiagState", "JsLogger", "JsDiagnosticsRenderer"): return ROOT / ("apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/view" if name == "JsDiagnosticsRenderer" else "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger") / (name + ".java")
+            if name in ("JsDiagState", "JsLogger", "BluetoothRuntimeProbe", "JsDiagnosticsRenderer"): return ROOT / ("apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/view" if name == "JsDiagnosticsRenderer" else "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger") / (name + ".java")
             if name in groups: return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view" / ("f1" if groups[name] == "cluster" else groups[name]) / (name + ".java")
             if name in UI_SOURCES: return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view" / (name + ".java")
             if name in ("JsPowertrain", "JsGearState", "JsTelemetryDecoder"): return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/js" / (name + ".java")

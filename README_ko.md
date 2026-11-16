@@ -119,11 +119,11 @@ JS 하드웨어·HSCAN 조사 도구는 앱과 분리된 [`diag/js_kr/`](diag/js
 
 [빌드·테스트](docs/BUILD.md) · [개발 과정](docs/RESEARCH_ko.md) · [JS 값 수집 인계](docs/JS_DEBUG_CAPTURE.md) · [NEMESIS 검토](docs/NEMESIS_REVIEW.md)
 
-소스의 [JS 진단 화면](docs/JS_DIAGNOSTICS.md)은 `HUD·내비 / 차량 신호 / Wi-Fi·DCT / Bindings` 네 탭으로 나뉩니다. 신호별 미수신·무효·유효·보관·만료 상태와 수신 횟수, 마지막 수신/유효값 경과를 비교할 수 있습니다. 내비는 초기 sticky 여부와 오류 원인도 표시합니다. 기존 APK에는 화면 개편이 포함되지 않으며 실차 수신·보정·HUD 출력 검증과는 구분합니다.
+소스의 [JS 진단 화면](docs/JS_DIAGNOSTICS.md)은 `HUD·내비 / CarPlay / 차량 / 연결 / Bindings` 다섯 분류로 나뉩니다. 차량 화면에는 차량 신호와 DCT 항목을, 연결 화면에는 Wi-Fi와 Bluetooth 항목을 함께 표시합니다. Bluetooth는 `READ_LOGS` 보호 권한을 요청하고 제한된 `bt_vendor` logcat에서 컨트롤러 판별명, HCD 파일명과 펌웨어 초기화 결과만 읽어 표시합니다. 일반 앱의 권한 부여와 실차 로그 접근은 미검증이며, 화면은 마지막 HAL 초기화 기록을 보여주고 현재 활성 상태를 보증하지 않습니다. 기존 APK에는 화면이 포함되지 않습니다.
 
 자체 코드·문서는 [MIT](LICENSE)입니다. [의존성·서명 안내](NOTICE.md)를 참고하세요. 공개 AOSP 시험 인증서는 독점 배포자 신원이나 OTA 키가 아닙니다. 소스 빌드 결과는 서명 전 APK입니다. 제조사 펌웨어·APK, 개인 로그·식별자·개인키는 배포하지 않습니다. 제조사와 무관한 비공식 프로젝트입니다.
 
-Dashboard Java 소스는 `apps/dashboard/src/main/java`에 있습니다. Activity는 `com.veloster.dashboard`, 차량 연결은 `com.veloster.dashboard.vehicle`, 뷰와 페이지별 렌더러는 `com.veloster.dashboard.view` 하위 패키지에 있습니다. JS·PD·JSN 디코더는 `apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/js`, `pd`, `jsn`에 있습니다. 사용자 작성 HUD 조사기와 경로 리스너는 `src/0x1101L/java` 아래 역할별 패키지에 있습니다. Bindings 탭은 차량 연결과 서비스 상태를 간단히 표시합니다. 이 소스 변경은 기존 APK에 포함되지 않았습니다.
+Dashboard Java 소스는 `apps/dashboard/src/main/java`에 있습니다. Activity는 `com.veloster.dashboard`, 차량 연결은 `com.veloster.dashboard.vehicle`, 뷰와 페이지별 렌더러는 `com.veloster.dashboard.view` 하위 패키지에 있습니다. JS·PD·JSN 디코더는 `apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/js`, `pd`, `jsn`에 있습니다. 사용자 작성 HUD·Bluetooth 조사기와 경로 리스너는 `src/0x1101L/java` 아래 역할별 패키지에 있습니다. Bluetooth 로그 접근과 실차 표시는 확인하지 않았고 이 소스 변경은 기존 APK에 포함되지 않았습니다.
 
 JS 소스는 기존 진단·텔레메트리 snapshot을 버전 계약 `JS_LOGGER v1`로 기록하며 호스트 추출기는 CSV·요약 JSON·분석 초안을 생성합니다. 과거 `JS_SAMPLE` 기록과 출력 호환도 유지합니다. 확인된 callback/decoder 출처만 표시하고, 알 수 없으면 `unknown`으로 둡니다. 원시 payload, 내비 목적지·좌표, 미디어 정보와 장치 식별자는 수집하지 않습니다. Java 로거와 Python 파서는 한 버전 계약이므로 필드나 버전 변경 시 항상 함께 바꿔야 합니다. 새 시험 APK에 로거가 포함되어 있으나 짧은 기기 로그 수집을 확인했으나 신호 정확도는 미검증입니다. [수집 계약과 명령](docs/JS_DEBUG_CAPTURE.md).
 
@@ -141,9 +141,9 @@ CarPlay 원본 보관은 ADB로 회수한 CPRAW1 파일을 진단 화면에서 �
 
 ### JS 변속기 판별 시험
 
-JS 진단 화면의 Wi-Fi · DCT 탭에 변속기 시험 추정값을 표시한다. 같은 시동 구간에서 수동 게이트 후보가 관측되거나 `01A4` 온도 두 값이 모두 유효하면 DCT, 그 외 MT로 표시한다. 신호 미수신 DCT도 MT로 표시될 수 있으며 실차 검증 전 추정값이다. 시동 경계에서 초기화하고 패들 전용 신호는 미구현이다. 새 요청은 추가하지 않는다.
+JS 진단 화면의 `차량 > DCT`에 변속기 시험 추정값을 표시한다. 같은 시동 구간에서 수동 게이트 후보가 관측되거나 `01A4` 온도 두 값이 모두 유효하면 DCT, 그 외 MT로 표시한다. 신호 미수신 DCT도 MT로 표시될 수 있으며 실차 검증 전 추정값이다. 시동 경계에서 초기화하고 패들 전용 신호는 미구현이다. 새 요청은 추가하지 않는다.
 
-JS 진단의 Wi-Fi · DCT 탭에서 변속기 정보의 변속기 설정 버튼을 눌러 DCT 또는 수동을 선택하면 앱 설정에 보관합니다. 시동·앱 재시작 후에도 선택값을 표시하며, 변속기 설정 버튼을 다시 눌러 바꿀 수 있습니다. 변속기 정보와 차량 정보는 별도 컨테이너로 표시하며 서비스 상태는 Bindings에 모읍니다. 앱 데이터 삭제나 재설치 시 보존은 보장되지 않습니다. 선택 전 시험 추정은 실제 변속기 확인값이 아닙니다. 온도값 수신을 위한 기존 진단 요청은 이 선택과 별개입니다.
+JS 진단의 `차량 > DCT`에서 변속기 설정 버튼을 눌러 DCT 또는 수동을 선택하면 앱 설정에 보관합니다. 시동·앱 재시작 후에도 선택값을 표시하며, 변속기 설정 버튼을 다시 눌러 바꿀 수 있습니다. 변속기 정보와 차량 정보는 별도 컨테이너로 표시하며 서비스 상태는 Bindings에 모읍니다. 앱 데이터 삭제나 재설치 시 보존은 보장되지 않습니다. 선택 전 시험 추정은 실제 변속기 확인값이 아닙니다. 온도값 수신을 위한 기존 진단 요청은 이 선택과 별개입니다.
 
 ### Mac 실시간 UI 프리뷰
 

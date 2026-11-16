@@ -1,6 +1,7 @@
 package com.veloster.dashboard.debugger.view;
 
 import com.veloster.dashboard.debugger.JsDiagState;
+import com.veloster.dashboard.debugger.BluetoothRuntimeProbe;
 
 import com.veloster.dashboard.vehicle.*;
 
@@ -25,12 +26,15 @@ public final class JsDiagnosticsRenderer {
     private String carPlayRawStatus="내부 저장 캡처 없음";
     private String carPlayLibraryStatus="미확인";
     private String carPlayProcessStatus="미확인";
-    public boolean transmissionHit(float x,float y){return diagnosticTab==3&&x>=640&&x<=770&&y>=118&&y<=154;}
-    public boolean select(float downX,float downY,float x,float y){int tab=diagnosticTabAt(x,y);if(tab<0||tab!=diagnosticTabAt(downX,downY))return false;diagnosticTab=tab;return true;}
-    public void draw(Canvas c,Telemetry.Sample[] samples,JsDiagState.Snapshot diagnostic,Telemetry.DctTemperatures dct,MediaState.Snapshot media,String rawStatus,String libraryStatus,String processStatus){this.samples=samples;this.diagnostic=diagnostic;this.media=media;this.carPlayRawStatus=rawStatus;this.carPlayLibraryStatus=libraryStatus;this.carPlayProcessStatus=processStatus;drawDiagnostics(c,dct);}
+    private BluetoothRuntimeProbe.Snapshot bluetoothStatus=BluetoothRuntimeProbe.parse("");
+    public boolean transmissionHit(float x,float y){return diagnosticTab==2&&x>=642&&x<=770&&y>=154&&y<=190;}
+    public boolean select(float downX,float downY,float x,float y){
+        if(downY>=62&&downY<=100&&y>=62&&y<=100){int tab=diagnosticTabAt(x);if(tab<0||tab!=diagnosticTabAt(downX))return false;diagnosticTab=tab;return true;}
+        return false;
+    }
+    public void draw(Canvas c,Telemetry.Sample[] samples,JsDiagState.Snapshot diagnostic,Telemetry.DctTemperatures dct,MediaState.Snapshot media,String rawStatus,String libraryStatus,String processStatus,BluetoothRuntimeProbe.Snapshot bluetoothStatus){this.samples=samples;this.diagnostic=diagnostic;this.media=media;this.carPlayRawStatus=rawStatus;this.carPlayLibraryStatus=libraryStatus;this.carPlayProcessStatus=processStatus;if(bluetoothStatus!=null)this.bluetoothStatus=bluetoothStatus;drawDiagnostics(c,dct);}
     public boolean carPlayImportHit(float x,float y){return diagnosticTab==1&&x>=425&&x<=770&&y>=310&&y<=354;}
-    private static int diagnosticTabAt(float x,float y){
-        if(y<62||y>100)return -1;
+    private static int diagnosticTabAt(float x){
         for(int i=0;i<5;i++){float left=18+i*154;if(x>=left&&x<=left+148)return i;}
         return -1;
     }
@@ -76,12 +80,12 @@ public final class JsDiagnosticsRenderer {
     private void drawDiagnostics(Canvas c,Telemetry.DctTemperatures dct){
         button(c,UiText.t("HUD · 내비"),18,62,148,38,diagnosticTab==0,BLUE);
         button(c,"CarPlay",172,62,148,38,diagnosticTab==1,BLUE);
-        button(c,UiText.t("차량 신호"),326,62,148,38,diagnosticTab==2,BLUE);
-        button(c,"Wi-Fi · DCT",480,62,148,38,diagnosticTab==3,BLUE);
+        button(c,UiText.t("차량"),326,62,148,38,diagnosticTab==2,BLUE);
+        button(c,UiText.t("연결"),480,62,148,38,diagnosticTab==3,BLUE);
         button(c,"Bindings",634,62,148,38,diagnosticTab==4,BLUE);
         if(diagnosticTab==1){drawCarPlay(c);return;}
-        if(diagnosticTab==2){drawDiagnosticSignals(c);return;}
-        if(diagnosticTab==3){drawDiagnosticWifi(c,dct);return;}
+        if(diagnosticTab==2){drawVehicleDiagnostics(c,dct);return;}
+        if(diagnosticTab==3){drawConnectivityDiagnostics(c);return;}
         panel(c,18,112,373,316,PANEL,LINE);panel(c,409,112,373,316,PANEL,LINE);
         if(diagnosticTab==4){drawBindings(c);return;}
         text(c,UiText.t("내비 수신"),32,138,16,BLUE,true);
@@ -127,25 +131,41 @@ public final class JsDiagnosticsRenderer {
         diagNote(c,"미디어 방송은 CarPlay 링크나 TBT 원본의 증거가 아닙니다.",448);
         diagNote(c,"라이브러리 로드 확인과 Frida 후킹·원본 수신은 별개입니다.",468);
     }
-    private void drawDiagnosticSignals(Canvas c){
-        panel(c,18,112,764,316,PANEL,LINE);
+    private void drawVehicleDiagnostics(Canvas c,Telemetry.DctTemperatures dct){
+        panel(c,18,112,500,316,PANEL,LINE);panel(c,530,112,252,316,PANEL,LINE);
         text(c,UiText.t("신호별 수신 · 유효성"),32,138,16,BLUE,true);
-        String[] headers={"신호","상태","현재 / 보관값","수신 횟수","수신 / 유효 경과"};
-        float[] positions={32,190,302,510,610};
-        for(int i=0;i<headers.length;i++)text(c,UiText.t(headers[i]),positions[i],163,13,MUTED,false);
+        text(c,UiText.t("신호"),32,163,12,MUTED,false);
+        text(c,UiText.t("상태"),150,163,12,MUTED,false);
+        text(c,UiText.t("값"),235,163,12,MUTED,false);
+        text(c,UiText.t("횟수 · 경과"),352,163,12,MUTED,false);
         int[] indices={Telemetry.BAT_VOLTAGE,Telemetry.BAT_SOC,Telemetry.TPMS_FL,Telemetry.TPMS_FR,Telemetry.TPMS_RL,Telemetry.TPMS_RR,1,10,11,12};
         for(int row=0;row<indices.length;row++){
-            int i=indices[row];Telemetry.Sample s=samples[i];float y=187+row*25;
-            fitted(c,UiText.t(Telemetry.LABELS[i]),32,y,14,150,WHITE);
-            fitted(c,sampleState(s),190,y,14,102,!s.seen?MUTED:s.valid?ECO_GREEN:s.held?BLUE:RED);
+            int i=indices[row];Telemetry.Sample s=samples[i];float y=184+row*21;
+            fitted(c,UiText.t(Telemetry.LABELS[i]),32,y,13,112,WHITE);
+            fitted(c,sampleState(s),150,y,13,78,!s.seen?MUTED:s.valid?ECO_GREEN:s.held?BLUE:RED);
             String reading="—";
             if(s.valid||s.held)reading=String.format(Locale.US,i==Telemetry.BAT_VOLTAGE?"%.2f":i==11||i==12?"%+.2f":"%.1f",s.value)+" "+Telemetry.UNITS[i];
-            fitted(c,reading,302,y,15,198,WHITE);
-            fitted(c,String.valueOf(s.receivedCount),510,y,14,90,WHITE);
-            fitted(c,diagAge(s.seen?s.ageMs:-1)+" / "+diagAge(s.lastValidAgeMs),610,y,14,156,MUTED);
+            fitted(c,reading,235,y,13,112,WHITE);
+            fitted(c,s.receivedCount+" · "+diagAge(s.seen?s.ageMs:-1)+" / "+diagAge(s.lastValidAgeMs),352,y,12,154,MUTED);
         }
-        diagNote(c,"유효·무효는 디코더 판정입니다. 배터리 전압·가속도는 실차 대조가 필요합니다.",448);
-        diagNote(c,"신호 횟수는 시동 경계에서 초기화됩니다. 보관값은 현재 실측값이 아닙니다.",468);
+        text(c,UiText.t("DCT 관측"),544,138,16,BLUE,true);
+        button(c,UiText.t("변속기 설정"),642,154,128,36,false,BLUE);
+        compactDiagRow(c,544,211,"변속기 종류",dct.transmissionSetting==1?"DCT":dct.transmissionSetting==2?"MT":dct.dctEstimate?"DCT (test)":"MT (test)");
+        compactDiagRow(c,544,243,"DCT 온도",dctValue(dct));
+        compactDiagRow(c,544,275,"DCT 서비스",connectionState(diagnostic.dctService));
+        compactDiagRow(c,544,307,"차량 속도",diagnosticSample(7," km/h",false));
+        compactDiagRow(c,544,339,"클러치 수명",UiText.t("미검증"));
+        fitted(c,UiText.t("온도는 기존 진단 응답만 표시합니다."),544,382,11,220,MUTED);
+        fitted(c,UiText.t("시험 추정은 실물 확인이 아닙니다."),544,401,11,220,MUTED);
+        fitted(c,UiText.t("값·상태·수신 횟수와 경과를 표시합니다. 보관값은 현재 실측값이 아닙니다."),32,417,11,476,MUTED);
+    }
+    private void compactDiagRow(Canvas c,float x,float y,String label,String value){
+        fitted(c,UiText.t(label),x,y,12,96,MUTED);
+        fitted(c,value,x+99,y,12,130,WHITE);
+    }
+    private void wideDiagRow(Canvas c,float x,float y,String label,String value){
+        fitted(c,UiText.t(label),x,y,12,96,MUTED);
+        fitted(c,value,x+99,y,12,244,WHITE);
     }
     private String connectionState(String status){
         if("registered".equals(status)||"connected".equals(status))return UiText.t("연결됨");
@@ -166,23 +186,25 @@ public final class JsDiagnosticsRenderer {
         diagRow(c,409,242,"클러스터 서비스",serviceAvailability(diagnostic.clusterService));
         diagRow(c,409,278,"MICOM 서비스",serviceAvailability(diagnostic.micom));
     }
-    private void drawDiagnosticWifi(Canvas c,Telemetry.DctTemperatures dct){
-        panel(c,18,112,373,316,PANEL,LINE);
-        panel(c,409,112,373,150,PANEL,LINE);
-        panel(c,409,272,373,156,PANEL,LINE);
-        text(c,UiText.t("Wi-Fi 관찰"),32,138,16,BLUE,true);
-        text(c,UiText.t("변속기 정보"),423,138,16,BLUE,true);
-        button(c,UiText.t("변속기 설정"),640,118,130,36,false,BLUE);
-        String[] labels={"Wi-Fi 기능","Wi-Fi 상태","Wi-Fi 알림","Wi-Fi 모듈"};
-        String[] states={observed(diagnostic.wifiFeature,"선언됨","선언 안 됨"),wifiRadio(diagnostic.wifiState),observed(diagnostic.wifiWatch,"등록됨","미등록"),UiText.t("미검증")};
-        for(int i=0;i<labels.length;i++)diagRow(c,18,170+i*36,labels[i],states[i]);
-        diagRow(c,409,170,"변속기 종류",dct.transmissionSetting==1?"DCT":dct.transmissionSetting==2?"MT":dct.dctEstimate?"DCT (test)":"MT (test)");
-        diagRow(c,409,201,"DCT 온도",dctValue(dct));
-        diagRow(c,409,232,"클러치 수명",UiText.t("미검증"));
-        text(c,UiText.t("차량 정보"),423,297,16,BLUE,true);
-        diagRow(c,409,357,"차량 속도",diagnosticSample(7," km/h",false));
-        fitted(c,UiText.t("Wi-Fi 켜짐은 통신 모듈 검증과 별개"),32,384,13,344,MUTED);
-
+    private void drawConnectivityDiagnostics(Canvas c){
+        panel(c,18,112,373,316,PANEL,LINE);panel(c,409,112,373,316,PANEL,LINE);
+        text(c,UiText.t("Wi-Fi 상태"),32,138,16,BLUE,true);
+        diagRow(c,18,174,"Wi-Fi 기능",observed(diagnostic.wifiFeature,"선언됨","선언 안 됨"));
+        diagRow(c,18,207,"Wi-Fi 상태",wifiRadio(diagnostic.wifiState));
+        diagRow(c,18,240,"Wi-Fi 알림",observed(diagnostic.wifiWatch,"등록됨","미등록"));
+        diagRow(c,18,273,"Wi-Fi 서비스",serviceAvailability(diagnostic.wifiService));
+        diagRow(c,18,306,"Wi-Fi 모듈",UiText.t("미검증"));
+        diagRow(c,18,339,"Android 상태",wifiRadio(diagnostic.wifiState));
+        fitted(c,UiText.t("Wi-Fi 켜짐은 통신 모듈 검증과 별개"),32,386,12,340,MUTED);
+        text(c,UiText.t("Bluetooth HAL 관찰"),423,138,16,BLUE,true);
+        wideDiagRow(c,423,174,"컨트롤러",UiText.t(bluetoothStatus.controller));
+        wideDiagRow(c,423,207,"선택된 HCD",UiText.t(bluetoothStatus.patch));
+        wideDiagRow(c,423,240,"초기화 상태",UiText.t(bluetoothStatus.status));
+        wideDiagRow(c,423,273,"로그 시각",UiText.t(bluetoothStatus.time));
+        wideDiagRow(c,423,306,"현재 활성 상태",UiText.t("로그 기록만으로는 미확정"));
+        fitted(c,UiText.t("최근 bt_vendor 초기화 기록입니다. 현재 활성 칩을 보증하지 않습니다."),423,350,12,340,MUTED);
+        fitted(c,UiText.t("권한 거부·기록 없음은 미확인으로 표시됩니다."),423,373,12,340,MUTED);
+        fitted(c,UiText.t("컨트롤러·HCD·fwcfg 결과만 추리며 원문 로그는 표시하지 않습니다."),423,396,11,340,MUTED);
     }
     private void text(Canvas c,String s,float x,float y,float size,int color,boolean bold){
         paint.setColor(color);paint.setTextSize(size);paint.setTypeface(bold?Typeface.DEFAULT_BOLD:Typeface.DEFAULT);c.drawText(s,x,y,paint);
