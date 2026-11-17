@@ -26,6 +26,7 @@ public final class JsDiagnosticsRenderer {
     private String carPlayLibraryStatus="미확인";
     private String carPlayProcessStatus="미확인";
     public boolean transmissionHit(float x,float y){return diagnosticTab==3&&x>=640&&x<=770&&y>=118&&y<=154;}
+    public boolean wifiSettingsHit(float x,float y){return diagnosticTab==3&&x>=244&&x<=379&&y>=118&&y<=154;}
     public boolean select(float downX,float downY,float x,float y){int tab=diagnosticTabAt(x,y);if(tab<0||tab!=diagnosticTabAt(downX,downY))return false;diagnosticTab=tab;return true;}
     public void draw(Canvas c,Telemetry.Sample[] samples,JsDiagState.Snapshot diagnostic,Telemetry.DctTemperatures dct,MediaState.Snapshot media,String rawStatus,String libraryStatus,String processStatus){this.samples=samples;this.diagnostic=diagnostic;this.media=media;this.carPlayRawStatus=rawStatus;this.carPlayLibraryStatus=libraryStatus;this.carPlayProcessStatus=processStatus;drawDiagnostics(c,dct);}
     public boolean carPlayImportHit(float x,float y){return diagnosticTab==1&&x>=425&&x<=770&&y>=310&&y<=354;}
@@ -171,6 +172,7 @@ public final class JsDiagnosticsRenderer {
         panel(c,409,112,373,150,PANEL,LINE);
         panel(c,409,272,373,156,PANEL,LINE);
         text(c,UiText.t("Wi-Fi 관찰"),32,138,16,BLUE,true);
+        button(c,UiText.t("Wi-Fi 설정"),244,118,135,36,false,BLUE);
         text(c,UiText.t("변속기 정보"),423,138,16,BLUE,true);
         button(c,UiText.t("변속기 설정"),640,118,130,36,false,BLUE);
         String[] labels={"Wi-Fi 기능","Wi-Fi 상태","Wi-Fi 알림","Wi-Fi 모듈"};

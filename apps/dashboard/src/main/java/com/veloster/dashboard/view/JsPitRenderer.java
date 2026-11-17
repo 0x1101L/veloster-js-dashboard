@@ -56,6 +56,7 @@ public final class JsPitRenderer {
     public void setDiagnosticPage(boolean value,JsDiagState.Snapshot status){diagnosticPage=value;if(status!=null)diagnostic=status;}
     private final JsDiagnosticsRenderer diagnosticsRenderer=new JsDiagnosticsRenderer();
     public boolean transmissionHit(float x,float y){return diagnosticsRenderer.transmissionHit(x,y);}
+    public boolean wifiSettingsHit(float x,float y){return diagnosticsRenderer.wifiSettingsHit(x,y);}
     public boolean selectDiagnosticTab(float downX,float downY,float x,float y){return diagnosticsRenderer.select(downX,downY,x,y);}
     public boolean carPlayImportHit(float x,float y){return diagnosticsRenderer.carPlayImportHit(x,y);}
     public void setCarPlayRawStatus(String value){carPlayRawStatus=value==null?"내부 저장 캡처 없음":value;}

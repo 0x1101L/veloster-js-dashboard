@@ -211,6 +211,13 @@ public final class Telemetry {
         writeSource="unknown";
         for(int i=0;i<LABELS.length;i++) { counts[i]=0; valid[i]=false; changed[i]=false; seen[i]=false;jsHasValue[i]=false;jsValidAt[i]=0;jsChangedAt[i]=0;sources[i]="unknown";validSources[i]="unknown"; history[i]=null; }
     }
+    public synchronized void clearJsTirePressure() {
+        if(!js)return;
+        for(int i=TPMS_FL;i<=TPMS_RR;i++){
+            valid[i]=false;changed[i]=false;seen[i]=false;jsHasValue[i]=false;
+            jsValidAt[i]=0;jsChangedAt[i]=0;counts[i]=0;sources[i]="unknown";validSources[i]="unknown";history[i]=null;
+        }
+    }
     public synchronized Sample sample(int i, long now) {
         long age=seen[i]?Math.max(0,now-times[i]):Long.MAX_VALUE;
         long validAge=js&&jsHasValue[i]?Math.max(0,now-jsValidAt[i]):Long.MAX_VALUE;

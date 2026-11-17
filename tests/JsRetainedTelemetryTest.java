@@ -28,10 +28,15 @@ public class JsRetainedTelemetryTest {
         byte[] tires=new byte[40];tires[22]=1;tires[29]=35;tires[31]=36;tires[33]=37;tires[35]=38;
         js.additional(tires,70000);
         check(js.sample(Telemetry.AMBIENT,3700000).valid,"ambient has no time expiry");
-        for(int i=Telemetry.TPMS_FL;i<=Telemetry.TPMS_RR;i++)check(js.sample(i,3700000).valid,"TPMS has no time expiry");
+        for(int i=Telemetry.TPMS_FL;i<=Telemetry.TPMS_RR;i++){
+            check(js.sample(i,3700000).valid,"TPMS does not expire by time");
+        }
+        js.additional(tires,3700000);
         js.units(null,3700000);js.additional(null,3700000);
         check(js.sample(Telemetry.AMBIENT,7200000).held,"invalid ambient retains last value");
-        for(int i=Telemetry.TPMS_FL;i<=Telemetry.TPMS_RR;i++)check(js.sample(i,7200000).held,"invalid TPMS retains each last value");
+        for(int i=Telemetry.TPMS_FL;i<=Telemetry.TPMS_RR;i++)check(!js.sample(i,3700000).valid&&js.sample(i,3700000).held,"invalid TPMS retains last value");
+        js.clearJsTirePressure();
+        for(int i=Telemetry.TPMS_FL;i<=Telemetry.TPMS_RR;i++)check(!js.sample(i,3700000).held&&!js.sample(i,3700000).seen,"disconnect clears TPMS");
         js.clear();check(!js.sample(Telemetry.AMBIENT,7200001).held&&!js.sample(Telemetry.TPMS_FL,7200001).seen,"session clears no-expiry values");
         js.clear();check(!js.sample(2,7200001).held&&!js.sample(2,7200001).seen,"session clear");
         Telemetry pd=new Telemetry();pd.profile(true,false,false);pd.temperatures(new byte[]{100,120},1000);pd.temperatures(new byte[]{(byte)255,(byte)255},2000);

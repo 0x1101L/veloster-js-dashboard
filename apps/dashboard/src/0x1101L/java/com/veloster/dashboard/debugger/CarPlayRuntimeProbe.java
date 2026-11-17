@@ -46,7 +46,7 @@ public final class CarPlayRuntimeProbe {
             while ((count = input.stream.read(buffer)) != -1) digest.update(buffer, 0, count);
             StringBuilder hex = new StringBuilder(64);
             for (byte value : digest.digest()) hex.append(String.format(java.util.Locale.US, "%02x", value & 255));
-            return REFERENCE_SHA256.equals(hex.toString()) ? "기준본 해시 일치" : "파일 있음 · 기준본과 해시 다름";
+            return REFERENCE_SHA256.equals(hex.toString()) ? "파일 확인됨" : "파일 있음 · 기준본과 해시 다름";
         } catch (Exception e) {
             return "파일 읽기 불가";
         } finally {

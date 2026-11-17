@@ -34,7 +34,7 @@ public final class DashboardView extends View implements Runnable {
     private static final JsDiagState DIAG=new JsDiagState();
     private static WeakReference<DashboardView> current=new WeakReference<DashboardView>(null);
     public static void carPlayRawStatus(String status){DashboardView view=current.get();if(view!=null){view.jsRenderer.setCarPlayRawStatus(status);view.invalidate();}}
-    public static void carPlayRuntimeStatus(String library,String process){DashboardView view=current.get();if(view!=null){view.jsRenderer.setCarPlayRuntimeStatus(library,process);view.invalidate();}}
+    public static void carPlayRuntimeStatus(final String library,final String process){final DashboardView view=current.get();if(view!=null)view.post(new Runnable(){public void run(){if(current.get()!=view)return;view.jsRenderer.setCarPlayRuntimeStatus(library,process);view.invalidate();}});}
     private final Activity activity;
     private final JsTransmissionSetting transmissionSetting;
     private final PitRenderer renderer=new PitRenderer();
@@ -158,6 +158,7 @@ public final class DashboardView extends View implements Runnable {
         DashboardView d=current.get();if(d!=null)regulation(d.activity,blocked);
     }
     public static void ignition(boolean on) { DATA.clear(); }
+    public static void clearJsTirePressure() { DATA.clearJsTirePressure(); }
     public static void profile(boolean pd,boolean js,boolean jsn){DATA.profile(pd,js,jsn);}
     public interface DiagnosticEventSink { void event(String name,String detail); }
     private static volatile DiagnosticEventSink diagnosticEventSink;
@@ -257,6 +258,11 @@ public final class DashboardView extends View implements Runnable {
         }
         if(tap&&!blocked&&DATA.jsProfile()&&pageState.is(DashboardPage.DIAG)&&jsRenderer.transmissionHit(downX,downY)&&jsRenderer.transmissionHit(x,y)){
             transmissionSetting.show(new Runnable(){public void run(){DATA.jsTransmissionSetting(transmissionSetting.get());invalidate();}});return true;
+        }
+        if(tap&&!blocked&&DATA.jsProfile()&&pageState.is(DashboardPage.DIAG)&&jsRenderer.wifiSettingsHit(downX,downY)&&jsRenderer.wifiSettingsHit(x,y)){
+            try{activity.startActivity(new Intent("android.settings.WIFI_SETTINGS"));}
+            catch(RuntimeException e){Toast.makeText(activity,UiText.t("Wi-Fi 설정을 열 수 없습니다"),Toast.LENGTH_SHORT).show();}
+            return true;
         }
         if(tap&&!blocked&&!pageState.is(DashboardPage.DIAG)&&!pageState.is(DashboardPage.PERFORMANCE)&&!pageState.is(DashboardPage.F1)&&!pageState.is(DashboardPage.GAUGES)&&!pageState.is(DashboardPage.GRAPHS)&&overviewDown>=0&&overviewLayout.hit(x,y)==overviewDown&&!overviewCovered(y)){
             if(OverviewLayout.dctCard(overviewDown,DATA.jsProfile()))return true;

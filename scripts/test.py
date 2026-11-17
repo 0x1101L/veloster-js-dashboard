@@ -31,7 +31,7 @@ def main():
                ROOT / "shared/src/com/veloster/i18n/UiText.java",
                ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/HscanFrameDecoder.java",
                ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/HscanProfile.java"]
-    sources += [hub / (name + ".java") for name in ("RadioTrial", "BluetoothSession", "RebootRequest", "QuickEntryPolicy")]
+    sources += [hub / (name + ".java") for name in ("RadioTrial", "BluetoothSession", "RebootRequest", "QuickEntryPolicy", "EngineerWifiControl")]
     tests = sorted((ROOT / "tests").glob("*Test.java"))
     sources += [ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/HudEventLog.java", ROOT / "shared/src/com/veloster/diagnostics/ErrorLog.java", ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view/DashboardPage.java", ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/JsDiagState.java"]
     sources += [ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/JsLogger.java",
@@ -42,7 +42,7 @@ def main():
         subprocess.run([str(javac), "-encoding", "UTF-8", "-d", temporary,
                         *map(str, sources)], check=True)
         for test in tests:
-            cls = ("com.veloster.dashboard.vehicle." if test.stem == "HscanFrameDecoderTest" else "") + test.stem
+            cls = ("com.veloster.dashboard.vehicle." if test.stem == "HscanFrameDecoderTest" else "com.veloster.carplayhub." if test.stem == "EngineerWifiControlTest" else "") + test.stem
             subprocess.run([str(java), "-ea", "-cp", temporary, cls], check=True)
     print("PASS: " + str(len(tests)) + " synthetic host test programs. Vehicle operation is outside this scope.")
 

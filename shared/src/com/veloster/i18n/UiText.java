@@ -58,11 +58,16 @@ public final class UiText {
         EN.put("Wi-Fi 관찰","Wi-Fi observation");
         EN.put("Wi-Fi 기능","Wi-Fi feature");
         EN.put("Wi-Fi 끄기 실패/시간 초과. 백업을 보존했습니다. 원상복구하세요.","Wi-Fi shutdown failed or timed out. Backup retained; restore the original settings.");
+        EN.put("Wi-Fi 또는 핫스팟 상태를 확인할 수 없어 요청하지 않았습니다.","The request was not made because Wi-Fi or hotspot state is not safe or known.");
         EN.put("Wi-Fi 모듈","Wi-Fi hardware");
         EN.put("Wi-Fi 상태","Wi-Fi state");
         EN.put("Wi-Fi 상태 변경을 대조하세요. DCT는 실제 수신 경로 확인이 남아 있습니다.","Compare Wi-Fi state changes. The DCT vehicle input path remains unverified.");
         EN.put("Wi-Fi 서비스","Wi-Fi service");
+        EN.put("Wi-Fi 설정","Wi-Fi settings");
+        EN.put("Wi-Fi 설정을 열 수 없습니다","Cannot open Wi-Fi settings");
         EN.put("Wi-Fi 알림","Wi-Fi receiver");
+        EN.put("Wi-Fi 전환 요청을 전달했습니다.","Wi-Fi change requested.");
+        EN.put("Wi-Fi 전환 요청이 거부되었거나 결과를 확인할 수 없습니다.","The Wi-Fi request was rejected or its result is unknown.");
         EN.put("Wi-Fi 켜짐은 통신 모듈 검증과 별개","Wi-Fi on does not verify a communication module");
         EN.put("Wi-Fi/AP 상태가 안정된 꺼짐/켜짐 상태가 아닙니다. 변경하지 않았습니다.","Wi-Fi/AP is not in a stable on/off state. No changes were made.");
         EN.put("e-LSD 수치","e-LSD value");
@@ -121,7 +126,7 @@ public final class UiText {
         EN.put("기존 핫스팟 설정을 읽지 못했습니다. 백업 불가로 변경하지 않았습니다.","Could not read the existing hotspot configuration. No backup or changes were made.");
         EN.put("기존 핫스팟이 이미 켜져 있습니다. 설정을 변경하지 않았습니다.","The existing hotspot is already on. No settings were changed.");
         EN.put("기준본 해시 일치","Reference hash matches");
-        EN.put("꺼지는 중","Disabling");
+        EN.put("꺼지는 중","Turning off");
         EN.put("꺼짐","Off");
         EN.put("내 앱","My Apps");
         EN.put("내 앱 / My Apps","My Apps");
@@ -258,6 +263,7 @@ public final class UiText {
         EN.put("안드로이드 기본앱","Android utilities");
         EN.put("안드로이드 블루투스 어댑터가 없습니다.","No Android Bluetooth adapter is available.");
         EN.put("안드로이드 설정","Android settings");
+        EN.put("알 수 없음/오류","Unknown/error");
         EN.put("알림 바로가기를 만들지 못했습니다. 서비스가 중지되었습니다.","Could not create the shortcut notification. The service has stopped.");
         EN.put("알림만","Notification only");
         EN.put("알림만 / Notification only","Notification only");
@@ -273,6 +279,10 @@ public final class UiText {
         EN.put("앱 화면을 열지 못했습니다. 알림에서 다시 시도하세요.","Could not open My Apps. Try the notification.");
         EN.put("언어 설정을 저장하지 못했습니다.","Could not save the language setting.");
         EN.put("없음/접근 불가","Absent / inaccessible");
+        EN.put("엔지니어 Wi-Fi","Engineer Wi-Fi");
+        EN.put("엔지니어 Wi-Fi 권한이 거부되었습니다.","Engineer Wi-Fi permission was denied.");
+        EN.put("엔지니어 Wi-Fi 요청 실패: ","Engineer Wi-Fi request failed: ");
+        EN.put("엔지니어 Wi-Fi 켜기 또는 끄기를 요청합니다. 켜기 전 핫스팟과 Wi-Fi 상태를 확인합니다. PC 연결이 끊길 수 있으므로 정차 중에 사용하세요.","Request Engineer Wi-Fi on or off. Hotspot and Wi-Fi state are checked before turning it on. The PC connection may be lost; use while parked.");
         EN.put("엔지니어링 모드","Engineering mode");
         EN.put("엔진 RPM","Engine RPM");
         EN.put("엔진 회전수","Engine speed");
@@ -297,6 +307,7 @@ public final class UiText {
         EN.put("음악 제어 요청을 보낼 수 없습니다","Could not send the playback command");
         EN.put("응답 해석만 구현 · 자동 진단 요청 없음","Response decoding only · No automatic diagnostic requests");
         EN.put("이 기기는 페어링을 진행 중입니다.","This device is already pairing.");
+        EN.put("이 기기에서 엔지니어 Wi-Fi 기능을 찾을 수 없습니다.","Engineer Wi-Fi is unavailable on this device.");
         EN.put("이 기기에서 재시작 기능을 사용할 수 없습니다.","Restart is unavailable on this device.");
         EN.put("이 시스템에서 바로가기 서비스를 시작할 수 없습니다.","This system cannot start the shortcut service.");
         EN.put("이 화면에서 시작한 검색을 종료했습니다.","Stopped discovery started from this screen.");
@@ -360,7 +371,7 @@ public final class UiText {
         EN.put("캡처 파일 가져오기","Import capture file");
         EN.put("켜기","Enable");
         EN.put("켜면 재부팅 뒤에도 작은 바로가기만 복원합니다. 앱 화면은 자동으로 열지 않습니다. 가장자리 버튼은 끌어서 옮길 수 있습니다.\n\n시스템이 다른 앱 위 표시를 허용하지 않으면 알림만 유지합니다. 순정 화면에서 알림을 열 수 없는 경우에는 별도 메뉴 진입점이 필요합니다. 강제 종료하면 직접 앱을 다시 열 때까지 자동 복원이 중지될 수 있습니다.\n\nWhen enabled, reboot restores only the shortcut. Drag the edge button to move it. If overlays are denied, a notification remains. If the factory UI hides notifications too, use a separate menu entry. Force-stop may block restoration until My Apps is opened again.","When enabled, reboot restores only the shortcut, not the full app screen. Drag the edge button to move it.\n\nIf overlays are denied, the notification remains. If the factory UI also hides notifications, use another entry point. Force-stop may prevent restoration until My Apps is opened again.");
-        EN.put("켜지는 중","Enabling");
+        EN.put("켜지는 중","Turning on");
         EN.put("켜짐","On");
         EN.put("클래스 확인","Class found");
         EN.put("클러스터 API","Cluster API");
@@ -372,6 +383,7 @@ public final class UiText {
         EN.put("파일 없음","File not found");
         EN.put("파일 읽기 불가","File unreadable");
         EN.put("파일 있음 · 기준본과 해시 다름","File found · hash differs");
+        EN.put("파일 확인됨","File found");
         EN.put("퍼포먼스","Performance");
         EN.put("페어링","Pair");
         EN.put("페어링 요청 실패: ","Pairing request failed: ");
@@ -389,6 +401,7 @@ public final class UiText {
         EN.put("핫스팟 요청 실패/시간 초과. 성공으로 판정하지 않습니다. 원상복구하세요.","Hotspot request failed or timed out. Success is not confirmed; restore the original settings.");
         EN.put("해제 실패","Detach failed");
         EN.put("현재 / 보관값","Current / Held value");
+        EN.put("현재 Wi-Fi 상태: ","Current Wi-Fi state: ");
         EN.put("현재 기어","Current gear");
         EN.put("현재 로드 미관측","No mapping observed");
         EN.put("현재 재생 소스에서 음악을 제어할 수 없습니다","Playback control is unavailable for this source");

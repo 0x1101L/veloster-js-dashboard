@@ -50,6 +50,7 @@ public final class HubActivity extends Activity {
     private TextView status;
     private volatile boolean busy;
     private volatile boolean usbBusy;
+    private volatile boolean engineerWifiBusy;
     private SharedPreferences prefs;
     private WifiManager wifi;
     private BluetoothPanel bluetoothPanel;
@@ -133,6 +134,7 @@ public final class HubActivity extends Activity {
         LinearLayout first=new LinearLayout(this),second=new LinearLayout(this);
         add(first,UiText.t("N 계기판"),new Runnable(){public void run(){openDashboard();}});
         add(first,UiText.t("USB 디버깅"),new Runnable(){public void run(){usbDebug();}});
+        add(first,UiText.t("엔지니어 Wi-Fi"),new Runnable(){public void run(){engineerWifi();}});
         add(second,UiText.t("엔지니어링 모드"),new Runnable(){public void run(){openEngineering();}});
         add(second,UiText.t("안드로이드 기본앱"),new Runnable(){public void run(){page="android";render();}});
         content.addView(first);content.addView(second);
@@ -250,6 +252,34 @@ public final class HubActivity extends Activity {
             .setPositiveButton("ON",new android.content.DialogInterface.OnClickListener(){public void onClick(android.content.DialogInterface d,int n){requestUsb(true);}})
             .setNegativeButton("OFF",new android.content.DialogInterface.OnClickListener(){public void onClick(android.content.DialogInterface d,int n){requestUsb(false);}})
             .setNeutralButton(UiText.t("닫기"),null).show();
+    }
+    private void engineerWifi(){
+        new AlertDialog.Builder(this).setTitle(UiText.t("엔지니어 Wi-Fi"))
+            .setMessage(UiText.t("엔지니어 Wi-Fi 켜기 또는 끄기를 요청합니다. 켜기 전 핫스팟과 Wi-Fi 상태를 확인합니다. PC 연결이 끊길 수 있으므로 정차 중에 사용하세요."))
+            .setPositiveButton("ON",new android.content.DialogInterface.OnClickListener(){public void onClick(android.content.DialogInterface d,int n){requestEngineerWifi(true);}})
+            .setNegativeButton("OFF",new android.content.DialogInterface.OnClickListener(){public void onClick(android.content.DialogInterface d,int n){requestEngineerWifi(false);}})
+            .setNeutralButton(UiText.t("닫기"),null).show();
+    }
+    private void requestEngineerWifi(final boolean on){
+        synchronized(this){if(engineerWifiBusy)return;engineerWifiBusy=true;}
+        new Thread(new Runnable(){public void run(){String result;
+            try{
+                int ap=on?radio.apState():-1, before=wifi==null?-1:wifi.getWifiState();
+                boolean accepted=EngineerWifiControl.request(wifi,on,ap,before);
+                int state=wifi.getWifiState();
+                for(int i=0;i<10 && state!=(on?3:1) && state!=4;i++){Thread.sleep(1000);state=wifi.getWifiState();}
+                result=(accepted?UiText.t("Wi-Fi 전환 요청을 전달했습니다."):UiText.t("Wi-Fi 전환 요청이 거부되었거나 결과를 확인할 수 없습니다."))+"\n"+UiText.t("현재 Wi-Fi 상태: ")+wifiStateLabel(state);
+            }catch(NoSuchMethodException e){result=UiText.t("이 기기에서 엔지니어 Wi-Fi 기능을 찾을 수 없습니다.");}
+            catch(SecurityException e){result=UiText.t("엔지니어 Wi-Fi 권한이 거부되었습니다.");}
+            catch(EngineerWifiControl.UnsafeStateException e){result=UiText.t("Wi-Fi 또는 핫스팟 상태를 확인할 수 없어 요청하지 않았습니다.");}
+            catch(Exception e){Log.e(TAG,"Engineer Wi-Fi request failed",e);result=UiText.t("엔지니어 Wi-Fi 요청 실패: ")+e.getClass().getSimpleName();}
+            catch(LinkageError e){result=UiText.t("이 기기에서 엔지니어 Wi-Fi 기능을 찾을 수 없습니다.");}
+            final String answer=result;engineerWifiBusy=false;
+            runOnUiThread(new Runnable(){public void run(){if(!isFinishing())new AlertDialog.Builder(HubActivity.this).setMessage(answer).setPositiveButton(UiText.t("확인"),null).show();}});
+        }},"vn-engineer-wifi").start();
+    }
+    private String wifiStateLabel(int state){
+        switch(state){case 0:return UiText.t("꺼지는 중");case 1:return UiText.t("꺼짐");case 2:return UiText.t("켜지는 중");case 3:return UiText.t("켜짐");default:return UiText.t("알 수 없음/오류");}
     }
     private void confirmReboot(){
         if(rebootDialog!=null)return;

@@ -34,18 +34,18 @@ public final class HscanDataClient {
         if (session == null) return;
         Session old = session; session = null;
         old.close();
-        if(profile==HscanProfile.Kind.JS){DashboardView.diagHscan(0);DashboardView.diagEvent("binding.hscan","stopped");}
+        if(profile==HscanProfile.Kind.JS){DashboardView.clearJsTirePressure();DashboardView.diagHscan(0);DashboardView.diagEvent("binding.hscan","stopped");}
     }
     private synchronized void report(Session source,int state){
-        if(profile==HscanProfile.Kind.JS&&session==source){DashboardView.diagHscan(state==3?2:state);DashboardView.diagEvent("binding.hscan",state==1?"connected":state==3?"permission denied":state==2?"error":"disconnected");}
+        if(profile==HscanProfile.Kind.JS&&session==source){if(state!=1){synchronized(source.delivery){source.connectionGeneration++;DashboardView.clearJsTirePressure();}}DashboardView.diagHscan(state==3?2:state);DashboardView.diagEvent("binding.hscan",state==1?"connected":state==3?"permission denied":state==2?"error":"disconnected");}
     }
 
     private static final class Chunk {
         final byte[] bytes;
-        final long time, sequence;
-        Chunk(byte[] source, int count, long time, long sequence) {
+        final long time, sequence, generation;
+        Chunk(byte[] source, int count, long time, long sequence, long generation) {
             bytes = new byte[count]; System.arraycopy(source, 0, bytes, 0, count);
-            this.time = time; this.sequence = sequence;
+            this.time = time; this.sequence = sequence; this.generation=generation;
         }
     }
 
@@ -55,6 +55,8 @@ public final class HscanDataClient {
         private volatile boolean active = true;
         private LocalSocket socket;
         private long sequence;
+        private volatile long connectionGeneration;
+        private long decodingGeneration;
         final Thread reader, decoder;
 
         Session() {
@@ -93,7 +95,7 @@ public final class HscanDataClient {
                             catch (SocketTimeoutException idle) { continue; }
                             if (n < 0) {report(this,0);break;}
                             if (n == 0) continue;
-                            Chunk chunk = new Chunk(buffer, n, SystemClock.elapsedRealtime(), ++sequence);
+                            Chunk chunk = new Chunk(buffer, n, SystemClock.elapsedRealtime(), ++sequence,connectionGeneration);
                             synchronized (queue) {
                                 if (!active) break;
                                 // Never wait for model/rendering work. Sequence gaps reset partial frames.
@@ -121,7 +123,7 @@ public final class HscanDataClient {
             HscanFrameDecoder parser = new HscanFrameDecoder(new HscanFrameDecoder.Sink() {
                 public void record(int function, byte[] data, long receivedAt) {
                     synchronized (delivery) {
-                        if(active&&gate.accepts()){
+                        if(active&&decodingGeneration==connectionGeneration&&gate.accepts()){
                             if(profile==HscanProfile.Kind.JS)DashboardView.diagEvent("binding.hscan","received");
                             if(profile==HscanProfile.Kind.JS)DashboardView.hscanJs(0xc7,function,data,receivedAt);
                             else if(profile==HscanProfile.Kind.PD)DashboardView.hscanPd(0xc7,function,data,receivedAt);
@@ -139,7 +141,9 @@ public final class HscanDataClient {
                         if (!active) break;
                         chunk = queue.removeFirst();
                     }
-                    if (chunk.sequence != previous + 1) parser.reset();
+                    if (chunk.sequence != previous + 1||chunk.generation!=connectionGeneration) parser.reset();
+                    if (chunk.generation!=connectionGeneration) continue;
+                    decodingGeneration=chunk.generation;
                     previous = chunk.sequence;
                     parser.accept(chunk.bytes, 0, chunk.bytes.length, chunk.time);
                 }

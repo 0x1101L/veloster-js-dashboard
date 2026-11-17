@@ -100,8 +100,9 @@ public class JsDiagnosticsPreview {
    check(sc.texts.contains(kind==1?"DCT":"MT"),"saved transmission displayed");
    check(!sc.texts.contains("MT (test)")&&!sc.texts.contains("DCT (test)"),"stored selection overrides trial");
   }
-  JsPitRenderer hit=new JsPitRenderer();check(!hit.transmissionHit(756,137),"settings requires Wi-Fi DCT tab");
+  JsPitRenderer hit=new JsPitRenderer();check(!hit.transmissionHit(756,137)&&!hit.wifiSettingsHit(300,137),"settings requires Wi-Fi DCT tab");
   hit.selectDiagnosticTab(500,80,500,80);check(hit.transmissionHit(756,137)&&!hit.transmissionHit(450,170),"settings hit restricted to button");
+  check(hit.wifiSettingsHit(300,137)&&!hit.wifiSettingsHit(300,170),"Wi-Fi settings hit restricted to button");
   Telemetry t=fixture("held");long before=t.sample(Telemetry.BAT_VOLTAGE,2000).receivedCount;
   t.snapshot(9000);check(t.sample(Telemetry.BAT_VOLTAGE,9000).receivedCount==before,"redraw cannot simulate new reception");
   t.clear();check(t.sample(Telemetry.BAT_VOLTAGE,10000).receivedCount==0&&!t.sample(Telemetry.BAT_VOLTAGE,10000).seen,"ignition clears reception evidence");

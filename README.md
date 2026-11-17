@@ -94,7 +94,7 @@ Once installed, normal use does not require a PC. If neither the edge button nor
 | 06 · Development and research | [Documentation index](docs/README.md#development-and-research) | [개발·연구 색인](docs/README.md#development-and-research) |
 
 
-JS source now uses a separate copy of the PD decoder and separate JS rendering. Invalid readings retain the last valid slow-changing value with a `LAST` age label for up to 60 seconds, except ambient temperature and TPMS, which have no time expiry within an ignition session; fast-changing readings expire after 2 seconds and are not displayed as retained. These are application policies, not validated OEM timeouts. JSN and PD retain their existing behavior. This is uninstalled source; vehicle validation is pending.
+JS source now uses a separate copy of the PD decoder and separate JS rendering. Invalid slow-changing readings retain the last valid value with a `LAST` age label for up to 60 seconds, except TPMS, which retains its last valid value without a `LAST` label until the ignition session resets or HSCAN disconnects; ambient temperature has no time expiry within an ignition session. Fast-changing readings expire after 2 seconds and are not displayed as retained. These are application policies, not validated OEM timeouts. JSN and PD retain their existing behavior. This is uninstalled source; vehicle validation is pending.
 
 When a valid JS DCT gear is received, the display combines the selector mode and number, such as D1 or M1. The JS sequential signal mapping still needs vehicle verification.
 
