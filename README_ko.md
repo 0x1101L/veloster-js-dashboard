@@ -161,7 +161,9 @@ JS 진단의 `차량 > DCT`에서 변속기 설정 버튼을 눌러 DCT 또는 �
 
 터미널에서 `python3 tools/js_ui_preview.py`를 실행하면 Java 데스크톱 창에서 실제 `DashboardView`가 열립니다. JDK(`java`, `javac`)와 Python 3이 필요합니다. 마우스 누름·이동·뗌은 플랫폼 대역의 `MotionEvent`로 변환되어 앱의 `DashboardView.onTouchEvent()`를 실행합니다. 별도 페이지 선택 메뉴나 Python 좌표 판정은 없습니다. 화면 상단 버튼으로 이동하고, 설정 페이지에서 언어·테마를 변경하며, 게이지·그래프를 길게 눌러 편집합니다. 언어 저장, 테마 적용·취소, 게이지·그래프 편집은 앱의 Java 콜백과 세션 내 메모리 설정을 사용합니다.
 
-창 위쪽에서는 차량과 예시 데이터 상태를 선택합니다. 차량은 `js`(Veloster), `js_n`(Veloster N), `pd`(i30 (N Line))이며 초기 캔버스는 800×480입니다. **프리뷰 캡처**를 누르면 현재 캔버스의 미리보기와 **클립보드 복사**, **저장** 버튼이 표시됩니다. 창과 선택 대화상자는 캡처에 포함되지 않습니다. 정적 이미지 비교는 `python3 tools/js_ui_preview.py --check`, 브라우저 렌더 갤러리는 `python3 tools/js_ui_preview.py --browser`를 사용합니다. 브라우저 갤러리는 화면·상태·언어·테마를 선택해 PNG를 확인하는 용도이며 Java 터치 이벤트를 실행하지 않습니다.
+창 위쪽에는 차량·언어·테마 도구를 배치합니다. 언어와 테마는 대시보드와 같은 Java 설정 기능을 열며, 대시보드 안에서 변경해도 위쪽 표시가 함께 바뀝니다. 차량은 `js`(Veloster), `js_n`(Veloster N), `pd`(i30 (N Line))이며 초기 캔버스는 800×480입니다. 화면 아래에는 예시 데이터 선택, **새로고침**(`R`), **프리뷰 캡처**를 배치합니다. 캡처하면 화면 오른쪽 아래에 미리보기와 **클립보드 복사**, **저장** 버튼이 10초 동안 표시됩니다. 저장 대화상자가 열린 동안에는 알림이 자동으로 닫히지 않습니다. 캡처 이미지에는 대시보드 캔버스만 포함됩니다. 화면은 실시간으로 갱신하므로 예전의 전체 이미지 갱신 버튼은 별도로 두지 않습니다.
+
+정적 이미지 비교는 `python3 tools/js_ui_preview.py --check`, 브라우저 렌더 갤러리는 `python3 tools/js_ui_preview.py --browser`를 사용합니다. 브라우저 갤러리는 화면·상태·언어·테마를 선택해 PNG를 확인하는 용도이며 Java 터치 이벤트를 실행하지 않습니다.
 
 Finder에서 더블클릭해 실행할 macOS 앱은 `sh tools/build_macos_app.sh`로 만들 수 있습니다. 앱 메뉴의 **File → Open…** 또는 `⌘O`로 디렉토리를 고를 수 있고, **Open Recent**와 시작 창에서 최근 경로를 다시 엽니다. **New Repository…** 또는 `⌘N`은 부모 디렉토리와 폴더 이름을 선택해 새 폴더를 만든 뒤 `git init`하고 최근 목록에 등록합니다. 실제 저장소는 선택한 위치에 두고 경로 목록은 `~/Library/Application Support/JS Dashboard Preview/recent-directories.json`에 저장합니다.
 

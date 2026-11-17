@@ -26,6 +26,7 @@ def compile_runtime(folder):
                       ' public java.awt.image.BufferedImage image(){g.dispose();return image;}\n'
                       ' public void blit(java.awt.Graphics target){target.drawImage(image,0,0,null);g.dispose();}\n}')
     sources.append(canvas)
+    sources.append(ROOT / 'tools/DashboardPreviewUi.java')
     base = ROOT / 'apps/dashboard/src/main/java/com/veloster/dashboard'
     for name in ('DashboardView', 'gauge/GaugeEditor', 'graph/GraphEditor'):
         sources.append(base / 'view' / (name + '.java'))
@@ -104,6 +105,7 @@ import com.veloster.dashboard.view.DashboardView;
 import com.veloster.dashboard.vehicle.Telemetry;
 import com.veloster.dashboard.debugger.JsDiagState;
 import com.veloster.i18n.LanguageSettings;
+import com.veloster.i18n.UiText;
 
 public class DashboardDesktop {
  static Object field(Object target,String name)throws Exception{Field f=(target instanceof Class?(Class<?>)target:target.getClass()).getDeclaredField(name);f.setAccessible(true);return f.get(target instanceof Class?null:target);}
@@ -122,19 +124,8 @@ public class DashboardDesktop {
  static void tap(DashboardView view,float x,float y){touch(view,0,x,y);touch(view,1,x,y);}
  static void check(boolean condition,String message){if(!condition)throw new AssertionError(message);}
  static android.graphics.Canvas draw(DashboardView view){android.graphics.Canvas c=new android.graphics.Canvas(view.getWidth(),view.getHeight());view.draw(c);return c;}
- static void capture(JFrame owner,DashboardView view){
-  java.awt.image.BufferedImage snapshot=draw(view).image();
-  JDialog toast=new JDialog(owner,"스크린샷 캡처됨");JPanel panel=new JPanel(new java.awt.BorderLayout());
-  panel.add(new JLabel(new ImageIcon(snapshot.getScaledInstance(240,144,java.awt.Image.SCALE_SMOOTH))),java.awt.BorderLayout.CENTER);
-  JPanel actions=new JPanel();JButton save=new JButton("저장…"),copy=new JButton("클립보드 복사");actions.add(copy);actions.add(save);panel.add(actions,java.awt.BorderLayout.SOUTH);
-  save.addActionListener(e->{JFileChooser chooser=new JFileChooser();chooser.setSelectedFile(new java.io.File("dashboard.png"));if(chooser.showSaveDialog(toast)==JFileChooser.APPROVE_OPTION)try{javax.imageio.ImageIO.write(snapshot,"png",chooser.getSelectedFile());toast.dispose();}catch(Exception error){JOptionPane.showMessageDialog(toast,error.toString());}});
-  copy.addActionListener(e->{try{java.awt.Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new java.awt.datatransfer.Transferable(){
-   public java.awt.datatransfer.DataFlavor[] getTransferDataFlavors(){return new java.awt.datatransfer.DataFlavor[]{java.awt.datatransfer.DataFlavor.imageFlavor};}
-   public boolean isDataFlavorSupported(java.awt.datatransfer.DataFlavor flavor){return flavor.equals(java.awt.datatransfer.DataFlavor.imageFlavor);}
-   public Object getTransferData(java.awt.datatransfer.DataFlavor flavor)throws java.awt.datatransfer.UnsupportedFlavorException{if(!isDataFlavorSupported(flavor))throw new java.awt.datatransfer.UnsupportedFlavorException(flavor);return snapshot;}
-  },null);toast.dispose();}catch(Exception error){JOptionPane.showMessageDialog(toast,error.toString());}});
-  toast.setContentPane(panel);toast.pack();toast.setLocationRelativeTo(owner);toast.setVisible(true);
- }
+ static void invoke(DashboardView view,String name){try{Method method=DashboardView.class.getDeclaredMethod(name);method.setAccessible(true);method.invoke(view);}catch(Exception e){throw new RuntimeException(e);}}
+ static void capture(JFrame owner,DashboardView view){DashboardPreviewUi.showCapture(owner,draw(view).image());}
  static void button(java.awt.Container root,String label){for(java.awt.Component child:root.getComponents()){
   if(child instanceof android.widget.Button&&((android.widget.Button)child).button.getText().equals(label)){((android.widget.Button)child).performClick();return;}
   if(child instanceof java.awt.Container){try{button((java.awt.Container)child,label);return;}catch(IllegalArgumentException ignored){}}
@@ -146,7 +137,7 @@ public class DashboardDesktop {
   touch(view,0,60,20);touch(view,2,280,20);touch(view,1,280,20);
   check(overview.equals(draw(view).texts),"drag must not switch pages");
   tap(view,60,20);check(draw(view).texts.contains("PERFORMANCE"),"real Java performance navigation");
-  tap(view,560,20);check(draw(view).texts.contains("SETTINGS / 설정"),"real Java settings navigation");
+  tap(view,560,20);check(draw(view).texts.contains(UiText.t("언어")),"real Java settings navigation");
   tap(view,140,164);check(AlertDialog.last!=null&&AlertDialog.last.spec.title.equals("Language / 언어"),"real LanguageSettings.show");
   AlertDialog.last.choose(2);AlertDialog.last.positive();check(LanguageSettings.selection(a).equals("en"),"real Java save language callback");
   tap(view,140,284);AlertDialog theme=AlertDialog.last;check(theme!=null&&theme.spec.title.equals("Theme / 테마"),"real theme picker");
@@ -155,7 +146,7 @@ public class DashboardDesktop {
   tap(view,140,284);theme=AlertDialog.last;button(theme.spec.content,"Aurora Focus");button(theme.spec.content,"Apply / 적용");
   check(a.getSharedPreferences("dashboard_theme",0).getString("theme_id","").equals("aurora_focus"),"real Java theme apply callback");
   check(draw(view).texts.contains("Aurora Focus"),"applied theme visible in settings");
-  tap(view,180,20);check(!draw(view).texts.contains("SETTINGS / 설정"),"leave settings through actual touch code");
+  tap(view,180,20);check(!draw(view).texts.contains(UiText.t("언어")),"leave settings through actual touch code");
   tap(view,360,20);Object layout=field(view,"gaugeLayout");
   boolean before=((com.veloster.dashboard.view.gauge.GaugeLayout)layout).dense();tap(view,700,65);
   check(((com.veloster.dashboard.view.gauge.GaugeLayout)layout).dense()!=before,"real gauge grid toggle");
@@ -166,28 +157,52 @@ public class DashboardDesktop {
   tap(view,560,20);before=((com.veloster.dashboard.view.gauge.GaugeLayout)layout).dense();tap(view,700,65);
   check(((com.veloster.dashboard.view.gauge.GaugeLayout)layout).dense()==before,"settings does not leak touches into gauges");
   view.setSize(400,240);tap(view,30,10);check(draw(view).texts.contains("PERFORMANCE"),"actual view coordinate scaling");
-  for(String vehicle:new String[]{"js","js_n","pd"}){fixture("received",vehicle);DashboardView other=create(new Activity());tap(other,560,20);check(draw(other).texts.contains("SETTINGS / 설정"),"profile settings "+vehicle);}
+  for(String vehicle:new String[]{"js","js_n","pd"}){fixture("received",vehicle);DashboardView other=create(new Activity());tap(other,560,20);check(draw(other).texts.contains(UiText.t("언어")),"profile settings "+vehicle);}
+  final java.awt.image.BufferedImage[] captured={null};final boolean[] refreshed={false};
+  JPanel tools=DashboardPreviewUi.actionBar(new JComboBox<String>(new String[]{"received"}),()->refreshed[0]=true,()->captured[0]=draw(view).image());
+  tools.setSize(640,tools.getPreferredSize().height);tools.doLayout();
+  JButton capture=(JButton)((java.awt.BorderLayout)tools.getLayout()).getLayoutComponent(java.awt.BorderLayout.EAST);
+  java.awt.Component controls=((java.awt.BorderLayout)tools.getLayout()).getLayoutComponent(java.awt.BorderLayout.CENTER);
+  check(capture.getX()>=controls.getX()+controls.getWidth()&&capture.getX()+capture.getWidth()<=640,"capture remains visible in lower action bar");
+  for(java.awt.Component item:((java.awt.Container)controls).getComponents())if(item instanceof JButton)((JButton)item).doClick();
+  check(refreshed[0],"refresh action is connected");
+  capture.doClick();check(captured[0]!=null&&captured[0].getWidth()==400&&captured[0].getHeight()==240,"capture action uses current canvas size");
+  boolean[] actions={false,false,false};
+  JPanel toast=DashboardPreviewUi.capturePanel(captured[0],()->actions[0]=true,()->actions[1]=true,()->actions[2]=true);
+  for(java.awt.Component group:toast.getComponents())if(group instanceof JPanel)for(java.awt.Component item:((JPanel)group).getComponents())if(item instanceof JButton)((JButton)item).doClick();
+  check(actions[0]&&actions[1]&&actions[2],"capture copy/save/close callbacks connected without touching clipboard or files");
+  invoke(view,"showThemePicker");button(AlertDialog.last.spec.content,"CarPlay Glass Light");button(AlertDialog.last.spec.content,"Apply / 적용");
+  check(a.getSharedPreferences("dashboard_theme",0).getString("theme_id","").equals("carplay_glass_light"),"desktop theme tool uses actual picker apply callback");
   System.out.println("PASS actual DashboardView: navigation, drag rejection, settings, language save, theme cancel/apply, gauge toggle, long press, editor callback, input isolation, scaled input and 3 vehicle profiles");
  }
  public static void main(String[] args)throws Exception{
   if(args.length>0&&args[0].equals("--check")){SwingUtilities.invokeAndWait(()->{try{selfCheck();}catch(Exception e){throw new RuntimeException(e);}});return;}
+  DashboardPreviewUi.installLookAndFeel();
   SwingUtilities.invokeLater(()->{try{
    Activity activity=new Activity();LanguageSettings.save(activity,"ko");fixture("received","js");
-   JFrame frame=new JFrame("Dashboard · Java touch runtime");activity.window=frame;frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-   JPanel root=new JPanel(new java.awt.BorderLayout());JPanel toolbar=new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
+   JFrame frame=new JFrame("JS Dashboard Preview");activity.window=frame;frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
    String[] vehicles={"js","js_n","pd"};JComboBox<String> car=new JComboBox<String>(new String[]{"Veloster","Veloster N","i30 (N Line)"});
    JComboBox<String> state=new JComboBox<String>(new String[]{"received","waiting","invalid","held","expired"});
-   toolbar.add(new JLabel("차량"));toolbar.add(car);toolbar.add(new JLabel("예시 데이터"));toolbar.add(state);
    JPanel screen=new JPanel(new java.awt.BorderLayout());final DashboardView[] current={create(activity)};screen.add(current[0]);
+   JButton language=DashboardPreviewUi.button("한국어 ▾",false,()->{}),theme=DashboardPreviewUi.button("Original ▾",false,()->{});
+   language.setPreferredSize(new java.awt.Dimension(140,34));theme.setPreferredSize(new java.awt.Dimension(220,34));
+   language.setToolTipText("대시보드 언어 변경");theme.setToolTipText("대시보드 테마 선택 및 미리보기");
+   Runnable sync=()->{try{
+    String selected=LanguageSettings.selection(activity);
+    language.setText(("auto".equals(selected)?UiText.t("시스템 설정 따름"):"ko".equals(selected)?"한국어":"English")+" ▾");
+    theme.setText(((com.veloster.dashboard.theme.ThemeSpec)field(current[0],"activeTheme")).displayName+" ▾");
+   }catch(Exception e){throw new RuntimeException(e);}};
+   language.addActionListener(e->LanguageSettings.show(activity,()->{sync.run();current[0].repaint();}));
+   theme.addActionListener(e->{invoke(current[0],"showThemePicker");sync.run();});
    Runnable data=()->{try{fixture((String)state.getSelectedItem(),vehicles[car.getSelectedIndex()]);current[0].repaint();}catch(Exception e){throw new RuntimeException(e);}};
-   car.addActionListener(e->{try{current[0].removeCallbacks((Runnable)field(current[0],"editHold"));screen.removeAll();data.run();current[0]=create(activity);screen.add(current[0]);screen.revalidate();screen.repaint();}catch(Exception error){throw new RuntimeException(error);}});
+   car.addActionListener(e->{try{current[0].removeCallbacks((Runnable)field(current[0],"editHold"));screen.removeAll();data.run();current[0]=create(activity);screen.add(current[0]);screen.revalidate();screen.repaint();sync.run();}catch(Exception error){throw new RuntimeException(error);}});
    state.addActionListener(e->data.run());
-   JButton capture=new JButton("프리뷰 캡처…");capture.addActionListener(e->capture(frame,current[0]));toolbar.add(capture);
-   root.add(toolbar,java.awt.BorderLayout.NORTH);root.add(screen,java.awt.BorderLayout.CENTER);
-   root.add(new JLabel("Java DashboardView.onTouchEvent 실행 · 예시 데이터 · Android UI는 데스크톱 대역"),java.awt.BorderLayout.SOUTH);
-   frame.setContentPane(root);frame.pack();frame.setLocationByPlatform(true);frame.setVisible(true);
+   JPanel root=DashboardPreviewUi.shell(DashboardPreviewUi.contextBar(car,language,theme),screen,DashboardPreviewUi.actionBar(state,data,()->capture(frame,current[0])));
+   root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("R"),"refresh");
+   root.getActionMap().put("refresh",new AbstractAction(){public void actionPerformed(java.awt.event.ActionEvent event){data.run();}});
+   frame.setContentPane(root);frame.pack();frame.setMinimumSize(new java.awt.Dimension(720,480));frame.setLocationByPlatform(true);frame.setVisible(true);
    System.out.println("READY Dashboard Java touch runtime: showing="+frame.isShowing()+", canvas="+current[0].getWidth()+"x"+current[0].getHeight());
-   javax.swing.Timer timer=new javax.swing.Timer(100,e->current[0].repaint());timer.start();
+   javax.swing.Timer timer=new javax.swing.Timer(100,e->{current[0].repaint();sync.run();});timer.start();
    frame.addWindowListener(new java.awt.event.WindowAdapter(){public void windowClosed(java.awt.event.WindowEvent e){timer.stop();}});
   }catch(Exception error){error.printStackTrace();JOptionPane.showMessageDialog(null,error.toString());}});
  }
