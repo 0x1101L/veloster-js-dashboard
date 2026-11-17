@@ -69,6 +69,7 @@ class DesktopPreview:
         self.overview_box.pack(side='left', padx=(5, 12))
         self.screen = ttk.Label(root, anchor='center')
         self.screen.pack(padx=12, pady=(0, 6))
+        self.screen.bind('<Button-1>', self.screen_click)
         actions = ttk.Frame(root, padding=(12, 0, 12, 6))
         actions.pack(fill='x')
         ttk.Label(actions, text='데이터').pack(side='left')
@@ -124,6 +125,37 @@ class DesktopPreview:
         self.vehicle.set(self.vehicle_labels[self.vehicle_label.get()])
         self.update_vehicle_pages()
         self.refresh()
+
+    def screen_click(self, event):
+        if self.image is None:
+            return
+        width, height = self.image.width(), self.image.height()
+        x = (event.x - (self.screen.winfo_width() - width) / 2) * 800 / width
+        y = (event.y - (self.screen.winfo_height() - height) / 2) * 480 / height
+        page = PAGES.index(self.page.get())
+        target = None
+        if 8 <= y <= 46:
+            if 18 <= x <= 138:
+                target = 6
+            elif 144 <= x <= 244:
+                target = 1 if self.vehicle.get() == 'js' and page == 0 else 0
+            elif 250 <= x <= 322:
+                target = 7
+            elif 328 <= x <= 412:
+                target = 8
+            elif 418 <= x <= 528:
+                target = 9
+            elif 534 <= x <= 602:
+                messagebox.showinfo('설정', '이 프리뷰에서는 앱의 설정 모달을 실행할 수 없습니다. 위쪽 언어와 테마 선택을 이용하세요.', parent=self.root)
+                return
+        elif 1 <= page <= 5 and 62 <= y <= 100:
+            for i in range(5):
+                if 18 + i * 154 <= x <= 166 + i * 154:
+                    target = i + 1
+                    break
+        if target in vehicle_pages(self.vehicle.get()):
+            self.page.set(PAGES[target])
+            self.refresh()
 
     def request(self, all_screens=False):
         with self.lock:

@@ -16,6 +16,7 @@ public final class UiTextTest {
         check("ko".equals(UiText.resolve("bad","ko")),"corrupt preference uses system");
         UiText.configure("en","ko");
         check("N Dashboard".equals(UiText.t("N 계기판")),"dashboard label translated");
+        check("Settings".equals(UiText.t("설정")),"settings button translated");
         check("Quick entry".equals(UiText.t("실행 바로가기 / Quick entry")),"quick entry translated");
         String[] english=UiText.list(Telemetry.LABELS);
         for(String label:english)check(!label.matches(".*[가-힣].*"),"English signal label: "+label);
@@ -25,6 +26,7 @@ public final class UiTextTest {
         check("Song 한국어 title".equals(UiText.t("Song 한국어 title")),"unknown metadata preserved");
         UiText.configure("ko","en");
         check("N 계기판".equals(UiText.t("N 계기판")),"manual Korean roundtrip");
+        check("설정".equals(UiText.t("설정")),"settings button uses Korean label");
         check("저장".equals(UiText.t("저장 / Save")),"legacy bilingual key renders one language");
         check(Locale.getDefault().equals(system),"display choice must not alter the system/numeric locale");
         System.out.println("PASS: language fallback/override, signal labels, metadata and locale isolation");

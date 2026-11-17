@@ -306,7 +306,7 @@ screen.addEventListener('load',()=>{if(requestedKey===selection()&&screen.curren
 capture.onclick=()=>{if(capture.disabled)return;const canvas=document.createElement('canvas');canvas.width=screen.naturalWidth;canvas.height=screen.naturalHeight;const context=canvas.getContext('2d');context.drawImage(screen,0,0);canvas.toBlob(blob=>{if(!blob)return;const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='dashboard-'+selection().replaceAll(',','-')+'.png';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)},'image/png')};
 screen.addEventListener('click',e=>{const rect=screen.getBoundingClientRect(),x=(e.clientX-rect.left)*800/rect.width,y=(e.clientY-rect.top)*480/rect.height;let p=Number(page.value), next=-1;
  if(p===0&&y>=448&&theme.value!=='original'&&!overview.disabled){overview.value=overview.value==='0'?'1':'0';refresh();return}
- if(y>=8&&y<=46){if(x>=18&&x<138)next=6;else if(x>=144&&x<=244)next=(p===0?1:0);else if(x>=250&&x<=322)next=7;else if(x>=328&&x<=412)next=8;else if(x>=418&&x<=528)next=9;else if(x>=534&&x<=582){lang.value=lang.value==='0'?'1':'0';refresh();return}}
+ if(y>=8&&y<=46){if(x>=18&&x<138)next=6;else if(x>=144&&x<=244)next=(vehicle.value==='js'&&p===0?1:0);else if(x>=250&&x<=322)next=7;else if(x>=328&&x<=412)next=8;else if(x>=418&&x<=528)next=9;else if(x>=534&&x<=602){alert('이 프리뷰에서는 앱의 설정 모달을 실행할 수 없습니다. 위쪽 언어와 테마 선택을 이용하세요.');return}}
  else if(p>=1&&p<=5&&y>=62&&y<=100){for(let i=0;i<5;i++)if(x>=18+i*154&&x<=166+i*154)next=i+1}
  if(next>=0){page.value=String(next);refresh()}
 });

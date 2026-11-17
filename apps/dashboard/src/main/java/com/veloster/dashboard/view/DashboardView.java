@@ -255,7 +255,7 @@ public final class DashboardView extends View implements Runnable {
     private void applyTheme(ThemeSpec theme){activeTheme=theme==null?ThemeSpec.original():theme;activeThemeResources=com.veloster.dashboard.theme.ThemeResources.load(activity,activeTheme);overviewLayout.theme(activeTheme);renderer.setTheme(activeTheme,activeThemeResources);jsRenderer.setTheme(activeTheme,activeThemeResources);invalidate();}
     private void showDisplayOptions(){
         final String[] items={"Language / 언어","Theme / 테마"};
-        new AlertDialog.Builder(activity).setItems(items,new DialogInterface.OnClickListener(){public void onClick(DialogInterface dialog,int which){
+        new AlertDialog.Builder(activity).setTitle(UiText.t("설정")).setItems(items,new DialogInterface.OnClickListener(){public void onClick(DialogInterface dialog,int which){
             if(which==0)LanguageSettings.show(activity,new Runnable(){public void run(){invalidate();}});
             else showThemePicker();
         }}).show();
@@ -369,7 +369,7 @@ public final class DashboardView extends View implements Runnable {
             activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("dashboard_page",page).apply();
             invalidate();
         }
-        else if(x>=534 && x<=582 && downX>=534 && downX<=582){showDisplayOptions();}
+        else if(x>=534 && x<=602 && downX>=534 && downX<=602){showDisplayOptions();}
         else if(x>=666 && x<=782 && downX>=666 && downX<=782)close();
         return true;
     }

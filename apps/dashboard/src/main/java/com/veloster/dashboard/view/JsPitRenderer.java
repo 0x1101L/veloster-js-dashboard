@@ -95,8 +95,8 @@ public final class JsPitRenderer {
         button(c,"F1",250,8,72,38,cluster&&gaugeLayout==null&&graphLayout==null,theme.accent);
         button(c,UiText.t("게이지"),328,8,84,38,gaugeLayout!=null,theme.accent);
         button(c,UiText.t("그래프"),418,8,110,38,graphLayout!=null,theme.accent);
-        button(c,UiText.language().toUpperCase(Locale.US),534,8,48,38,false,theme.accent);
-        centered(c,clock(),620,33,22,theme.textPrimary,true);
+        button(c,UiText.t("설정"),534,8,68,38,false,theme.accent);
+        centered(c,clock(),633,33,20,theme.textPrimary,true);
         button(c,UiText.t("돌아가기"),666,8,116,38,false,theme.accent);
         if(diagnosticPage)diagnosticsRenderer.draw(c,samples,diagnostic,model.dctTemperatures(now),track,carPlayRawStatus,carPlayLibraryStatus,carPlayProcessStatus,bluetoothStatus);
         else if(performancePage)performanceRenderer.draw(c,model,now);

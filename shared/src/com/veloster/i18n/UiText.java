@@ -253,6 +253,7 @@ public final class UiText {
         EN.put("선언됨","Declared");
         EN.put("선택된 HCD","Selected HCD");
         EN.put("설명 / Help","Help");
+        EN.put("설정","Settings");
         EN.put("설정 복원 확인. 백업 표시 삭제 실패로 다음 실행 때 재확인 필요.","Settings restoration verified, but the backup marker could not be cleared. Check again next time.");
         EN.put("설정 상태 확인 불가","Setting unavailable");
         EN.put("설정: ","Setting: ");
