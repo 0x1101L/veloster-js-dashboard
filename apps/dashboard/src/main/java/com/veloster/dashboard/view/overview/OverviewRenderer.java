@@ -3,6 +3,8 @@ package com.veloster.dashboard.view.overview;
 import com.veloster.dashboard.vehicle.*;
 import com.veloster.dashboard.view.gauge.GaugeRenderer;
 import com.veloster.dashboard.vehicle.js.JsGearState;
+import com.veloster.dashboard.theme.ThemeSpec;
+import com.veloster.dashboard.theme.ThemeResources;
 
 import android.graphics.*;
 import com.veloster.i18n.UiText;
@@ -13,11 +15,15 @@ public final class OverviewRenderer {
     private Telemetry.Sample[] samples;
     private OverviewLayout overviewLayout;
     private boolean pdProfile,jsProfile;
+    private ThemeSpec theme=ThemeSpec.original();
+    private ThemeResources resources;
     private final Paint paint=new Paint(3);
     private final Path shape=new Path();
-    private static final int BG=0xff040506,PANEL=0xff101315,LINE=0xff303638,BLUE=0xffa4d9ef,WHITE=0xffe1edf2,MUTED=0xff91a5ae,RED=0xffff4059;
+    public void setTheme(ThemeSpec value){setTheme(value,null);}
+    public void setTheme(ThemeSpec value,ThemeResources assets){theme=value==null?ThemeSpec.original():value;resources=assets;}
     private void box(Canvas c,float l,float t,float r,float b,int color){paint.setColor(color);c.drawRect(l,t,r,b,paint);}
     private void panel(Canvas c,float x,float y,float w,float h,int fill,int edge){
+        if(!theme.cutPanels){paint.setColor(fill);c.drawRect(x,y,x+w,y+h,paint);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1);paint.setColor(edge);c.drawRect(x,y,x+w,y+h,paint);paint.setStyle(Paint.Style.FILL);return;}
         shape.reset();shape.moveTo(x,y);shape.lineTo(x+w-12,y);shape.lineTo(x+w,y+12);
         shape.lineTo(x+w,y+h);shape.lineTo(x+12,y+h);shape.lineTo(x,y+h-12);shape.close();
         paint.setColor(fill);c.drawPath(shape,paint);
@@ -27,10 +33,10 @@ public final class OverviewRenderer {
         paint.setColor(color);paint.setStrokeWidth(width);c.drawLine(x,y,x2,y2,paint);
     }
     private void text(Canvas c,String s,float x,float y,float size,int color,boolean bold){
-        paint.setColor(color);paint.setTextSize(size);paint.setTypeface(bold?Typeface.DEFAULT_BOLD:Typeface.DEFAULT);c.drawText(s,x,y,paint);
+        paint.setColor(color);paint.setTextSize(size);paint.setTypeface(resources==null?(bold?Typeface.DEFAULT_BOLD:Typeface.DEFAULT):resources.fontForText(s,bold));c.drawText(s,x,y,paint);
     }
     private void fitted(Canvas c,String s,float x,float y,float size,float width,int color){
-        paint.setTypeface(Typeface.DEFAULT);paint.setTextSize(size);
+        paint.setTypeface(resources==null?Typeface.DEFAULT:resources.fontForText(s,false));paint.setTextSize(size);
         float measured=paint.measureText(s);
         text(c,s,x,y,measured>width?size*width/measured:size,color,false);
     }
@@ -49,37 +55,37 @@ public final class OverviewRenderer {
     }
     private void groupCard(Canvas c,int i){
         float x=overviewLayout.left(i),y=overviewLayout.top(i),w=overviewLayout.width(i);
-        panel(c,x,y,w,overviewLayout.height(i),PANEL,LINE);box(c,x+10,y,x+53,y+2,BLUE);
+        panel(c,x,y,w,overviewLayout.height(i),theme.panel,theme.stroke);box(c,x+10,y,x+53,y+2,theme.accent);
         if(i==Telemetry.TPMS_FL){
-            fitted(c,UiText.t("타이어 공기압"),x+10,y+20,13,w-20,MUTED);
+            fitted(c,UiText.t("타이어 공기압"),x+10,y+20,13,w-20,theme.textSecondary);
             String[] corners={"FL","FR","RL","RR"};
             for(int n=0;n<4;n++){
                 float l=x+10+(n%2)*69,t=y+44+(n/2)*25;
-                text(c,corners[n],l,t,10,MUTED,false);
-                text(c,value(PREFIX[i+n]),l+20,t,20,BLUE,true);
+                text(c,corners[n],l,t,10,theme.textSecondary,false);
+                text(c,value(PREFIX[i+n]),l+20,t,20,theme.accent,true);
             }
-            text(c,"psi",x+10,y+88,11,MUTED,false);
+            text(c,"psi",x+10,y+88,11,theme.textSecondary,false);
         }else if(i==Telemetry.PD_TCS_ENABLED){
-            fitted(c,UiText.t("TCS · ESC · ABS 상태"),x+10,y+20,13,w-20,MUTED);
+            fitted(c,UiText.t("TCS · ESC · ABS 상태"),x+10,y+20,13,w-20,theme.textSecondary);
             for(int n=0;n<3;n++){float t=y+43+n*22;Telemetry.Sample s=samples[i+n];boolean ok=s.valid&&(s.value==0||s.value==1);
-                String label=n==0?"TCS":n==1?"ESC":UiText.t("ABS 경고등");fitted(c,label,x+10,t,12,w-66,MUTED);
+                String label=n==0?"TCS":n==1?"ESC":UiText.t("ABS 경고등");fitted(c,label,x+10,t,12,w-66,theme.textSecondary);
                 String state=!ok?"—":s.value==1?"ON":"OFF";boolean warning=ok&&(n<2?s.value==0:s.value==1);
-                fitted(c,state,x+w-43,t,16,33,warning?RED:BLUE);}
+                fitted(c,state,x+w-43,t,16,33,warning?theme.critical:theme.accent);}
         }else{
-            fitted(c,"TCS · ESC · ABS",x+10,y+20,13,w-20,MUTED);
+            fitted(c,"TCS · ESC · ABS",x+10,y+20,13,w-20,theme.textSecondary);
             for(int n=0;n<3;n++){
                 float t=y+43+n*22;Telemetry.Sample s=samples[i+n];
-                text(c,UiText.t(Telemetry.LABELS[i+n]),x+10,t,12,MUTED,false);
-                text(c,s.valid?(s.value==1?UiText.t("작동"):UiText.t("비작동")):"—",x+66,t,16,s.valid&&s.value==1?RED:BLUE,true);
+                text(c,UiText.t(Telemetry.LABELS[i+n]),x+10,t,12,theme.textSecondary,false);
+                text(c,s.valid?(s.value==1?UiText.t("작동"):UiText.t("비작동")):"—",x+66,t,16,s.valid&&s.value==1?theme.critical:theme.accent,true);
             }
         }
     }
     private void overviewCard(Canvas c,int i,String title){
         float x=overviewLayout.left(i),y=overviewLayout.top(i),w=overviewLayout.width(i),h=overviewLayout.height(i);
         boolean head=overviewLayout.headline(i),ok=samples[i].valid&&!Float.isNaN(samples[i].value)&&!Float.isInfinite(samples[i].value);
-        int style=overviewLayout.style(i),color=samples[i].changed?0xffe9f7ff:BLUE;
-        panel(c,x,y,w,h,PANEL,LINE);box(c,x+10,y,x+53,y+2,head&&i==0?RED:BLUE);
-        fitted(c,title,x+10,y+(head?18:22),head?11:13,w-20,MUTED);
+        int style=overviewLayout.style(i),color=samples[i].changed?0xffe9f7ff:theme.accent;
+        panel(c,x,y,w,h,theme.panel,theme.stroke);box(c,x+10,y,x+53,y+2,head&&i==0?theme.critical:theme.accent);
+        fitted(c,title,x+10,y+(head?18:22),head?11:13,w-20,theme.textSecondary);
         String number=ok?value(PREFIX[i]):"—";
         float lo=GaugeRenderer.min(i,Telemetry.UNITS[i]),hi=GaugeRenderer.max(i,Telemetry.UNITS[i]);
         // Unsupported gears keep the existing dash and have no gauge position.
@@ -90,17 +96,17 @@ public final class OverviewRenderer {
         }else if(style==1){
             fitted(c,number,x+10,y+(head?48:54),head?28:29,w-20,color);
             float t=y+(head?59:64),b=t+7;
-            box(c,x+10,t,x+w-10,b,LINE);if(position)box(c,x+10,t,x+10+(w-20)*f,b,BLUE);
-            if(lo<0){float zero=x+10+(w-20)*(-lo)/(hi-lo);stroke(c,zero,t-2,zero,b+2,MUTED,1);}
+            box(c,x+10,t,x+w-10,b,theme.stroke);if(position)box(c,x+10,t,x+10+(w-20)*f,b,theme.accent);
+            if(lo<0){float zero=x+10+(w-20)*(-lo)/(hi-lo);stroke(c,zero,t-2,zero,b+2,theme.textSecondary,1);}
         }else{
             float cx=x+32,cy=y+(head?46:56),radius=head?17:23;
-            paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(head?3:4);paint.setColor(LINE);
+            paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(head?3:4);paint.setColor(theme.stroke);
             RectF arc=new RectF(cx-radius,cy-radius,cx+radius,cy+radius);c.drawArc(arc,150,240,false,paint);
-            if(position){paint.setColor(BLUE);c.drawArc(arc,150,240*f,false,paint);}
+            if(position){paint.setColor(theme.accent);c.drawArc(arc,150,240*f,false,paint);}
             paint.setStyle(Paint.Style.FILL);
-            if(position){double angle=Math.toRadians(150+240*f);stroke(c,cx,cy,cx+(float)Math.cos(angle)*(radius-6),cy+(float)Math.sin(angle)*(radius-6),WHITE,1.5f);paint.setColor(BLUE);c.drawCircle(cx,cy,2,paint);}
+            if(position){double angle=Math.toRadians(150+240*f);stroke(c,cx,cy,cx+(float)Math.cos(angle)*(radius-6),cy+(float)Math.sin(angle)*(radius-6),theme.textPrimary,1.5f);paint.setColor(theme.accent);c.drawCircle(cx,cy,2,paint);}
             fitted(c,number,x+58,y+(head?54:66),head?26:28,w-68,color);
         }
-        if(!head)text(c,Telemetry.UNITS[i],x+10,y+85,11,MUTED,false);
+        if(!head)text(c,Telemetry.UNITS[i],x+10,y+85,11,theme.textSecondary,false);
     }
 }

@@ -27,6 +27,14 @@ def main():
                ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd/PdGearState.java",
                *[ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/js" / (name + ".java") for name in ("JsPowertrain", "JsGearState", "JsTelemetryDecoder")],
                ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/ShiftGuide.java",
+               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemeSpec.java",
+               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemeCatalog.java",
+               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemeRepository.java",
+               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemeJsonParser.java",
+               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemePalette.java",
+               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemeSelectionDraft.java",
+               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemeResources.java",
+               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view/overview/ThemeLayout.java",
                ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view/overview/OverviewLayout.java",
                ROOT / "shared/src/com/veloster/i18n/UiText.java",
                ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/HscanFrameDecoder.java",
@@ -36,14 +44,23 @@ def main():
     sources += [ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/HudEventLog.java", ROOT / "shared/src/com/veloster/diagnostics/ErrorLog.java", ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view/DashboardPage.java", ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/JsDiagState.java"]
     sources += [ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/JsLogger.java",
                 ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/CarPlayRawLog.java",
-                ROOT / "tests/java_stubs/android/util/Log.java", ROOT / "tests/JsLoggerTest.java"]
+                ROOT / "tests/java_stubs/android/util/Log.java", ROOT / "tests/java_stubs/android/content/Context.java",
+                ROOT / "tests/java_stubs/android/content/res/AssetManager.java", ROOT / "tests/java_stubs/android/graphics/Bitmap.java",
+                ROOT / "tests/java_stubs/android/graphics/BitmapFactory.java", ROOT / "tests/java_stubs/android/graphics/Typeface.java",
+                ROOT / "tests/JsLoggerTest.java"]
     sources += tests
     with tempfile.TemporaryDirectory(prefix="vn-public-tests-") as temporary:
         subprocess.run([str(javac), "-encoding", "UTF-8", "-d", temporary,
                         *map(str, sources)], check=True)
         for test in tests:
-            cls = ("com.veloster.dashboard.vehicle." if test.stem == "HscanFrameDecoderTest" else "com.veloster.carplayhub." if test.stem == "EngineerWifiControlTest" else "") + test.stem
-            subprocess.run([str(java), "-ea", "-cp", temporary, cls], check=True)
+            cls = ("com.veloster.dashboard.vehicle." if test.stem == "HscanFrameDecoderTest" else
+                   "com.veloster.carplayhub." if test.stem == "EngineerWifiControlTest" else
+                   "com.veloster.dashboard.theme." if test.stem == "ThemeResourcesTest" else "") + test.stem
+            command=[str(java), "-ea", "-cp", temporary, cls]
+            if test.stem=="ThemeManifestTest":
+                command += [str(ROOT/"apps/dashboard/src/main/assets/themes/catalog.json"),
+                            str(ROOT/"apps/dashboard/src/main/assets/themes")]
+            subprocess.run(command, check=True)
     print("PASS: " + str(len(tests)) + " synthetic host test programs. Vehicle operation is outside this scope.")
 
 

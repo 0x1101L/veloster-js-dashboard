@@ -17,22 +17,39 @@ import com.veloster.dashboard.debugger.view.*;
 import com.veloster.dashboard.view.f1.*;
 import com.veloster.dashboard.view.graph.*;
 import com.veloster.dashboard.view.gauge.*;
-import com.veloster.dashboard.view.overview.*;import com.veloster.i18n.UiText;import android.graphics.Canvas;
+import com.veloster.dashboard.view.overview.*;import com.veloster.dashboard.theme.ThemeSpec;import com.veloster.i18n.UiText;import android.graphics.Canvas;
 public class JsDiagnosticsPreview {
  static void check(boolean ok,String message){if(!ok)throw new AssertionError(message);}
- static Telemetry fixture(String state){
-  Telemetry t=new Telemetry();t.profile(false,true,false);
+ static int pixelDifference(Canvas a,Canvas b){int different=0;for(int y=60;y<480;y+=2)for(int x=0;x<800;x+=2)if(a.pixel(x,y)!=b.pixel(x,y))different++;return different;}
+ static Telemetry fixture(String state){return fixture(state,"js");}
+ static Telemetry fixture(String state,String vehicle){
+  boolean pd=vehicle.equals("pd"),jsn=vehicle.equals("js_n"),js=vehicle.equals("js");
+  Telemetry t=new Telemetry();t.profile(pd,js,jsn);
   if(state.equals("waiting"))return t;
   if(!state.equals("invalid")){
-   t.hscanJs(0xc7,0,new byte[]{0,0,70,0,0,0,0,0},1000);
-   t.hscanJs(0xc7,0x0a,new byte[]{0,0,0,(byte)142,0,0,0,0},1000);
-   t.hscanJs(0xc7,0x20,new byte[]{0,1,32,33,34,35},1000);
-   t.hscanJs(0xc7,0x0d,new byte[]{0,0,0,0,(byte)120,0,0,0},1000);
+   if(js){
+    t.hscanJs(0xc7,0,new byte[]{0,0,70,0,0,0,0,0},1000);
+    t.hscanJs(0xc7,0x0a,new byte[]{0,0,0,(byte)142,0,0,0,0},1000);
+    t.hscanJs(0xc7,0x20,new byte[]{0,1,32,33,34,35},1000);
+    t.hscanJs(0xc7,0x0d,new byte[]{0,0,0,0,(byte)120,0,0,0},1000);
+   }else if(pd){
+    t.hscanPd(0xc7,8,new byte[]{0,0,70,0,0,0,0,0},1000);
+    t.hscanPd(0xc7,2,new byte[]{0,70,0,0},1000);
+   }else{
+    t.hscanJsn(0xc7,7,new byte[]{0,0,74,8,32,0,0,0},1000);
+    t.hscanJsn(0xc7,0x23,new byte[]{0,0,100,0,0,0,0,0},1000);
+   }
   }
   if(state.equals("invalid")||state.equals("held")){
-   t.hscanJs(0xc7,0,new byte[]{0,0,70,0,0,0,(byte)255,(byte)255},2000);
-   t.hscanJs(0xc7,0x0a,new byte[]{0,0,0,(byte)255,0,0,0,0},2000);
-   t.hscanJs(0xc7,0x20,new byte[]{0,0,(byte)255,(byte)255,(byte)255,(byte)255},2000);
+   if(js){
+    t.hscanJs(0xc7,0,new byte[]{0,0,70,0,0,0,(byte)255,(byte)255},2000);
+    t.hscanJs(0xc7,0x0a,new byte[]{0,0,0,(byte)255,0,0,0,0},2000);
+    t.hscanJs(0xc7,0x20,new byte[]{0,0,(byte)255,(byte)255,(byte)255,(byte)255},2000);
+   }else if(pd){
+    t.hscanPd(0xc7,8,new byte[]{0,0,70,0,0,0,(byte)255,(byte)255},2000);
+   }else{
+    t.hscanJsn(0xc7,7,new byte[]{0,0,(byte)255,(byte)255,(byte)255,(byte)255,(byte)255,(byte)255},2000);
+   }
   }
   return t;
  }
@@ -113,6 +130,11 @@ public class JsDiagnosticsPreview {
   Telemetry t=fixture("held");long before=t.sample(Telemetry.BAT_VOLTAGE,2000).receivedCount;
   t.snapshot(9000);check(t.sample(Telemetry.BAT_VOLTAGE,9000).receivedCount==before,"redraw cannot simulate new reception");
   t.clear();check(t.sample(Telemetry.BAT_VOLTAGE,10000).receivedCount==0&&!t.sample(Telemetry.BAT_VOLTAGE,10000).seen,"ignition clears reception evidence");
+  for(int tab=0;tab<5;tab++){
+   JsPitRenderer a=new JsPitRenderer(),b=new JsPitRenderer();a.setDiagnosticPage(true,observations("received").snapshot(2000));b.setDiagnosticPage(true,observations("received").snapshot(2000));b.setTheme(ThemeSpec.auroraFocus());a.selectDiagnosticTab(40+tab*154,80,40+tab*154,80);b.selectDiagnosticTab(40+tab*154,80,40+tab*154,80);
+   Canvas ca=new Canvas(800,480),cb=new Canvas(800,480);a.draw(ca,800,480,false,fixture("received"),2000);b.draw(cb,800,480,false,fixture("received"),2000);
+   check(pixelDifference(ca,cb)>0&&ca.texts.equals(cb.texts),"diagnostics theme changes styling and preserves content on tab "+tab);
+  }
   System.out.println("PASS "+rendered+" JS diagnostic renders");
  }
 }'''
@@ -138,12 +160,15 @@ def render(folder):
         harness = root / "JsDiagnosticsPreview.java"
         harness.write_text(HARNESS)
         sources.append(harness)
-        names = ("Telemetry", "PdPowertrain", "PdGearState", "JsPowertrain", "JsGearState",
+        names = ("Telemetry", "ThemeSpec", "ThemePalette", "ThemeResources", "ThemeLayout", "PdPowertrain", "PdGearState", "JsPowertrain", "JsGearState",
                  "JsTelemetryDecoder", "JsDiagState", "BluetoothRuntimeProbe", "JsPitRenderer", "ClusterRenderer", "JsClusterRenderer", "JsOverviewRenderer", "JsDiagnosticsRenderer", "JsGaugeRenderer",
                  "JsPerformanceRenderer", "DashboardPage", "ShiftGuide", "MediaState",
                  "GaugeLayout", "GaugeRenderer", "OverviewLayout", "GraphLayout", "GraphRenderer")
-        groups = {'OverviewLayout': 'overview', 'OverviewRenderer': 'overview', 'JsOverviewRenderer': 'overview', 'GaugeEditor': 'gauge', 'GaugeLayout': 'gauge', 'GaugeRenderer': 'gauge', 'JsGaugeRenderer': 'gauge', 'GraphEditor': 'graph', 'GraphLayout': 'graph', 'GraphRenderer': 'graph', 'ClusterRenderer': 'cluster', 'JsClusterRenderer': 'cluster', 'JsDiagnosticsRenderer': 'diagnostics', 'PerformanceRenderer': 'performance', 'JsPerformanceRenderer': 'performance'}
+        groups = {'ThemeLayout': 'overview', 'OverviewLayout': 'overview', 'OverviewRenderer': 'overview', 'JsOverviewRenderer': 'overview', 'GaugeEditor': 'gauge', 'GaugeLayout': 'gauge', 'GaugeRenderer': 'gauge', 'JsGaugeRenderer': 'gauge', 'GraphEditor': 'graph', 'GraphLayout': 'graph', 'GraphRenderer': 'graph', 'ClusterRenderer': 'cluster', 'JsClusterRenderer': 'cluster', 'JsDiagnosticsRenderer': 'diagnostics', 'PerformanceRenderer': 'performance', 'JsPerformanceRenderer': 'performance'}
         def source_path(name):
+            if name == "ThemeSpec": return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemeSpec.java"
+            if name == "ThemePalette": return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemePalette.java"
+            if name == "ThemeResources": return ROOT / "tests/java_stubs/com/veloster/dashboard/theme/ThemeResources.java"
             if name in ("JsDiagState", "JsLogger", "BluetoothRuntimeProbe", "JsDiagnosticsRenderer"): return ROOT / ("apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/view" if name == "JsDiagnosticsRenderer" else "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger") / (name + ".java")
             if name in groups: return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view" / ("f1" if groups[name] == "cluster" else groups[name]) / (name + ".java")
             if name in UI_SOURCES: return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view" / (name + ".java")
@@ -151,6 +176,7 @@ def render(folder):
             if name in ("PdPowertrain", "PdGearState"): return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd" / (name + ".java")
             return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle" / (name + ".java")
         sources += [source_path(name) for name in names]
+        sources += [ROOT / "tests/java_stubs/android/content/Context.java", ROOT / "tests/java_stubs/android/content/res/AssetManager.java"]
         sources += [ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd/PdTelemetryDecoder.java", ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/jsn/JsnTelemetryDecoder.java"]
         sources.append(ROOT / "shared/src/com/veloster/i18n/UiText.java")
         result = subprocess.run([javac, "-encoding", "UTF-8", "-d", str(root), *map(str, sources)],

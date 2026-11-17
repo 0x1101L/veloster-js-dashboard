@@ -1,0 +1,55 @@
+{
+  "sampleOnly": true,
+  "id": "joylab.aurora-focus",
+  "name": "Aurora Focus",
+  "themeSpecVersion": 1,
+  "assets": {
+    "background": {
+      "resource": "assets/aurora-night-texture.png",
+      "fit": "cover",
+      "scrim": "#9906111B"
+    },
+    "font": {
+      "family": "system-sans",
+      "fallback": "android-default"
+    }
+  },
+  "colors": {
+    "canvas": "#071019",
+    "surface.card": "#CC17232D",
+    "surface.cardEdge": "#667C909C",
+    "text.primary": "#F4F8FB",
+    "text.secondary": "#A8B8C5",
+    "accent.primary": "#35D8D0",
+    "state.warning": "#FFB547",
+    "state.critical": "#FF5D6C",
+    "state.unavailable": "#82909B"
+  },
+  "shape": {
+    "overviewCardRadius": 14,
+    "controlRadius": 10,
+    "statusRadius": 8,
+    "borderWidth": 1
+  },
+  "typography": {
+    "caption": 11,
+    "label": 13,
+    "value": 34,
+    "heroValue": 46,
+    "strongWeight": true
+  },
+  "layouts": {
+    "overview": {
+      "profile": "focus-4x3",
+      "columns": 4,
+      "rowsPerPage": 3,
+      "gap": { "x": 12, "y": 10 },
+      "margin": { "left": 16, "right": 16, "top": 10, "bottom": 8 },
+      "pages": [
+        ["speed", "engine_rpm", "gear", "throttle", "brake_pressure", "oil_temp", "coolant_temp", "intake_temp", "ambient_temp", "steering_angle", "power_est", "torque_est"],
+        ["boost_est", "lateral_g", "longitudinal_g", "tpms_or_fuel_group", "tcs_esc_abs_group", "battery_voltage", "battery_soc", "steering_rate"]
+      ],
+      "keepAllSignalsReachable": true
+    }
+  }
+}

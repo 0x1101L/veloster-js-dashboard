@@ -1,6 +1,9 @@
 package com.veloster.dashboard.view.gauge;
 
 import com.veloster.dashboard.vehicle.*;
+import com.veloster.dashboard.theme.ThemeSpec;
+import com.veloster.dashboard.theme.ThemeResources;
+import com.veloster.dashboard.theme.ThemePalette;
 
 import com.veloster.dashboard.vehicle.js.JsGearState;
 
@@ -15,9 +18,11 @@ import java.util.Locale;
 
 /** Draws six or twelve cards below the shared navigation. */
 public final class JsGaugeRenderer {
+    private ThemeSpec theme=ThemeSpec.original();
+    private ThemeResources resources;
+    public void setTheme(ThemeSpec value,ThemeResources assets){theme=value==null?ThemeSpec.original():value;resources=assets;}
     private final Paint p=new Paint(3);
-    private static final int BLUE=0xffa4d9ef,WHITE=0xffe1edf2,MUTED=0xff8299a4,LINE=0xff293943;
-    private void text(Canvas c,String s,float x,float y,float size,int color){p.setStyle(Paint.Style.FILL);p.setColor(color);p.setTypeface(Typeface.DEFAULT);p.setTextAlign(Paint.Align.CENTER);p.setTextSize(size);c.drawText(s,x,y,p);}
+    private void text(Canvas c,String s,float x,float y,float size,int color){p.setStyle(Paint.Style.FILL);p.setColor(color);p.setTypeface(resources==null?Typeface.DEFAULT:resources.fontForText(s,false));p.setTextAlign(Paint.Align.CENTER);p.setTextSize(size);c.drawText(s,x,y,p);}
     private void line(Canvas c,float x,float y,float xx,float yy,int color,float width){p.setColor(color);p.setStrokeWidth(width);c.drawLine(x,y,xx,yy,p);}
     public static float min(int i,String u){return "G".equals(u)?-2:"°C".equals(u)?-40:i==Telemetry.STEERING?-540:0;}
     public static float max(int i,String u){
@@ -34,9 +39,9 @@ public final class JsGaugeRenderer {
     private static String axis(float value){return String.format(Locale.US,value==(int)value?"%.0f":"%.1f",value);}
     public void draw(Canvas c,Telemetry data,long now,GaugeLayout layout){
         int save=c.save();c.clipRect(0,52,800,480);p.setColor(0xff070b0e);c.drawRect(0,52,800,480,p);
-        text(c,UiText.t("게이지를 길게 눌러 항목 · 모양 · 위치 편집"),300,71,13,MUTED);
-        p.setColor(0xff233b46);c.drawRoundRect(new RectF(650,54,788,78),5,5,p);
-        text(c,layout.dense()?UiText.t("3 × 2 보기"):UiText.t("4 × 3 보기"),719,71,14,BLUE);
+        text(c,UiText.t("게이지를 길게 눌러 항목 · 모양 · 위치 편집"),300,71,13,ThemePalette.secondary(theme,0xff8299a4));
+        p.setColor(theme.isOriginal()?0xff233b46:theme.panelRaised);if(theme.cutPanels)c.drawRoundRect(new RectF(650,54,788,78),5,5,p);else c.drawRect(650,54,788,78,p);
+        text(c,layout.dense()?UiText.t("3 × 2 보기"):UiText.t("4 × 3 보기"),719,71,14,ThemePalette.accent(theme,0xffa4d9ef));
         Telemetry.Sample[] samples=data.snapshot(now);
         for(int slot=0;slot<layout.count();slot++){
             int i=layout.signal(slot),style=layout.style(slot);Telemetry.Sample s=samples[i];
@@ -44,26 +49,26 @@ public final class JsGaugeRenderer {
             // Scale the same card design uniformly; dense cards remain centered in their wider cell.
             int cardSave=c.save();float scale=layout.dense()?124f/190:1;
             c.translate(cx-126*scale,t);c.scale(scale,scale);l=0;t=0;cx=126;
-            p.setStyle(Paint.Style.FILL);p.setColor(0xff101920);c.drawRoundRect(new RectF(l,t,l+252,t+190),10,10,p);
-            p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1);p.setColor(LINE);c.drawRoundRect(new RectF(l,t,l+252,t+190),10,10,p);p.setStyle(Paint.Style.FILL);
+            p.setStyle(Paint.Style.FILL);p.setColor(theme.isOriginal()?0xff101920:theme.panel);if(theme.cutPanels)c.drawRoundRect(new RectF(l,t,l+252,t+190),10,10,p);else c.drawRect(l,t,l+252,t+190,p);
+            p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1);p.setColor(ThemePalette.stroke(theme,0xff293943));if(theme.cutPanels)c.drawRoundRect(new RectF(l,t,l+252,t+190),10,10,p);else c.drawRect(l,t,l+252,t+190,p);p.setStyle(Paint.Style.FILL);
             boolean ok=s.valid&&!Float.isNaN(s.value)&&!Float.isInfinite(s.value);
             String title=UiText.t(Telemetry.LABELS[i]);
-            text(c,title,cx,t+25,17,BLUE);
+            text(c,title,cx,t+25,17,ThemePalette.accent(theme,0xffa4d9ef));
             float displayed=Telemetry.displayValue(i,s.value);
             String value=(ok||s.held)?(i==8?JsGearState.valueLabel((int)s.value):(Telemetry.jsTenthSignal(i)?Telemetry.jsTenth(displayed,i==11||i==12):String.format(Locale.US,"rpm".equals(u)||"km/h".equals(u)?"%.0f":"G".equals(u)?"%+.2f":i==Telemetry.STEERING?"%+.1f":"%.1f",displayed))):"—";
             if(s.held&&i!=7)value="LAST "+(s.lastValidAgeMs/1000)+"s "+value;
             float lo=min(i,u),hi=max(i,u),f=ok?Math.max(0,Math.min(1,(displayed-lo)/(hi-lo))):0;
             if(style==0){
                 float cy=t+107,r=63;
-                p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(5);p.setColor(LINE);RectF arc=new RectF(cx-r,cy-r,cx+r,cy+r);c.drawArc(arc,150,240,false,p);
-                if(ok){p.setColor(BLUE);c.drawArc(arc,150,240*f,false,p);}
-                for(int tick=0;tick<=8;tick++){double a=Math.toRadians(150+30*tick);line(c,cx+(float)Math.cos(a)*54,cy+(float)Math.sin(a)*54,cx+(float)Math.cos(a)*60,cy+(float)Math.sin(a)*60,MUTED,1);}
-                if(ok){double a=Math.toRadians(150+240*f);line(c,cx,cy,cx+(float)Math.cos(a)*48,cy+(float)Math.sin(a)*48,WHITE,2);p.setStyle(Paint.Style.FILL);p.setColor(BLUE);c.drawCircle(cx,cy,4,p);}
-                text(c,axis(lo),cx-69,t+155,10,MUTED);text(c,axis(hi),cx+69,t+155,10,MUTED);
-                text(c,value,cx,t+163,29,WHITE);text(c,u,cx,t+181,12,MUTED);
+                p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(5);p.setColor(ThemePalette.stroke(theme,0xff293943));RectF arc=new RectF(cx-r,cy-r,cx+r,cy+r);c.drawArc(arc,150,240,false,p);
+                if(ok){p.setColor(ThemePalette.accent(theme,0xffa4d9ef));c.drawArc(arc,150,240*f,false,p);}
+                for(int tick=0;tick<=8;tick++){double a=Math.toRadians(150+30*tick);line(c,cx+(float)Math.cos(a)*54,cy+(float)Math.sin(a)*54,cx+(float)Math.cos(a)*60,cy+(float)Math.sin(a)*60,ThemePalette.secondary(theme,0xff8299a4),1);}
+                if(ok){double a=Math.toRadians(150+240*f);line(c,cx,cy,cx+(float)Math.cos(a)*48,cy+(float)Math.sin(a)*48,ThemePalette.primary(theme,0xffe1edf2),2);p.setStyle(Paint.Style.FILL);p.setColor(ThemePalette.accent(theme,0xffa4d9ef));c.drawCircle(cx,cy,4,p);}
+                text(c,axis(lo),cx-69,t+155,10,ThemePalette.secondary(theme,0xff8299a4));text(c,axis(hi),cx+69,t+155,10,ThemePalette.secondary(theme,0xff8299a4));
+                text(c,value,cx,t+163,29,ThemePalette.primary(theme,0xffe1edf2));text(c,u,cx,t+181,12,ThemePalette.secondary(theme,0xff8299a4));
             }else{
-                text(c,value,cx,t+103,48,WHITE);text(c,u,cx,t+129,17,MUTED);
-                if(style==1){p.setColor(LINE);c.drawRect(l+20,t+147,l+232,t+159,p);if(ok){p.setColor(BLUE);c.drawRect(l+20,t+147,l+20+212*f,t+159,p);}text(c,axis(lo),l+25,t+178,11,MUTED);text(c,axis(hi),l+226,t+178,11,MUTED);}
+                text(c,value,cx,t+103,48,ThemePalette.primary(theme,0xffe1edf2));text(c,u,cx,t+129,17,ThemePalette.secondary(theme,0xff8299a4));
+                if(style==1){p.setColor(ThemePalette.stroke(theme,0xff293943));c.drawRect(l+20,t+147,l+232,t+159,p);if(ok){p.setColor(ThemePalette.accent(theme,0xffa4d9ef));c.drawRect(l+20,t+147,l+20+212*f,t+159,p);}text(c,axis(lo),l+25,t+178,11,ThemePalette.secondary(theme,0xff8299a4));text(c,axis(hi),l+226,t+178,11,ThemePalette.secondary(theme,0xff8299a4));}
             }
             c.restoreToCount(cardSave);
         }

@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+  <defs>
+    <linearGradient id="bg" x2="0" y2="1"><stop stop-color="#0b1118"/><stop offset="1" stop-color="#080b10"/></linearGradient>
+    <linearGradient id="screen" x2="0" y2="1"><stop stop-color="#101923"/><stop offset="1" stop-color="#090e14"/></linearGradient>
+    <linearGradient id="arc" x2="1"><stop stop-color="#52d6c7"/><stop offset="1" stop-color="#87a9ff"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#000" flood-opacity=".38"/></filter>
+    <style>
+      text{font-family:Inter,"Noto Sans KR",Arial,sans-serif;fill:#eaf1fa}.muted{fill:#8f9eaf}.tiny{font-size:12px}.small{font-size:14px}.label{font-size:13px;letter-spacing:.08em}.heading{font-size:25px;font-weight:650}.value{font-size:30px;font-weight:650}.card{fill:#111b26;stroke:#273543;stroke-width:1}.chip{fill:#17232f;stroke:#2b3b49;stroke-width:1}.line{stroke:#293744;stroke-width:1}
+    </style>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#bg)"/>
+  <text x="64" y="62" class="label" fill="#52d6c7">DASHBOARD / THEME LAB</text>
+  <text x="64" y="108" class="heading">테마 엔진 · 편집기 + 동일 렌더러 프리뷰</text>
+  <text x="64" y="140" class="small muted">제안 시안 · 샘플 차량 데이터 · 800 × 480 논리 화면</text>
+
+  <!-- editor shell -->
+  <rect x="54" y="174" width="1492" height="770" rx="24" fill="#0e151d" stroke="#24313c" filter="url(#shadow)"/>
+  <rect x="54" y="174" width="1492" height="68" rx="24" fill="#121b24"/>
+  <path d="M54 218h1492v24H54z" fill="#121b24"/>
+  <circle cx="88" cy="208" r="7" fill="#52d6c7"/><text x="108" y="214" font-size="16" font-weight="600">테마 편집</text>
+  <text x="1290" y="212" class="small muted">초안 변경 · 아직 적용되지 않음</text>
+  <rect x="1430" y="190" width="92" height="38" rx="12" fill="#183e42" stroke="#347d79"/><text x="1455" y="214" class="small" fill="#a7fff1">적용</text>
+
+  <!-- left panel -->
+  <text x="86" y="282" class="label muted">테마</text>
+  <rect x="82" y="300" width="408" height="62" rx="13" class="chip"/>
+  <circle cx="111" cy="331" r="10" fill="#52d6c7"/><text x="136" y="327" font-size="16" font-weight="600">Aurora · 커스텀</text><text x="136" y="347" class="tiny muted">규격 v1 · 호환성 검사 통과</text>
+  <text x="86" y="402" class="label muted">미리보기 페이지</text>
+  <g class="small">
+    <rect x="82" y="420" width="94" height="38" rx="11" fill="#183e42" stroke="#52d6c7"/><text x="104" y="445">조망</text>
+    <rect x="184" y="420" width="68" height="38" rx="11" class="chip"/><text x="206" y="445">F1</text>
+    <rect x="260" y="420" width="92" height="38" rx="11" class="chip"/><text x="278" y="445">게이지</text>
+    <rect x="360" y="420" width="92" height="38" rx="11" class="chip"/><text x="378" y="445">그래프</text>
+  </g>
+  <text x="86" y="496" class="label muted">미리보기 상태</text>
+  <rect x="82" y="514" width="408" height="52" rx="12" class="chip"/>
+  <text x="104" y="546" class="small">정상 주행 샘플</text><text x="420" y="546" class="small muted">⌄</text>
+  <text x="86" y="612" class="label muted">토큰 편집</text>
+  <g class="small">
+    <text x="88" y="648">강조 색</text><rect x="390" y="628" width="48" height="28" rx="8" fill="#52d6c7" stroke="#c8fff6"/>
+    <rect x="82" y="666" width="408" height="1" fill="#263440"/>
+    <text x="88" y="700">패널 형상</text><rect x="314" y="678" width="124" height="34" rx="10" class="chip"/><text x="332" y="700" class="tiny">둥근 모서리 ⌄</text>
+    <rect x="82" y="720" width="408" height="1" fill="#263440"/>
+    <text x="88" y="754">숫자 크기</text><text x="402" y="754" class="tiny muted">30</text>
+    <line x1="88" y1="780" x2="450" y2="780" stroke="#354653" stroke-width="4" stroke-linecap="round"/><line x1="88" y1="780" x2="310" y2="780" stroke="#52d6c7" stroke-width="4" stroke-linecap="round"/><circle cx="310" cy="780" r="9" fill="#d9fffa" stroke="#52d6c7" stroke-width="3"/>
+    <rect x="82" y="812" width="408" height="1" fill="#263440"/>
+    <text x="88" y="848">폰트</text><rect x="314" y="826" width="124" height="34" rx="10" class="chip"/><text x="332" y="848" class="tiny">기본 산세리프 ⌄</text>
+  </g>
+  <text x="86" y="902" class="tiny muted">변경 즉시 오른쪽 Canvas에 반영 · draft는 취소 가능</text>
+
+  <!-- preview area -->
+  <text x="544" y="282" class="label muted">LIVE PREVIEW / 공통 Java 렌더러</text>
+  <rect x="544" y="302" width="950" height="570" rx="18" fill="#070b0f" stroke="#2b3947"/>
+  <g transform="translate(621 346) scale(1.05)">
+    <rect width="800" height="480" fill="url(#screen)"/>
+    <!-- top navigation -->
+    <rect width="800" height="52" fill="#0d141b"/>
+    <rect x="18" y="51" width="764" height="1" fill="#293744"/>
+    <rect x="16" y="8" width="110" height="38" rx="10" fill="#183e42" stroke="#52d6c7"/>
+    <text x="33" y="32" font-size="14" fill="#a7fff1">퍼포먼스</text>
+    <rect x="134" y="8" width="100" height="38" rx="10" class="chip"/><text x="151" y="32" font-size="14" class="muted">전체 조망</text>
+    <rect x="242" y="8" width="72" height="38" rx="10" class="chip"/><text x="268" y="32" font-size="14" class="muted">F1</text>
+    <rect x="322" y="8" width="84" height="38" rx="10" class="chip"/><text x="338" y="32" font-size="14" class="muted">게이지</text>
+    <rect x="414" y="8" width="108" height="38" rx="10" class="chip"/><text x="434" y="32" font-size="14" class="muted">그래프</text>
+    <text x="603" y="34" font-size="22" font-weight="650">10:42</text>
+    <rect x="664" y="8" width="120" height="38" rx="10" class="chip"/><text x="681" y="32" font-size="14" class="muted">돌아가기</text>
+    <!-- main cards -->
+    <g>
+      <rect x="18" y="70" width="238" height="176" rx="18" class="card"/><rect x="32" y="70" width="46" height="3" rx="2" fill="#52d6c7"/>
+      <text x="34" y="98" class="tiny muted">SPEED / km/h</text><text x="36" y="160" font-size="52" font-weight="650">086</text><text x="37" y="191" class="small muted">정상 샘플</text>
+      <path d="M35 222h203" stroke="#2a3946" stroke-width="7" stroke-linecap="round"/><path d="M35 222h120" stroke="url(#arc)" stroke-width="7" stroke-linecap="round"/>
+
+      <rect x="272" y="70" width="238" height="176" rx="18" class="card"/><rect x="286" y="70" width="46" height="3" rx="2" fill="#52d6c7"/>
+      <text x="288" y="98" class="tiny muted">ENGINE / rpm</text><text x="290" y="160" font-size="49" font-weight="650">2,450</text><text x="292" y="191" class="small muted">rpm</text>
+      <path d="M290 222h203" stroke="#2a3946" stroke-width="7" stroke-linecap="round"/><path d="M290 222h99" stroke="url(#arc)" stroke-width="7" stroke-linecap="round"/>
+
+      <rect x="526" y="70" width="256" height="176" rx="18" class="card"/><rect x="540" y="70" width="46" height="3" rx="2" fill="#52d6c7"/>
+      <text x="542" y="98" class="tiny muted">GEAR / 현재 기어</text><text x="544" y="178" font-size="76" font-weight="650">D</text><text x="620" y="165" class="small muted">주행 샘플</text>
+      <circle cx="742" cy="147" r="24" fill="#132a2a" stroke="#52d6c7"/><path d="M731 148l8 8 15-18" fill="none" stroke="#79e6d8" stroke-width="3"/>
+    </g>
+    <rect x="18" y="266" width="764" height="190" rx="18" class="card"/>
+    <text x="38" y="296" class="small muted">차량 상태</text>
+    <g class="tiny">
+      <rect x="36" y="316" width="174" height="112" rx="14" fill="#0d151d" stroke="#233340"/><text x="52" y="344" class="muted">오일 온도</text><text x="52" y="390" font-size="28" fill="#dce8f3">92 °C</text>
+      <rect x="226" y="316" width="174" height="112" rx="14" fill="#0d151d" stroke="#233340"/><text x="242" y="344" class="muted">냉각수</text><text x="242" y="390" font-size="28" fill="#dce8f3">88 °C</text>
+      <rect x="416" y="316" width="174" height="112" rx="14" fill="#0d151d" stroke="#233340"/><text x="432" y="344" class="muted">스로틀</text><text x="432" y="390" font-size="28" fill="#dce8f3">18 %</text>
+      <rect x="606" y="316" width="156" height="112" rx="14" fill="#261a20" stroke="#7f3b48"/><text x="622" y="344" fill="#ff9aa8">ABS 상태</text><text x="622" y="390" font-size="25" fill="#ff7388">경고</text>
+    </g>
+    <text x="20" y="474" font-size="10" fill="#657689">SYNTHETIC PREVIEW DATA · 경고 표시는 의미 토큰 시안</text>
+  </g>
+  <text x="544" y="910" class="small muted">800×480 렌더 surface · 위치/배치 고정 · draft 토큰만 실시간 반영</text>
+</svg>

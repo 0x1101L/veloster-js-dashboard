@@ -77,7 +77,8 @@ def main():
     if (app / "res").is_dir():
         run("resources", [aapt2, "compile", "--dir", app / "res", "-o", out / "resources.zip"])
         resources = ["--auto-add-overlay", "-R", out / "resources.zip"]
-    run("manifest", [aapt2, "link", "-I", sdk, "--manifest", app / "AndroidManifest.xml", *resources,
+    asset_args = ["-A", app / "src" / "main" / "assets"] if (app / "src" / "main" / "assets").is_dir() else []
+    run("manifest", [aapt2, "link", "-I", sdk, "--manifest", app / "AndroidManifest.xml", *resources, *asset_args,
                      "--min-sdk-version", "17", "--target-sdk-version", "17", "-o", out / "base.apk"])
     target = out / (args.app + "-UNSIGNED.apk")
     with zipfile.ZipFile(out / "base.apk") as source, zipfile.ZipFile(target, "w") as archive:

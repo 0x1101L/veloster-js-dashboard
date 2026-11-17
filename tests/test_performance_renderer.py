@@ -16,9 +16,10 @@ import com.veloster.dashboard.debugger.view.*;
 import com.veloster.dashboard.view.f1.*;
 import com.veloster.dashboard.view.graph.*;
 import com.veloster.dashboard.view.gauge.*;
-import com.veloster.dashboard.view.overview.*;import com.veloster.i18n.UiText;import android.graphics.Canvas;
+import com.veloster.dashboard.view.overview.*;import com.veloster.dashboard.theme.ThemeSpec;import com.veloster.dashboard.theme.ThemePreviewController;import com.veloster.dashboard.theme.ThemeSelectionDraft;import com.veloster.i18n.UiText;import android.graphics.Canvas;
 public class PerformancePreview {
  static void check(boolean v,String m){if(!v)throw new AssertionError(m);}
+ static int pixelDifference(Canvas a,Canvas b){int different=0;for(int y=0;y<480;y+=2)for(int x=0;x<800;x+=2)if(a.pixel(x,y)!=b.pixel(x,y))different++;return different;}
  static Telemetry fixture(){
   Telemetry t=new Telemetry();t.profile(false,false,true);t.speed(75,1000);t.units(new byte[]{2,60,108},1000);
   t.rpm(new byte[]{0,0x22,0x38,0,0,0,0,0},1000);t.temperatures(new byte[]{(byte)176,(byte)185},1000);
@@ -97,6 +98,42 @@ public class PerformancePreview {
   Telemetry pd=new Telemetry();pd.profile(true,false,false);pd.jsDctTemperatureReply(reply,1000);
   check(Float.isNaN(pd.dctTemperatures(1000).oddC),"PD does not accept JS DCT reply");
  }
+ static void focusOverview(String folder)throws Exception{
+  for(int profile=0;profile<3;profile++){
+   Telemetry t=profile==0?fixture():new Telemetry();if(profile==1)t.profile(true,false,false);if(profile==2)t.profile(false,true,false);
+   OverviewLayout layout=new OverviewLayout();layout.theme(ThemeSpec.auroraFocus());
+  for(int page=0;page<1;page++){
+    Canvas c=new Canvas(800,480);
+    if(profile==2){JsPitRenderer r=new JsPitRenderer();r.setTheme(ThemeSpec.auroraFocus());r.setOverviewLayout(layout);r.draw(c,800,480,false,t,1000);}
+    else {PitRenderer r=new PitRenderer();r.setTheme(ThemeSpec.auroraFocus());r.setOverviewLayout(layout);r.draw(c,800,480,false,t,1000);}
+    check(c.pixel(799,479)==0xff071118,"Focus background applied");
+   check(!c.texts.contains(" / 2"),"5x4 Focus overview has no unnecessary pager");
+    check(c.texts.size()>=20,"overview renderer draws the active profile page");
+    c.write(folder+"/focus-profile-"+profile+"-page-"+page+".png");
+   }
+  }
+  for(int profile=0;profile<3;profile++){
+   ThemePreviewController preview=new ThemePreviewController(profile==1,profile==2,profile==0);
+   ThemeSelectionDraft draft=new ThemeSelectionDraft(ThemeSpec.original());draft.choose(ThemeSpec.auroraFocus());preview.setDraft(draft.selected());
+   check(preview.layout().pageCount()==1&&preview.layout().count()==20,"preview controller uses the existing 5x4 layout");
+   Canvas c=new Canvas(800,480);preview.draw(c,800,480);
+   check(!c.texts.contains(" / 2")&&c.texts.size()>=20,"preview uses renderer and fixed data without a redundant pager");
+   c.write(folder+"/controller-profile-"+profile+"-page-0.png");
+   ThemeSpec rollback=draft.cancel();check("original".equals(rollback.id),"preview cancel does not commit draft");
+   ThemeSelectionDraft commit=new ThemeSelectionDraft(ThemeSpec.original());commit.choose(ThemeSpec.auroraFocus());
+   check("aurora_focus".equals(commit.apply().id),"preview Apply exposes the draft ID");
+  }
+ }
+ static void themedPages(){
+  Telemetry t=fixture();
+  for(int page=0;page<5;page++){
+   Canvas original=new Canvas(800,480),focus=new Canvas(800,480);PitRenderer a=new PitRenderer(),b=new PitRenderer();b.setTheme(ThemeSpec.auroraFocus());
+   if(page==1){a.setPerformancePage(true);b.setPerformancePage(true);}if(page==2){a.setGaugeLayout(new GaugeLayout());b.setGaugeLayout(new GaugeLayout());}if(page==3){a.setGraphLayout(new GraphLayout());b.setGraphLayout(new GraphLayout());}
+   a.draw(original,800,480,page==4,t,1000);b.draw(focus,800,480,page==4,t,1000);
+   check(pixelDifference(original,focus)>0,"theme changes pixels on overview/F1/performance/gauge/graph page "+page);
+   check(original.texts.equals(focus.texts),"theme preserves displayed vehicle labels and values on page "+page);
+  }
+ }
  static void jsTransmissionTrial(){
   Telemetry t=new Telemetry();t.profile(false,true,false);
   check(!t.dctTemperatures(100).dctEstimate,"initial MT trial");
@@ -155,8 +192,8 @@ public class PerformancePreview {
   gear(gearbox,0x1e,3,4250);jsGearPages(gearbox,4250,"M","3");
   gear(gearbox,0x1e,7,4300);jsGearPages(gearbox,4300,"M","7");
   gear(gearbox,0x1d,5,4350);gear(gearbox,0x1e,6,4400);jsGearPages(gearbox,4400,"D","6");
-  jsDctOverview(args[0]);
-  jsTransmissionTrial();
+  jsDctOverview(args[0]);focusOverview(args[0]);
+  jsTransmissionTrial();themedPages();
   jsRpmAccent(args[0]);jsF1Modes();jsSpeedRetained();
   System.out.println("PASS "+rendered+" performance renders and 4 existing page renders");
  }
@@ -177,15 +214,21 @@ def render(folder):
         p = root / 'PerformancePreview.java'
         p.write_text(HARNESS)
         sources.append(p)
-        groups = {'OverviewLayout': 'overview', 'OverviewRenderer': 'overview', 'JsOverviewRenderer': 'overview', 'GaugeEditor': 'gauge', 'GaugeLayout': 'gauge', 'GaugeRenderer': 'gauge', 'JsGaugeRenderer': 'gauge', 'GraphEditor': 'graph', 'GraphLayout': 'graph', 'GraphRenderer': 'graph', 'ClusterRenderer': 'cluster', 'JsClusterRenderer': 'cluster', 'JsDiagnosticsRenderer': 'diagnostics', 'PerformanceRenderer': 'performance', 'JsPerformanceRenderer': 'performance'}
+        groups = {'ThemeLayout': 'overview', 'OverviewLayout': 'overview', 'OverviewRenderer': 'overview', 'JsOverviewRenderer': 'overview', 'GaugeEditor': 'gauge', 'GaugeLayout': 'gauge', 'GaugeRenderer': 'gauge', 'JsGaugeRenderer': 'gauge', 'GraphEditor': 'graph', 'GraphLayout': 'graph', 'GraphRenderer': 'graph', 'ClusterRenderer': 'cluster', 'JsClusterRenderer': 'cluster', 'JsDiagnosticsRenderer': 'diagnostics', 'PerformanceRenderer': 'performance', 'JsPerformanceRenderer': 'performance'}
         def source_path(name):
+            if name == 'ThemeSpec': return ROOT / 'apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemeSpec.java'
+            if name == 'ThemePalette': return ROOT / 'apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemePalette.java'
+            if name == 'ThemeSelectionDraft': return ROOT / 'apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemeSelectionDraft.java'
+            if name == 'ThemePreviewController': return ROOT / 'apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemePreviewController.java'
+            if name == 'ThemeResources': return ROOT / 'tests/java_stubs/com/veloster/dashboard/theme/ThemeResources.java'
             if name in ("JsDiagState", "JsLogger", "BluetoothRuntimeProbe", "JsDiagnosticsRenderer"): return ROOT / ("apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/view" if name == "JsDiagnosticsRenderer" else "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger") / (name + ".java")
             if name in groups: return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view" / ("f1" if groups[name] == "cluster" else groups[name]) / (name + ".java")
             if name in UI_SOURCES: return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view" / (name + ".java")
             if name in ("JsPowertrain", "JsGearState", "JsTelemetryDecoder"): return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/js" / (name + ".java")
             if name in ("PdPowertrain", "PdGearState"): return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd" / (name + ".java")
             return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle" / (name + ".java")
-        sources += [source_path(name) for name in ('Telemetry','PdPowertrain','PdGearState','JsPowertrain','JsGearState','JsTelemetryDecoder','JsDiagState','BluetoothRuntimeProbe','JsPitRenderer','ClusterRenderer','JsClusterRenderer','OverviewRenderer','JsOverviewRenderer','JsDiagnosticsRenderer','JsGaugeRenderer','JsPerformanceRenderer','PitRenderer','PerformanceRenderer','DashboardPage','ShiftGuide','MediaState','GaugeLayout','GaugeRenderer','OverviewLayout','GraphLayout','GraphRenderer')]
+        sources += [source_path(name) for name in ('Telemetry','ThemeSpec','ThemePalette','ThemeSelectionDraft','ThemePreviewController','ThemeResources','ThemeLayout','PdPowertrain','PdGearState','JsPowertrain','JsGearState','JsTelemetryDecoder','JsDiagState','BluetoothRuntimeProbe','JsPitRenderer','ClusterRenderer','JsClusterRenderer','OverviewRenderer','JsOverviewRenderer','JsDiagnosticsRenderer','JsGaugeRenderer','JsPerformanceRenderer','PitRenderer','PerformanceRenderer','DashboardPage','ShiftGuide','MediaState','GaugeLayout','GaugeRenderer','OverviewLayout','GraphLayout','GraphRenderer')]
+        sources += [ROOT / "tests/java_stubs/android/content/Context.java",ROOT / "tests/java_stubs/android/content/res/AssetManager.java"]
         sources += [ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd/PdTelemetryDecoder.java", ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/jsn/JsnTelemetryDecoder.java"]
         sources.append(ROOT / 'shared/src/com/veloster/i18n/UiText.java')
         result = subprocess.run([javac,'-encoding','UTF-8','-d',str(root),*map(str,sources)],capture_output=True,text=True)

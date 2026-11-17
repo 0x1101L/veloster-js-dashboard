@@ -2,6 +2,12 @@ package com.veloster.dashboard.view;
 
 import com.veloster.dashboard.vehicle.*;
 import com.veloster.dashboard.DashboardActivity;
+import com.veloster.dashboard.theme.ThemeCatalog;
+import com.veloster.dashboard.theme.ThemeRepository;
+import com.veloster.dashboard.theme.ThemeSettingsStore;
+import com.veloster.dashboard.theme.ThemeSpec;
+import com.veloster.dashboard.theme.ThemePreviewController;
+import com.veloster.dashboard.theme.ThemeSelectionDraft;
 import com.veloster.dashboard.vehicle.js.JsTransmissionSetting;
 import com.veloster.dashboard.debugger.JsDiagState;
 import com.veloster.dashboard.debugger.JsLogger;
@@ -17,6 +23,8 @@ import com.veloster.dashboard.view.graph.GraphLayout;
 import com.veloster.i18n.UiText;
 import com.veloster.i18n.LanguageSettings;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Canvas;
 import android.os.SystemClock;
@@ -26,6 +34,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 import java.lang.ref.WeakReference;
 
@@ -49,6 +59,10 @@ public final class DashboardView extends View implements Runnable {
     private final GraphLayout graphLayout=new GraphLayout();
     private final GraphEditor graphEditor;
     private final OverviewLayout overviewLayout=new OverviewLayout();
+    private final ThemeCatalog themeCatalog;
+    private final ThemeSettingsStore themeStore;
+    private ThemeSpec activeTheme;
+    private com.veloster.dashboard.theme.ThemeResources activeThemeResources;
     private int overviewDown=-1;
     private boolean media, touching;
     private final DashboardPage.State pageState=new DashboardPage.State();
@@ -68,7 +82,7 @@ public final class DashboardView extends View implements Runnable {
             if(slot>=0){touching=false;if(pageState.is(DashboardPage.GRAPHS))graphEditor.edit(slot);else gaugeEditor.edit(slot);}
         }
     }};
-    private DashboardView(Activity a) { super(a); activity=a; transmissionSetting=new JsTransmissionSetting(a);DATA.jsTransmissionSetting(transmissionSetting.get()); artwork=new ArtworkLoader(a,this);
+    private DashboardView(Activity a) { super(a); activity=a; themeCatalog=ThemeCatalog.load(a);themeStore=new ThemeSettingsStore(a);activeTheme=new ThemeRepository(themeCatalog).load(themeStore.selectedId(),ThemeRepository.SUPPORTED_SCHEMA_VERSION);activeThemeResources=com.veloster.dashboard.theme.ThemeResources.load(a,activeTheme);overviewLayout.theme(activeTheme);renderer.setTheme(activeTheme,activeThemeResources);jsRenderer.setTheme(activeTheme,activeThemeResources); transmissionSetting=new JsTransmissionSetting(a);DATA.jsTransmissionSetting(transmissionSetting.get()); artwork=new ArtworkLoader(a,this);
         gaugeEditor=new GaugeEditor(a,gaugeLayout,new Runnable(){public void run(){invalidate();}});
         graphEditor=new GraphEditor(a,graphLayout,new Runnable(){public void run(){invalidate();}});
         for(int i=0;i<Telemetry.LABELS.length;i++)try{
@@ -76,6 +90,7 @@ public final class DashboardView extends View implements Runnable {
         }catch(IllegalArgumentException e){/* Retain default for an invalid saved style. */}
         catch(ClassCastException e){/* Retain default for incompatible preferences. */}
         try{pageState.restore(a.getSharedPreferences("pit_vehicle_ui",0).getInt("dashboard_page",DashboardPage.OVERVIEW),DATA.jsProfile());}catch(ClassCastException ignored){pageState.restore(DashboardPage.OVERVIEW,DATA.jsProfile());}
+        try{overviewLayout.page(a.getSharedPreferences("pit_vehicle_ui",0).getInt("overview_theme_page",0));}catch(ClassCastException ignored){}
         shiftTarget=ShiftGuide.clamp(a.getSharedPreferences("pit_vehicle_ui",0).getInt("shift_target",ShiftGuide.DEFAULT),DATA.pdLayoutProfile()); setVisibility(GONE); }
     public static void attach(Activity a) {
         try {
@@ -237,6 +252,56 @@ public final class DashboardView extends View implements Runnable {
         }},"NMode-track-control").start();
     }
     private boolean overviewCovered(float y){return y>=347&&mediaState.snapshot(SystemClock.elapsedRealtime()).notice;}
+    private void applyTheme(ThemeSpec theme){activeTheme=theme==null?ThemeSpec.original():theme;activeThemeResources=com.veloster.dashboard.theme.ThemeResources.load(activity,activeTheme);overviewLayout.theme(activeTheme);renderer.setTheme(activeTheme,activeThemeResources);jsRenderer.setTheme(activeTheme,activeThemeResources);invalidate();}
+    private void showDisplayOptions(){
+        final String[] items={"Language / 언어","Theme / 테마"};
+        new AlertDialog.Builder(activity).setItems(items,new DialogInterface.OnClickListener(){public void onClick(DialogInterface dialog,int which){
+            if(which==0)LanguageSettings.show(activity,new Runnable(){public void run(){invalidate();}});
+            else showThemePicker();
+        }}).show();
+    }
+    private void showThemePicker(){
+        final ThemeSpec previous=activeTheme;
+        final int previousPage=overviewLayout.page();
+        final ThemeSelectionDraft selection=new ThemeSelectionDraft(previous);
+        final ThemeSpec[] choices=themeCatalog.all().values().toArray(new ThemeSpec[0]);
+        final boolean pd=DATA.pdProfile(),js=DATA.jsProfile(),jsn=DATA.jsnProfile();
+        final ThemePreviewController preview=new ThemePreviewController(activity,pd,js,jsn);preview.setDraft(selection.selected());
+        final ThemePreviewSurface surface=new ThemePreviewSurface(activity,preview);
+        LinearLayout previewPanel=new LinearLayout(activity);previewPanel.setOrientation(LinearLayout.VERTICAL);
+        TextView sampleLabel=new TextView(activity);sampleLabel.setText("Preview · sample data / 미리보기 · 예시 데이터");sampleLabel.setGravity(Gravity.CENTER_VERTICAL);sampleLabel.setPadding(12,4,12,4);
+        previewPanel.addView(sampleLabel,new LinearLayout.LayoutParams(-1,-2));
+        previewPanel.addView(surface,new LinearLayout.LayoutParams(-1,-2));
+        final View content=themePickerContent(choices,preview,selection,previewPanel,surface,previous,previousPage);
+        final AlertDialog picker=new AlertDialog.Builder(activity).setTitle("Theme / 테마").setView(content).create();content.setTag(picker);
+        picker.setOnCancelListener(new DialogInterface.OnCancelListener(){public void onCancel(DialogInterface dialog){restoreTheme(previous,previousPage);}});
+        picker.show();
+    }
+    private void restoreTheme(ThemeSpec theme,int page){applyTheme(theme);overviewLayout.page(page);invalidate();}
+    private View themePickerContent(final ThemeSpec[] choices,final ThemePreviewController preview,final ThemeSelectionDraft selection,
+            final View previewPanel,final ThemePreviewSurface surface,final ThemeSpec previous,final int previousPage){
+        LinearLayout root=new LinearLayout(activity);root.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout options=new LinearLayout(activity);options.setOrientation(LinearLayout.HORIZONTAL);
+        for(final ThemeSpec choice:choices){Button button=new Button(activity);button.setText(choice.displayName);button.setOnClickListener(new OnClickListener(){public void onClick(View view){selection.choose(choice);preview.setDraft(selection.selected());preview.page(0);surface.invalidate();}});options.addView(button,new LinearLayout.LayoutParams(0,-2,1));}
+        root.addView(options,new LinearLayout.LayoutParams(-1,-2));
+        root.addView(previewPanel,new LinearLayout.LayoutParams(-1,-2));
+        LinearLayout actions=new LinearLayout(activity);actions.setOrientation(LinearLayout.HORIZONTAL);
+        Button cancel=new Button(activity);cancel.setTag(root);cancel.setText("Cancel / 취소");cancel.setOnClickListener(new OnClickListener(){public void onClick(View view){ThemeSpec selected=selection.cancel();restoreTheme(selected,previousPage);View parent=(View)view.getTag();((AlertDialog)parent.getTag()).dismiss();}});
+        Button apply=new Button(activity);apply.setTag(root);apply.setText("Apply / 적용");apply.setOnClickListener(new OnClickListener(){public void onClick(View view){ThemeSpec selected=selection.apply();themeStore.save(selected.id);applyTheme(selected);View parent=(View)view.getTag();((AlertDialog)parent.getTag()).dismiss();}});
+        actions.addView(cancel,new LinearLayout.LayoutParams(0,-2,1));actions.addView(apply,new LinearLayout.LayoutParams(0,-2,1));
+        root.addView(actions,new LinearLayout.LayoutParams(-1,-2));
+        return root;
+    }
+    private static final class ThemePreviewSurface extends View {
+        private final ThemePreviewController controller;
+        ThemePreviewSurface(Activity context,ThemePreviewController controller){super(context);this.controller=controller;}
+        protected void onMeasure(int widthSpec,int heightSpec){int widthMode=MeasureSpec.getMode(widthSpec),widthSize=MeasureSpec.getSize(widthSpec);int width=widthMode==MeasureSpec.EXACTLY?widthSize:widthMode==MeasureSpec.AT_MOST?Math.min(800,widthSize):800;int desired=width*3/5;int heightMode=MeasureSpec.getMode(heightSpec),heightSize=MeasureSpec.getSize(heightSpec);int height=heightMode==MeasureSpec.UNSPECIFIED?desired:Math.min(desired,heightSize);setMeasuredDimension(width,height);}
+        protected void onDraw(Canvas canvas){controller.draw(canvas,getWidth(),getHeight());}
+        public boolean onTouchEvent(MotionEvent event){
+            if(event.getAction()==MotionEvent.ACTION_UP){float x=event.getX()*800/getWidth(),y=event.getY()*480/getHeight();int target=controller.layout().pageControlTarget(x,y);if(target>=0){controller.page(target);invalidate();return true;}}
+            return true;
+        }
+    }
     public boolean onTouchEvent(MotionEvent event) {
         float x=event.getX()*800/getWidth(), y=event.getY()*480/getHeight();
         if(event.getAction()==MotionEvent.ACTION_DOWN) {
@@ -251,6 +316,7 @@ public final class DashboardView extends View implements Runnable {
         removeCallbacks(editHold);
         boolean tap=touching && Math.abs(x-downX)<16 && Math.abs(y-downY)<16;
         touching=false;
+        if(tap&&!blocked&&!pageState.is(DashboardPage.DIAG)&&!pageState.is(DashboardPage.PERFORMANCE)&&!pageState.is(DashboardPage.F1)&&!pageState.is(DashboardPage.GAUGES)&&!pageState.is(DashboardPage.GRAPHS)&&!overviewCovered(y)&&downY>=448&&y>=448){int next=overviewLayout.pageControlTarget(x,y);if(next>=0){overviewLayout.page(next);activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("overview_theme_page",next).apply();invalidate();return true;}}
         if(standalone&&tap&&x>=666&&x<=782&&downX>=666&&downX<=782&&y>=8&&y<=46&&downY>=8&&downY<=46){activity.finish();return true;}
         if(tap&&!blocked&&pageState.is(DashboardPage.DIAG)&&jsRenderer.selectDiagnosticTab(downX,downY,x,y)){invalidate();return true;}
         if(tap&&!blocked&&DATA.jsProfile()&&pageState.is(DashboardPage.DIAG)&&jsRenderer.carPlayImportHit(downX,downY)&&jsRenderer.carPlayImportHit(x,y)){
@@ -303,7 +369,7 @@ public final class DashboardView extends View implements Runnable {
             activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("dashboard_page",page).apply();
             invalidate();
         }
-        else if(x>=534 && x<=582 && downX>=534 && downX<=582){LanguageSettings.show(activity,new Runnable(){public void run(){invalidate();}});}
+        else if(x>=534 && x<=582 && downX>=534 && downX<=582){showDisplayOptions();}
         else if(x>=666 && x<=782 && downX>=666 && downX<=782)close();
         return true;
     }

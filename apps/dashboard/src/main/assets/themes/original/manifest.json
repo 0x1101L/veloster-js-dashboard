@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "original",
+  "displayName": "Original",
+  "tokens": {
+    "background": "#FF040506",
+    "panel": "#FF101315",
+    "panelRaised": "#FF233B46",
+    "stroke": "#FF303638",
+    "textPrimary": "#FFE1EDF2",
+    "textSecondary": "#FF91A5AE",
+    "accent": "#FFA4D9EF",
+    "warning": "#FFFFB547",
+    "critical": "#FFFF4059",
+    "unavailable": "#FF91A5AE",
+    "cutPanels": true
+  },
+  "layout": {"columns": 5, "rows": 4},
+  "fonts": {"body": "", "numeric": "", "display": ""},
+  "assets": {"background": ""}
+}

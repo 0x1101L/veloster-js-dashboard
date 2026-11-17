@@ -159,6 +159,10 @@ JS 진단의 `차량 > DCT`에서 변속기 설정 버튼을 눌러 DCT 또는 �
 
 ### Mac 실시간 UI 프리뷰
 
-터미널에서 `python3 tools/js_ui_preview.py`를 실행하면 로컬 브라우저에 현재 JS Java 렌더러의 800×480 화면이 열립니다. JDK(`java`, `javac`)와 Python 3가 필요합니다. 화면·예시 데이터 상태·언어를 선택하고 이미지의 상단 화면 버튼과 진단 탭을 클릭할 수 있습니다. 렌더러는 실행 상태로 유지해 화면 전환 시 재컴파일하지 않으며, Java 소스가 저장되면 다시 컴파일해 현재 화면을 갱신합니다. `r`은 현재 화면 갱신, `Shift+R`은 모든 화면·상태·언어를 갱신한 후 전체 조망의 수신 예시로 돌아갑니다. 종료는 터미널에서 Ctrl+C입니다. 브라우저가 열리지 않으면 터미널에 출력된 로컬 주소를 직접 여세요.
+터미널에서 `python3 tools/js_ui_preview.py`를 실행하면 OS 네이티브 창에 현재 Java 렌더러의 800×480 화면이 열립니다. JDK(`java`, `javac`), Python 3 및 Tkinter가 필요합니다. 화면·언어·테마·차량을 위쪽 두 줄에서 선택하고, 데이터 상태와 현재/전체 갱신은 프리뷰 바로 아래에서 조작합니다. 차량은 `js`(Veloster), `js_n`(Veloster N), `pd`(i30 (N LIne))이며 현재 세 모델의 출력 크기는 800×480입니다. 차량별 크기는 설정에 따로 두어 후속 모델의 다른 해상도도 추가할 수 있습니다. 전체 조망은 두 테마 모두 기존 5×4 한 페이지 배열을 유지합니다. `R`은 현재 화면 갱신, `Shift+R`은 선택 차량의 모든 화면·상태·언어·테마를 갱신합니다. **프리뷰 캡처**는 현재 표시된 렌더링 영역만 PNG로 저장하며 앱 창이나 설정 UI는 포함하지 않습니다. 종료는 창의 닫기 버튼을 누릅니다. 브라우저 프리뷰는 `python3 tools/js_ui_preview.py --browser`로 실행하며, 이미지 로드가 끝난 뒤 **프리뷰 캡처 (PNG)**를 누르면 같은 렌더 영역만 내려받습니다.
 
-이 화면은 Android Canvas를 PC Java2D 대역으로 그린 결과이며 값은 예시입니다. Android의 폰트·그래픽·터치나 실차 실행을 검증하지 않습니다. 화면 전환 클릭은 프리뷰에서 연결한 일부 조작이며 카드 편집·설정 팝업 등 앱 전체 터치는 지원하지 않습니다. 창 없이 렌더링을 확인하려면 `python3 tools/js_ui_preview.py --check`를 사용합니다.
+Finder에서 더블클릭해 실행할 macOS 앱은 `sh tools/build_macos_app.sh`로 만들 수 있습니다. 앱 메뉴의 **File → Open…** 또는 `⌘O`로 디렉토리를 고를 수 있고, **Open Recent**와 시작 창에서 최근 경로를 다시 엽니다. **New Repository…** 또는 `⌘N`은 부모 디렉토리와 폴더 이름을 선택해 새 폴더를 만든 뒤 `git init`하고 최근 목록에 등록합니다. 실제 저장소는 선택한 위치에 두고 경로 목록은 `~/Library/Application Support/JS Dashboard Preview/recent-directories.json`에 저장합니다.
+
+프리뷰를 실행하려면 선택한 디렉토리에 `tools/js_ui_preview.py`와 렌더러 소스가 있어야 합니다. 새 빈 Git 저장소와 임의 프로젝트는 최근 목록에 저장되지만 JS Dashboard 렌더러가 없으면 프리뷰를 열 수 없습니다. `.app` 런처는 현재 저장소와 Mac에 설치된 Python 3/Tkinter 및 JDK(`java`, `javac`)를 사용하므로 독립 배포용 앱은 아닙니다.
+
+이 화면은 Android Canvas API 호출을 PC Java2D 대역으로 그린 결과이며 값은 예시입니다. Android의 폰트·그래픽·터치나 실차 실행을 검증하지 않습니다. 네이티브 창은 화면·상태·언어 프리뷰를 제공하며 카드 편집·설정 팝업 등 앱 전체 터치는 지원하지 않습니다. 창 없이 렌더링을 확인하려면 `python3 tools/js_ui_preview.py --check`를 사용합니다.
