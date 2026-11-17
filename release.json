@@ -53,8 +53,8 @@
       "bytes": 126432,
       "source_commit": "8c20449a4b2fdc59b146ebdc65fd7baf66f2d1e5",
       "uncommitted_build_input": "Isolated integration of local changes based on 121e16b, remote 8c20449, conflict resolutions and manifest versionCode 24. Reproducible source patch: docs/build-inputs/js-v24-origin-dev.patch; original dev working tree not integrated.",
-      "scope": "Host-built trial; verify target identity, installed version and signer before installation. Vehicle installation and runtime unverified.",
-      "vehicle_install_observed": false,
+      "scope": "Installed on js_kr API17; installed APK SHA-256 matches, DashboardActivity foreground and telemetry counters increased during brief observation. Screen interactions, signal accuracy and extended operation remain unverified.",
+      "vehicle_install_observed": true,
       "build_input_note": "2026-11-17 02:33:06 KST; JDK 24 wrapper maps source/target 7 to 8; API17, Build Tools 36.1.0; Java 7 compilation unverified."
     },
     {

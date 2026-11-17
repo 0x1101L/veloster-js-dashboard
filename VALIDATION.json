@@ -618,6 +618,7 @@
     "inputs": "Isolated integration including local changes and conflict resolutions; patch against origin/dev 8c20449 in docs/build-inputs/js-v24-origin-dev.patch.",
     "host_tests": "21 synthetic Java programs; 88 Python tests; 100 Java2D diagnostic renders; translation catalog check.",
     "signature": "API17 V1 AOSP signer and zipalign verified.",
-    "unverified": "Installation, UI touch on device, runtime, actual vehicle data and Java 7 compilation."
+    "unverified": "Physical screen and touch, signal correctness, extended operation and Java 7 compilation.",
+    "device_observation": "2026-11-17 09:47–09:48 KST: js_kr API17, expected firmware; version 23 to 24 install Success; installed APK SHA-256 matches; foreground process and rising telemetry counters observed; no new AndroidRuntime errors in inspected log window."
   }
 }
