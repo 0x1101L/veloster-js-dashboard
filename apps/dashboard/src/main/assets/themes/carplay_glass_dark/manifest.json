@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "carplay_glass_dark",
+  "displayName": "CarPlay Glass Dark",
+  "tokens": {
+    "background": "#FF0B0E14",
+    "panel": "#661C222D",
+    "panelRaised": "#8C2A3342",
+    "stroke": "#33FFFFFF",
+    "textPrimary": "#FFF5F7FA",
+    "textSecondary": "#FF9BA6B2",
+    "accent": "#FF3898FF",
+    "warning": "#FFFFB340",
+    "critical": "#FFFF453A",
+    "unavailable": "#FF636E7B",
+    "cutPanels": false
+  },
+  "layout": {"columns": 5, "rows": 4},
+  "fonts": {
+    "body": "fonts/Pretendard-Regular.otf",
+    "numeric": "fonts/Pretendard-Regular.otf",
+    "display": "fonts/Pretendard-Regular.otf"
+  },
+  "assets": {"background": ""}
+}

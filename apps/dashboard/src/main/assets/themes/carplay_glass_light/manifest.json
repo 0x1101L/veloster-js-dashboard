@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "carplay_glass_light",
+  "displayName": "CarPlay Glass Light",
+  "tokens": {
+    "background": "#FFE6ECF2",
+    "panel": "#99FFFFFF",
+    "panelRaised": "#CCFFFFFF",
+    "stroke": "#80FFFFFF",
+    "textPrimary": "#FF111418",
+    "textSecondary": "#FF5C6672",
+    "accent": "#FF007AFF",
+    "warning": "#FFFF9500",
+    "critical": "#FFFF3B30",
+    "unavailable": "#FF9AA4B0",
+    "cutPanels": false
+  },
+  "layout": {"columns": 5, "rows": 4},
+  "fonts": {
+    "body": "fonts/Pretendard-Regular.otf",
+    "numeric": "fonts/Pretendard-Regular.otf",
+    "display": "fonts/Pretendard-Regular.otf"
+  },
+  "assets": {"background": ""}
+}
