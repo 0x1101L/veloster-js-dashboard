@@ -45,6 +45,84 @@
   "verification_document": "docs/STATUS.md",
   "js_trial_apks": [
     {
+      "file": "apks/JS-Dashboard-build-20261117-023306.apk",
+      "package": "com.veloster.dashboard",
+      "version_code": 24,
+      "version_name": "1.5-i18n",
+      "sha256": "b3031076afe68b60a56fd00639bc066b028d0d9418e5651bdb55ff581f17e3b8",
+      "bytes": 126432,
+      "source_commit": "8c20449a4b2fdc59b146ebdc65fd7baf66f2d1e5",
+      "uncommitted_build_input": "Isolated integration of local changes based on 121e16b, remote 8c20449, conflict resolutions and manifest versionCode 24. Reproducible source patch: docs/build-inputs/js-v24-origin-dev.patch; original dev working tree not integrated.",
+      "scope": "Host-built trial; verify target identity, installed version and signer before installation. Vehicle installation and runtime unverified.",
+      "vehicle_install_observed": false,
+      "build_input_note": "2026-11-17 02:33:06 KST; JDK 24 wrapper maps source/target 7 to 8; API17, Build Tools 36.1.0; Java 7 compilation unverified."
+    },
+    {
+      "file": "apks/JS-Dashboard-build-20261117-020154.apk",
+      "package": "com.veloster.dashboard",
+      "version_code": 21,
+      "version_name": "1.5-i18n",
+      "sha256": "1ef13b4522633af597b34c34b557d2ba0becfd11ce243f8c87c883de0bbb51c1",
+      "bytes": 125135,
+      "source_commit": "8c20449a4b2fdc59b146ebdc65fd7baf66f2d1e5",
+      "uncommitted_build_input": "None; isolated clean checkout of origin/dev. Local uncommitted changes excluded.",
+      "scope": "Host-only remote commit build; not an installation candidate: last confirmed installed versionCode is 23, and local changes including the UI thread crash fix are excluded.",
+      "vehicle_install_observed": false,
+      "build_input_note": "2026-11-17 02:01:54 KST; JDK 24 wrapper maps source/target 7 to 8, API17 and Build Tools 36.1.0; Java 7 compilation unverified."
+    },
+    {
+      "file": "apks/JS-Dashboard-build-20261116-101849.apk",
+      "package": "com.veloster.dashboard",
+      "version_code": 23,
+      "version_name": "1.5-i18n",
+      "sha256": "5ffa504e9106699baefdf449d386148e4daf5409536bad91c436d29e825e3fd7",
+      "bytes": 121821,
+      "source_commit": "121e16b75f0e49e7f663d48a93dfa6de0857ce2f",
+      "uncommitted_build_input": "Working tree at build: README.md, README_ko.md, SHA256SUMS, VALIDATION.json, apps/dashboard/AndroidManifest.xml, apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/CarPlayRuntimeProbe.java, apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/view/JsDiagnosticsRenderer.java, apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/HscanDataClient.java, apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/Telemetry.java, apps/dashboard/src/main/java/com/veloster/dashboard/view/DashboardView.java, apps/dashboard/src/main/java/com/veloster/dashboard/view/JsPitRenderer.java, apps/dashboard/src/main/java/com/veloster/dashboard/view/f1/JsClusterRenderer.java, apps/dashboard/src/main/java/com/veloster/dashboard/view/overview/JsOverviewRenderer.java, apps/dashboard/src/main/java/com/veloster/dashboard/view/performance/JsPerformanceRenderer.java, docs/JS_DIAGNOSTICS.md, release.json, shared/src/com/veloster/i18n/UiText.java, tests/JsRetainedTelemetryTest.java, tests/test_hscan_client.py, tests/test_js_diagnostics_renderer.py, translations/en.json",
+      "scope": "Installed on js_kr; installed APK SHA-256 matches; DashboardActivity foreground after five seconds. Vehicle signals and extended use not verified.",
+      "vehicle_install_observed": true,
+      "build_input_note": "2026-11-16 10:18:49 KST; JDK24 external wrapper maps source/target 7 to 8; API17, Build Tools 36.1.0; exact Java 7 compilation unverified."
+    },
+    {
+      "file": "apks/JS-Dashboard-build-20261115-154302.apk",
+      "package": "com.veloster.dashboard",
+      "version_code": 22,
+      "version_name": "1.5-i18n",
+      "sha256": "78ca7bc0b3729d0cf6a0ee9a6f189f5599840bbd4c13f5c504f9a2af7512123c",
+      "bytes": 121327,
+      "source_commit": "121e16b75f0e49e7f663d48a93dfa6de0857ce2f",
+      "uncommitted_build_input": "Manifest versionCode 22 and DashboardView UI-thread dispatch crash fix.",
+      "scope": "Same-version v22 crash fix trial; install success, foreground and no new recorded exception in short observation; readback hash and extended operation unverified.",
+      "vehicle_install_observed": true,
+      "build_input_note": "2026-11-15 15:43:02 KST; user requested versionCode 22 retained; JDK24 wrapper maps source/target 7 to 8, API17 Build Tools 36.1.0."
+    },
+    {
+      "file": "apks/JS-Dashboard-build-20261115-151528.apk",
+      "package": "com.veloster.dashboard",
+      "version_code": 22,
+      "version_name": "1.5-i18n",
+      "sha256": "73dec007df6c86b56cf85c5d484983e35abd36009b303c8ed926d7d76ff5280f",
+      "bytes": 121188,
+      "source_commit": "121e16b75f0e49e7f663d48a93dfa6de0857ce2f",
+      "uncommitted_build_input": "Manifest versionCode 21 to 22.",
+      "scope": "JS CarPlay diagnostics and manual CPRAW import trial; host tests, V1 signature, installation and Activity foreground verified. Device readback hash and actual capture unverified.",
+      "vehicle_install_observed": true,
+      "build_input_note": "2026-11-15 15:15:28 KST; JDK24 wrapper maps source/target 7 to 8, API17 Build Tools 36.1.0; Java 7 compile unverified."
+    },
+    {
+      "file": "apks/JS-Dashboard-build-20261115-112137.apk",
+      "package": "com.veloster.dashboard",
+      "version_code": 21,
+      "version_name": "1.5-i18n",
+      "sha256": "01fa36ff79c558344c9630d284e93746faea9fdfcd9f6537af48547f5d673bb5",
+      "bytes": 116736,
+      "source_commit": "704821050030f084869f1dbff5152451645b6510",
+      "uncommitted_build_input": "Manifest versionCode 20 to 21 only.",
+      "scope": "JS trial: API17 V1 signed, installed v21 and Activity foreground confirmed; 79/80 Python tests, DCT lifecycle timeout; CarPlay background media observation underway; TBT producer and device readback hash unverified.",
+      "vehicle_install_observed": true,
+      "build_input_note": "2026-11-15 11:21:37 KST; JDK24 wrapper maps Java 7 source/target to 8; API17 and Build Tools 36.1.0; Java 7 compilation unverified."
+    },
+    {
       "file": "apks/JS-Dashboard-build-20261114-215121.apk",
       "package": "com.veloster.dashboard",
       "version_code": 20,
@@ -210,6 +288,34 @@
       "vehicle_install_observed": false,
       "original_source_commit": "6448644",
       "build_input_note": "Source tree plus AndroidManifest versionCode 9; packaging scripts and metadata are committed separately."
+    }
+  ],
+  "hub_trial_apks": [
+    {
+      "file": "apks/JS-Hub-build-20261116-104310.apk",
+      "package": "com.veloster.carplayhub",
+      "version_code": 12,
+      "version_name": "1.9-i18n",
+      "sha256": "dcb2391dad29794cfcdfeeda3d558b219c70f97df6c196cf47e999adc3453e91",
+      "bytes": 50995,
+      "source_commit": "121e16b75f0e49e7f663d48a93dfa6de0857ce2f",
+      "uncommitted_build_input": "Hub Engineer Wi-Fi UI and control; permit state 4 on explicit ON, manifest v12, current shared translations",
+      "scope": "Installed and readback hash matched; one user-authorized OEM Wi-Fi ON request reached enabling, bcmdhd briefly loaded, then driver load failed.",
+      "vehicle_install_observed": true,
+      "build_input_note": "2026-11-16 10:43:10 KST; JDK24 wrapper source/target 8; API17 and Build Tools 36.1.0."
+    },
+    {
+      "file": "apks/JS-Hub-build-20261116-103608.apk",
+      "package": "com.veloster.carplayhub",
+      "version_code": 11,
+      "version_name": "1.9-i18n",
+      "sha256": "cbdeb470dcb36b4bb21ca8cd5444ae24ffd6a871781bb66382472aca96aa5fe6",
+      "bytes": 50983,
+      "source_commit": "121e16b75f0e49e7f663d48a93dfa6de0857ce2f",
+      "uncommitted_build_input": "Hub Engineer Wi-Fi control and UI, manifest version 11, translation changes; current uncommitted shared i18n changes",
+      "scope": "V1 signed trial installed on js_kr; installed APK SHA-256 matches and Engineer Wi-Fi button appears in foreground. API invocation not tested.",
+      "vehicle_install_observed": true,
+      "build_input_note": "2026-11-16 10:36:08 KST; JDK24 wrapper source/target 8; Android API17, Build Tools 36.1.0."
     }
   ]
 }

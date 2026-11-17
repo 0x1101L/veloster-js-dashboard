@@ -546,5 +546,78 @@
     "version_code": 20,
     "host_validation": "20 Java host programs and 2 renderer tests, including numeric speed on six JS pages; API17 V1 signature and alignment verified.",
     "limitations": "JDK24 wrapper maps Java 7 source/target to 8; Java 7 compilation, installation and vehicle behavior unverified."
+  },
+  "js_version_21_trial_validation": {
+    "apk": "apks/JS-Dashboard-build-20261115-112137.apk",
+    "sha256": "01fa36ff79c558344c9630d284e93746faea9fdfcd9f6537af48547f5d673bb5",
+    "source_commit": "704821050030f084869f1dbff5152451645b6510",
+    "build_time_kst": "2026-11-15 11:21:37",
+    "version_code": 21,
+    "host_validation": "API17 V1 signature, zipalign, DEX035, 20 Java synthetic programs and 79/80 Python tests. DCT service lifecycle test timed out at 18 seconds twice, including standalone rerun. Shell syntax and diff check passed.",
+    "limitations": "No device install or runtime validation. CarPlay TBT producer not established. JDK24 wrapper maps source/target 7 to 8; Java7 compile unverified.",
+    "device_observation": "2026-11-15 KST: v21 install success and Activity foreground. Before events-current ok 482 records, previous unknown; after current ok 490 (+8, no media playback/processed events), previous unknown. Device uptime fell from 219.40 s at 13:14:23 to 95.32 s at 13:18:36, indicating restart; Dashboard process not present at 13:19:25, Hub foreground. User reported playback/pause performed; background receipt inconclusive. APK readback hash unverified."
+  },
+  "js_version_22_trial_validation": {
+    "apk": "apks/JS-Dashboard-build-20261115-151528.apk",
+    "sha256": "73dec007df6c86b56cf85c5d484983e35abd36009b303c8ed926d7d76ff5280f",
+    "source_commit": "121e16b75f0e49e7f663d48a93dfa6de0857ce2f",
+    "build_time_kst": "2026-11-15 15:15:28",
+    "version_code": 22,
+    "host_validation": "API17 V1 signing and alignment; 20 Java programs, 7 CarPlay capture tests, 2 renderer tests, standalone DCT service test passed.",
+    "limitations": "JDK24 wrapper source/target 7 to 8; Java 7 compile and device installation/behavior unverified. Host Frida module absent; API17 Frida compatibility, process access, hook, USB transition and raw capture unverified.",
+    "device_observation": "2026-11-15 KST: installation success, versionCode 22 and DashboardActivity foreground confirmed; readback hash and CarPlay capture not verified."
+  },
+  "js_version_22_crashfix_validation": {
+    "apk": "apks/JS-Dashboard-build-20261115-154302.apk",
+    "sha256": "78ca7bc0b3729d0cf6a0ee9a6f189f5599840bbd4c13f5c504f9a2af7512123c",
+    "version_code": 22,
+    "source_commit": "121e16b75f0e49e7f663d48a93dfa6de0857ce2f",
+    "host_validation": "20 Java host programs, 7 CarPlay capture tests, 2 renderer tests, API17 Java 8 source compile, V1 signing and zipalign passed.",
+    "device_observation": "Same-version installation success 15:43 KST; Dashboard foreground and process observed ~26 seconds; no new errors.log records. Installed APK readback hash not checked.",
+    "limitations": "Java7 compilation, long-term runtime and actual CarPlay capture unverified."
+  },
+  "js_version_23_trial_validation": {
+    "apk": "apks/JS-Dashboard-build-20261116-101849.apk",
+    "sha256": "5ffa504e9106699baefdf449d386148e4daf5409536bad91c436d29e825e3fd7",
+    "source_commit": "121e16b75f0e49e7f663d48a93dfa6de0857ce2f",
+    "build_time_kst": "2026-11-16 10:18:49",
+    "version_code": 23,
+    "host_validation": "87 Python tests and 20 synthetic Java programs passed; API17 V1 signature and zip alignment verified. HSCAN test stub updated to include existing clearJsTirePressure method.",
+    "device_observation": "js_kr eng.vmadmin.20260114.090656; pm install -r reported Success; versionCode 23; installed APK SHA-256 matched; DashboardActivity foreground and process observed after 5 seconds.",
+    "limitations": "JDK24 wrapper maps source/target 7 to 8; exact Java7 compilation, physical screen, vehicle signals, long-term behavior and CarPlay unverified. Temporary staged APK retained on device."
+  },
+  "js_hub_v11_engineer_wifi_trial": {
+    "apk": "apks/JS-Hub-build-20261116-103608.apk",
+    "sha256": "cbdeb470dcb36b4bb21ca8cd5444ae24ffd6a871781bb66382472aca96aa5fe6",
+    "version_code": 11,
+    "source_commit": "121e16b75f0e49e7f663d48a93dfa6de0857ce2f",
+    "host_validation": "21 synthetic Java test programs, Hub API17 source compilation, V1 signing and alignment passed; JDK24 wrapper source/target 8.",
+    "device_observation": "Install Success, versionCode 11, readback SHA-256 matches; Hub foreground; UI dump shows Engineer Wi-Fi button next to USB debugging. Wi-Fi state unknown; button not pressed.",
+    "limitations": "OEM API permission and behavior, Wi-Fi activation, restoration, network, TCP ADB and CarPlay coexistence unverified. Temporary staged APK retained on device."
+  },
+  "js_hub_v12_engineer_wifi_trial": {
+    "apk": "apks/JS-Hub-build-20261116-104310.apk",
+    "sha256": "dcb2391dad29794cfcdfeeda3d558b219c70f97df6c196cf47e999adc3453e91",
+    "version_code": 12,
+    "source_commit": "121e16b75f0e49e7f663d48a93dfa6de0857ce2f",
+    "host_validation": "21 synthetic Java programs, V1 signing, alignment and API17 build; JDK24 wrapper uses source/target 8.",
+    "device_observation": "Installed v12, APK readback hash matched; one ON request 10:45 KST: enabling, bcmdhd transiently loaded without wlan0; WifiStateMachine reported Failed to load driver / DriverFailedState; Wi-Fi returned unknown; AP off and USB ADB remained.",
+    "limitations": "Kernel log permission denied; physical module, driver root cause, IP, TCP ADB and CarPlay coexistence unknown. OEM API request return value not observed. Temporary staged APK retained."
+  },
+  "js_remote_commit_20261117_validation": {
+    "file": "apks/JS-Dashboard-build-20261117-020154.apk",
+    "source_commit": "8c20449a4b2fdc59b146ebdc65fd7baf66f2d1e5",
+    "scope": "Clean remote commit only; local uncommitted changes excluded. Host-only; not an installation candidate because last confirmed installation is versionCode 23.",
+    "host_tests": "20 Java synthetic programs and 88 Python tests passed; existing release integrity passed in isolated checkout.",
+    "signature": "API17 V1 AOSP test signer verified; zipalign checked.",
+    "unverified": "Install, device runtime, vehicle behavior and Java 7 source/target compilation."
+  },
+  "js_version_24_integrated_trial_validation": {
+    "file": "apks/JS-Dashboard-build-20261117-023306.apk",
+    "source_commit": "8c20449a4b2fdc59b146ebdc65fd7baf66f2d1e5",
+    "inputs": "Isolated integration including local changes and conflict resolutions; patch against origin/dev 8c20449 in docs/build-inputs/js-v24-origin-dev.patch.",
+    "host_tests": "21 synthetic Java programs; 88 Python tests; 100 Java2D diagnostic renders; translation catalog check.",
+    "signature": "API17 V1 AOSP signer and zipalign verified.",
+    "unverified": "Installation, UI touch on device, runtime, actual vehicle data and Java 7 compilation."
   }
 }
