@@ -8,7 +8,7 @@ from graphics_test_support import GRAPHICS
 from test_quick_entry_runtime import java_tools
 
 ROOT = Path(__file__).resolve().parents[1]
-UI_SOURCES = ('ArtworkLoader', 'ClusterRenderer', 'JsClusterRenderer', 'DashboardPage', 'GaugeEditor', 'GaugeLayout', 'GaugeRenderer', 'GraphEditor', 'GraphLayout', 'GraphRenderer', 'JsDiagnosticsRenderer', 'JsGaugeRenderer', 'JsOverviewRenderer', 'JsPerformanceRenderer', 'JsPitRenderer', 'OverviewLayout', 'OverviewRenderer', 'PerformanceRenderer', 'PitRenderer', 'DashboardView')
+UI_SOURCES = ('ArtworkLoader', 'ClusterRenderer', 'JsClusterRenderer', 'DashboardPage', 'GaugeEditor', 'GaugeLayout', 'GaugeRenderer', 'GraphEditor', 'GraphLayout', 'GraphRenderer', 'JsDiagnosticsRenderer', 'JsGaugeRenderer', 'JsOverviewRenderer', 'JsPerformanceRenderer', 'JsPitRenderer', 'OverviewLayout', 'OverviewRenderer', 'PerformanceRenderer', 'PitRenderer', 'SettingsPageRenderer', 'DashboardView')
 HARNESS = '''import com.veloster.dashboard.vehicle.*;
 import com.veloster.dashboard.view.*;
 import com.veloster.dashboard.view.performance.*;
@@ -160,7 +160,7 @@ def render(folder):
         harness = root / "JsDiagnosticsPreview.java"
         harness.write_text(HARNESS)
         sources.append(harness)
-        names = ("Telemetry", "ThemeSpec", "ThemePalette", "ThemeResources", "ThemeLayout", "PdPowertrain", "PdGearState", "JsPowertrain", "JsGearState",
+        names = ("Telemetry", "ThemeSpec", "ThemePalette", "ThemeResources", "ThemeLayout", "PdPowertrain", "PdGearState", "JsPowertrain", "JsGearState", "SettingsPageRenderer",
                  "JsTelemetryDecoder", "JsDiagState", "BluetoothRuntimeProbe", "JsPitRenderer", "ClusterRenderer", "JsClusterRenderer", "JsOverviewRenderer", "JsDiagnosticsRenderer", "JsGaugeRenderer",
                  "JsPerformanceRenderer", "DashboardPage", "ShiftGuide", "MediaState",
                  "GaugeLayout", "GaugeRenderer", "OverviewLayout", "GraphLayout", "GraphRenderer")

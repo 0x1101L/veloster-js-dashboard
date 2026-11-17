@@ -7,7 +7,7 @@ from graphics_test_support import GRAPHICS
 from test_quick_entry_runtime import java_tools
 
 ROOT = Path(__file__).resolve().parents[1]
-UI_SOURCES = ('ArtworkLoader', 'ClusterRenderer', 'JsClusterRenderer', 'DashboardPage', 'GaugeEditor', 'GaugeLayout', 'GaugeRenderer', 'GraphEditor', 'GraphLayout', 'GraphRenderer', 'JsDiagnosticsRenderer', 'JsGaugeRenderer', 'JsOverviewRenderer', 'JsPerformanceRenderer', 'JsPitRenderer', 'OverviewLayout', 'OverviewRenderer', 'PerformanceRenderer', 'PitRenderer', 'DashboardView')
+UI_SOURCES = ('ArtworkLoader', 'ClusterRenderer', 'JsClusterRenderer', 'DashboardPage', 'GaugeEditor', 'GaugeLayout', 'GaugeRenderer', 'GraphEditor', 'GraphLayout', 'GraphRenderer', 'JsDiagnosticsRenderer', 'JsGaugeRenderer', 'JsOverviewRenderer', 'JsPerformanceRenderer', 'JsPitRenderer', 'OverviewLayout', 'OverviewRenderer', 'PerformanceRenderer', 'PitRenderer', 'SettingsPageRenderer', 'DashboardView')
 HARNESS = '''import com.veloster.dashboard.vehicle.*;
 import com.veloster.dashboard.view.*;
 import com.veloster.dashboard.view.performance.*;
@@ -193,6 +193,9 @@ public class PerformancePreview {
   gear(gearbox,0x1e,7,4300);jsGearPages(gearbox,4300,"M","7");
   gear(gearbox,0x1d,5,4350);gear(gearbox,0x1e,6,4400);jsGearPages(gearbox,4400,"D","6");
   jsDctOverview(args[0]);focusOverview(args[0]);
+  check(SettingsPageRenderer.hit(140,164)==0&&SettingsPageRenderer.hit(140,284)==1&&SettingsPageRenderer.hit(700,164)==-1,"settings page rows have bounded hit areas");
+  Canvas settings=new Canvas(800,480);new SettingsPageRenderer().draw(settings,ThemeSpec.original(),new com.veloster.dashboard.theme.ThemeResources(),"한국어","Original");
+  check(settings.texts.contains("SETTINGS / 설정")&&settings.texts.contains("Language / 언어")&&settings.texts.contains("Theme / 테마"),"settings page content rendered");
   jsTransmissionTrial();themedPages();
   jsRpmAccent(args[0]);jsF1Modes();jsSpeedRetained();
   System.out.println("PASS "+rendered+" performance renders and 4 existing page renders");
@@ -227,7 +230,7 @@ def render(folder):
             if name in ("JsPowertrain", "JsGearState", "JsTelemetryDecoder"): return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/js" / (name + ".java")
             if name in ("PdPowertrain", "PdGearState"): return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd" / (name + ".java")
             return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle" / (name + ".java")
-        sources += [source_path(name) for name in ('Telemetry','ThemeSpec','ThemePalette','ThemeSelectionDraft','ThemePreviewController','ThemeResources','ThemeLayout','PdPowertrain','PdGearState','JsPowertrain','JsGearState','JsTelemetryDecoder','JsDiagState','BluetoothRuntimeProbe','JsPitRenderer','ClusterRenderer','JsClusterRenderer','OverviewRenderer','JsOverviewRenderer','JsDiagnosticsRenderer','JsGaugeRenderer','JsPerformanceRenderer','PitRenderer','PerformanceRenderer','DashboardPage','ShiftGuide','MediaState','GaugeLayout','GaugeRenderer','OverviewLayout','GraphLayout','GraphRenderer')]
+        sources += [source_path(name) for name in ('Telemetry','ThemeSpec','ThemePalette','ThemeSelectionDraft','ThemePreviewController','ThemeResources','ThemeLayout','PdPowertrain','PdGearState','JsPowertrain','JsGearState','JsTelemetryDecoder','JsDiagState','BluetoothRuntimeProbe','JsPitRenderer','ClusterRenderer','JsClusterRenderer','OverviewRenderer','JsOverviewRenderer','JsDiagnosticsRenderer','JsGaugeRenderer','JsPerformanceRenderer','PitRenderer','PerformanceRenderer','DashboardPage','SettingsPageRenderer','ShiftGuide','MediaState','GaugeLayout','GaugeRenderer','OverviewLayout','GraphLayout','GraphRenderer')]
         sources += [ROOT / "tests/java_stubs/android/content/Context.java",ROOT / "tests/java_stubs/android/content/res/AssetManager.java"]
         sources += [ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd/PdTelemetryDecoder.java", ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/jsn/JsnTelemetryDecoder.java"]
         sources.append(ROOT / 'shared/src/com/veloster/i18n/UiText.java')

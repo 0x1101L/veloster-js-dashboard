@@ -43,6 +43,9 @@ public final class JsPitRenderer {
     private ThemeSpec theme=ThemeSpec.original();
     private ThemeResources resources;
     private boolean performancePage;
+    private boolean settingsPage;
+    private String settingsLanguage="System / 시스템",settingsTheme="Original";
+    private final SettingsPageRenderer settingsRenderer=new SettingsPageRenderer();
     private boolean diagnosticPage;
     private JsDiagState.Snapshot diagnostic=new JsDiagState().snapshot();
     private String carPlayRawStatus="내부 저장 캡처 없음";
@@ -59,6 +62,7 @@ public final class JsPitRenderer {
         return clockText;
     }
     public void setPerformancePage(boolean value){performancePage=value;}
+    public void setSettingsPage(boolean value,String language,String themeName){settingsPage=value;settingsLanguage=language;settingsTheme=themeName;}
     public void setDiagnosticPage(boolean value,JsDiagState.Snapshot status){diagnosticPage=value;if(status!=null)diagnostic=status;}
     private final JsDiagnosticsRenderer diagnosticsRenderer=new JsDiagnosticsRenderer();
     public boolean transmissionHit(float x,float y){return diagnosticsRenderer.transmissionHit(x,y);}
@@ -91,20 +95,21 @@ public final class JsPitRenderer {
         for(int y=56;y<480;y+=8)stroke(c,0,y,800,y,theme.isOriginal()?0x063f4948:0x18314a50,1);
         box(c,0,0,800,52,theme.isOriginal()?0xff090b0c:0xff0b1b22);box(c,18,51,782,52,theme.stroke);
         button(c,UiText.t("퍼포먼스"),DashboardPage.left(DashboardPage.PERFORMANCE),8,DashboardPage.width(DashboardPage.PERFORMANCE),38,performancePage,theme.accent);
-        button(c,UiText.t(diagnosticPage?"진단":"전체 조망"),144,8,100,38,!performancePage&&!cluster&&gaugeLayout==null&&graphLayout==null,theme.accent);
+        button(c,UiText.t(diagnosticPage?"진단":"전체 조망"),144,8,100,38,!settingsPage&&!performancePage&&!cluster&&gaugeLayout==null&&graphLayout==null,theme.accent);
         button(c,"F1",250,8,72,38,cluster&&gaugeLayout==null&&graphLayout==null,theme.accent);
         button(c,UiText.t("게이지"),328,8,84,38,gaugeLayout!=null,theme.accent);
         button(c,UiText.t("그래프"),418,8,110,38,graphLayout!=null,theme.accent);
-        button(c,UiText.t("설정"),534,8,68,38,false,theme.accent);
+        button(c,UiText.t("설정"),534,8,68,38,settingsPage,theme.accent);
         centered(c,clock(),633,33,20,theme.textPrimary,true);
         button(c,UiText.t("돌아가기"),666,8,116,38,false,theme.accent);
-        if(diagnosticPage)diagnosticsRenderer.draw(c,samples,diagnostic,model.dctTemperatures(now),track,carPlayRawStatus,carPlayLibraryStatus,carPlayProcessStatus,bluetoothStatus);
+        if(settingsPage)settingsRenderer.draw(c,theme,resources,settingsLanguage,settingsTheme);
+        else if(diagnosticPage)diagnosticsRenderer.draw(c,samples,diagnostic,model.dctTemperatures(now),track,carPlayRawStatus,carPlayLibraryStatus,carPlayProcessStatus,bluetoothStatus);
         else if(performancePage)performanceRenderer.draw(c,model,now);
         else if(graphLayout!=null)graphRenderer.draw(c,model,now,graphLayout);
         else if(gaugeLayout!=null)gaugeRenderer.draw(c,model,now,gaugeLayout);
         else if(mediaPage)clusterRenderer.drawCombined(c);else if(cluster)clusterRenderer.drawCluster(c);else {overviewRenderer.draw(c,samples,overviewLayout,pdProfile,jsProfile,model.dctTemperatures(now),model.jsDriveMode(now),model.jsFuelTrial(now));drawOverviewPager(c);}
-        if(!diagnosticPage&&!performancePage&&graphLayout==null&&!mediaPage && track!=null && track.notice)clusterRenderer.drawMedia(c);
-        if(cluster&&gaugeLayout==null&&graphLayout==null)clusterRenderer.drawArtworkToggle(c);
+        if(!settingsPage&&!diagnosticPage&&!performancePage&&graphLayout==null&&!mediaPage && track!=null && track.notice)clusterRenderer.drawMedia(c);
+        if(!settingsPage&&cluster&&gaugeLayout==null&&graphLayout==null)clusterRenderer.drawArtworkToggle(c);
         c.restore();
     }
     private void box(Canvas c,float l,float t,float r,float b,int color){paint.setColor(color);c.drawRect(l,t,r,b,paint);}

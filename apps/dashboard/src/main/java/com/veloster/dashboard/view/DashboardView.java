@@ -59,6 +59,7 @@ public final class DashboardView extends View implements Runnable {
     private final GraphLayout graphLayout=new GraphLayout();
     private final GraphEditor graphEditor;
     private final OverviewLayout overviewLayout=new OverviewLayout();
+    private boolean settingsVisible;
     private final ThemeCatalog themeCatalog;
     private final ThemeSettingsStore themeStore;
     private ThemeSpec activeTheme;
@@ -77,7 +78,7 @@ public final class DashboardView extends View implements Runnable {
     private boolean blocked;
     private boolean standalone;
     private final Runnable editHold=new Runnable(){public void run(){
-        if((pageState.is(DashboardPage.GAUGES)||pageState.is(DashboardPage.GRAPHS))&&touching&&!blocked&&getVisibility()==VISIBLE){
+        if(!settingsVisible&&(pageState.is(DashboardPage.GAUGES)||pageState.is(DashboardPage.GRAPHS))&&touching&&!blocked&&getVisibility()==VISIBLE){
             int slot=pageState.is(DashboardPage.GRAPHS)?graphLayout.hit(downX,downY):gaugeEditor.hit(downX,downY);
             if(slot>=0){touching=false;if(pageState.is(DashboardPage.GRAPHS))graphEditor.edit(slot);else gaugeEditor.edit(slot);}
         }
@@ -128,7 +129,7 @@ public final class DashboardView extends View implements Runnable {
     }
     public static void stopStandaloneMedia(Activity a){DashboardView d=current.get();if(d!=null&&d.activity==a)d.mediaReceiver.stop();}
     private void showDashboard(){setVisibility(VISIBLE);if(entry!=null)entry.setVisibility(GONE);bringToFront();}
-    private void close() { entryRequestUntil=0;removeCallbacks(editHold);touching=false;gaugeEditor.dismiss();graphEditor.dismiss();setVisibility(GONE); if(entry!=null) entry.setVisibility(blocked?GONE:VISIBLE); }
+    private void close() { entryRequestUntil=0;removeCallbacks(editHold);touching=false;settingsVisible=false;gaugeEditor.dismiss();graphEditor.dismiss();setVisibility(GONE); if(entry!=null) entry.setVisibility(blocked?GONE:VISIBLE); }
     public static void consumeEntryIntent(Activity a){entryIntent(a,a.getIntent());}
     /** Explicit opt-in only; consume once and require a live unrestricted OEM response. */
     public static void entryIntent(Activity a,android.content.Intent intent){
@@ -220,20 +221,22 @@ public final class DashboardView extends View implements Runnable {
         long now=SystemClock.elapsedRealtime();
         MediaState.Snapshot track=mediaState.snapshot(now);artwork.request(track);
         if(DATA.jsProfile()){
-        jsRenderer.setPerformancePage(pageState.is(DashboardPage.PERFORMANCE));
-        jsRenderer.setDiagnosticPage(pageState.is(DashboardPage.DIAG),DIAG.snapshot(now));
+        jsRenderer.setPerformancePage(!settingsVisible&&pageState.is(DashboardPage.PERFORMANCE));
+        jsRenderer.setSettingsPage(settingsVisible,languageLabel(),activeTheme.displayName);
+        jsRenderer.setDiagnosticPage(!settingsVisible&&pageState.is(DashboardPage.DIAG),DIAG.snapshot(now));
         jsRenderer.setArtwork(artwork.bitmap());
-        jsRenderer.setGaugeLayout(pageState.is(DashboardPage.GAUGES)?gaugeLayout:null);
-        jsRenderer.setGraphLayout(pageState.is(DashboardPage.GRAPHS)?graphLayout:null);
+        jsRenderer.setGaugeLayout(!settingsVisible&&pageState.is(DashboardPage.GAUGES)?gaugeLayout:null);
+        jsRenderer.setGraphLayout(!settingsVisible&&pageState.is(DashboardPage.GRAPHS)?graphLayout:null);
         jsRenderer.setOverviewLayout(overviewLayout);
-        jsRenderer.draw(c,getWidth(),getHeight(),pageState.is(DashboardPage.F1),DATA,now,shiftTarget,media,track);
+        jsRenderer.draw(c,getWidth(),getHeight(),!settingsVisible&&pageState.is(DashboardPage.F1),DATA,now,shiftTarget,media,track);
         }else{
-        renderer.setPerformancePage(pageState.is(DashboardPage.PERFORMANCE));
+        renderer.setPerformancePage(!settingsVisible&&pageState.is(DashboardPage.PERFORMANCE));
+        renderer.setSettingsPage(settingsVisible,languageLabel(),activeTheme.displayName);
         renderer.setArtwork(artwork.bitmap());
-        renderer.setGaugeLayout(pageState.is(DashboardPage.GAUGES)?gaugeLayout:null);
-        renderer.setGraphLayout(pageState.is(DashboardPage.GRAPHS)?graphLayout:null);
+        renderer.setGaugeLayout(!settingsVisible&&pageState.is(DashboardPage.GAUGES)?gaugeLayout:null);
+        renderer.setGraphLayout(!settingsVisible&&pageState.is(DashboardPage.GRAPHS)?graphLayout:null);
         renderer.setOverviewLayout(overviewLayout);
-        renderer.draw(c,getWidth(),getHeight(),pageState.is(DashboardPage.F1),DATA,now,shiftTarget,media,track);
+        renderer.draw(c,getWidth(),getHeight(),!settingsVisible&&pageState.is(DashboardPage.F1),DATA,now,shiftTarget,media,track);
         }
     }
     private void requestMedia(final int command){
@@ -253,13 +256,7 @@ public final class DashboardView extends View implements Runnable {
     }
     private boolean overviewCovered(float y){return y>=347&&mediaState.snapshot(SystemClock.elapsedRealtime()).notice;}
     private void applyTheme(ThemeSpec theme){activeTheme=theme==null?ThemeSpec.original():theme;activeThemeResources=com.veloster.dashboard.theme.ThemeResources.load(activity,activeTheme);overviewLayout.theme(activeTheme);renderer.setTheme(activeTheme,activeThemeResources);jsRenderer.setTheme(activeTheme,activeThemeResources);invalidate();}
-    private void showDisplayOptions(){
-        final String[] items={"Language / 언어","Theme / 테마"};
-        new AlertDialog.Builder(activity).setTitle(UiText.t("설정")).setItems(items,new DialogInterface.OnClickListener(){public void onClick(DialogInterface dialog,int which){
-            if(which==0)LanguageSettings.show(activity,new Runnable(){public void run(){invalidate();}});
-            else showThemePicker();
-        }}).show();
-    }
+    private String languageLabel(){String selected=LanguageSettings.selection(activity);return "auto".equals(selected)?"System / 시스템":"ko".equals(selected)?"한국어":"English";}
     private void showThemePicker(){
         final ThemeSpec previous=activeTheme;
         final int previousPage=overviewLayout.page();
@@ -306,8 +303,8 @@ public final class DashboardView extends View implements Runnable {
         float x=event.getX()*800/getWidth(), y=event.getY()*480/getHeight();
         if(event.getAction()==MotionEvent.ACTION_DOWN) {
             removeCallbacks(editHold);touching=true;downX=x;downY=y;
-            overviewDown=!pageState.is(DashboardPage.DIAG)&&!pageState.is(DashboardPage.PERFORMANCE)&&!pageState.is(DashboardPage.F1)&&!pageState.is(DashboardPage.GAUGES)&&!pageState.is(DashboardPage.GRAPHS)&&!blocked&&!overviewCovered(y)?overviewLayout.hit(x,y):-1;
-            if(!blocked&&((pageState.is(DashboardPage.GAUGES)&&gaugeEditor.hit(x,y)>=0)||(pageState.is(DashboardPage.GRAPHS)&&graphLayout.hit(x,y)>=0)))postDelayed(editHold,600);
+            overviewDown=!settingsVisible&&!pageState.is(DashboardPage.DIAG)&&!pageState.is(DashboardPage.PERFORMANCE)&&!pageState.is(DashboardPage.F1)&&!pageState.is(DashboardPage.GAUGES)&&!pageState.is(DashboardPage.GRAPHS)&&!blocked&&!overviewCovered(y)?overviewLayout.hit(x,y):-1;
+            if(!settingsVisible&&!blocked&&((pageState.is(DashboardPage.GAUGES)&&gaugeEditor.hit(x,y)>=0)||(pageState.is(DashboardPage.GRAPHS)&&graphLayout.hit(x,y)>=0)))postDelayed(editHold,600);
             return true;
         }
         if(event.getAction()==MotionEvent.ACTION_MOVE){if(Math.abs(x-downX)>=16||Math.abs(y-downY)>=16){touching=false;removeCallbacks(editHold);}return true;}
@@ -316,6 +313,11 @@ public final class DashboardView extends View implements Runnable {
         removeCallbacks(editHold);
         boolean tap=touching && Math.abs(x-downX)<16 && Math.abs(y-downY)<16;
         touching=false;
+        if(settingsVisible){
+            if(!tap)return true;
+            if(!blocked&&y>=52){int item=SettingsPageRenderer.hit(x,y);if(item==SettingsPageRenderer.hit(downX,downY)){if(item==0)LanguageSettings.show(activity,new Runnable(){public void run(){invalidate();}});else if(item==1)showThemePicker();}}
+            if(y>=52)return true;
+        }
         if(tap&&!blocked&&!pageState.is(DashboardPage.DIAG)&&!pageState.is(DashboardPage.PERFORMANCE)&&!pageState.is(DashboardPage.F1)&&!pageState.is(DashboardPage.GAUGES)&&!pageState.is(DashboardPage.GRAPHS)&&!overviewCovered(y)&&downY>=448&&y>=448){int next=overviewLayout.pageControlTarget(x,y);if(next>=0){overviewLayout.page(next);activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("overview_theme_page",next).apply();invalidate();return true;}}
         if(standalone&&tap&&x>=666&&x<=782&&downX>=666&&downX<=782&&y>=8&&y<=46&&downY>=8&&downY<=46){activity.finish();return true;}
         if(tap&&!blocked&&pageState.is(DashboardPage.DIAG)&&jsRenderer.selectDiagnosticTab(downX,downY,x,y)){invalidate();return true;}
@@ -365,11 +367,13 @@ public final class DashboardView extends View implements Runnable {
         gaugeEditor.dismiss();graphEditor.dismiss();
         int selected=DashboardPage.tap(downX,downY,x,y);
         if(selected>=0){
-            int page=pageState.selectPage(selected,DATA.jsProfile());
+            boolean fromSettings=settingsVisible;
+            settingsVisible=false;
+            int page=fromSettings?pageState.restore(selected,DATA.jsProfile()):pageState.selectPage(selected,DATA.jsProfile());
             activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("dashboard_page",page).apply();
             invalidate();
         }
-        else if(x>=534 && x<=602 && downX>=534 && downX<=602){showDisplayOptions();}
+        else if(x>=534 && x<=602 && downX>=534 && downX<=602){settingsVisible=!settingsVisible;invalidate();}
         else if(x>=666 && x<=782 && downX>=666 && downX<=782)close();
         return true;
     }
