@@ -2,6 +2,7 @@ package com.veloster.dashboard.view;
 
 import com.veloster.dashboard.vehicle.*;
 import com.veloster.dashboard.debugger.JsDiagState;
+import com.veloster.dashboard.debugger.BluetoothRuntimeProbe;
 
 import com.veloster.dashboard.view.overview.OverviewLayout;
 import com.veloster.dashboard.view.overview.JsOverviewRenderer;
@@ -43,6 +44,7 @@ public final class JsPitRenderer {
     private String carPlayRawStatus="내부 저장 캡처 없음";
     private String carPlayLibraryStatus="미확인";
     private String carPlayProcessStatus="미확인";
+    private BluetoothRuntimeProbe.Snapshot bluetoothStatus=BluetoothRuntimeProbe.parse("");
     private final JsPerformanceRenderer performanceRenderer=new JsPerformanceRenderer();
     private final java.text.SimpleDateFormat clockFormat=new java.text.SimpleDateFormat("HH:mm",Locale.US);
     private long clockMinute=Long.MIN_VALUE;
@@ -61,6 +63,7 @@ public final class JsPitRenderer {
     public boolean carPlayImportHit(float x,float y){return diagnosticsRenderer.carPlayImportHit(x,y);}
     public void setCarPlayRawStatus(String value){carPlayRawStatus=value==null?"내부 저장 캡처 없음":value;}
     public void setCarPlayRuntimeStatus(String library,String process){carPlayLibraryStatus=library==null?"미확인":library;carPlayProcessStatus=process==null?"미확인":process;}
+    public void setBluetoothStatus(BluetoothRuntimeProbe.Snapshot status){if(status!=null)bluetoothStatus=status;}
     public void setArtwork(Bitmap value){artwork=value;}
     public void setGaugeLayout(GaugeLayout value){gaugeLayout=value;}
     public void setGraphLayout(GraphLayout value){graphLayout=value;}
@@ -88,7 +91,7 @@ public final class JsPitRenderer {
         button(c,UiText.language().toUpperCase(Locale.US),534,8,48,38,false,BLUE);
         centered(c,clock(),620,33,22,WHITE,true);
         button(c,UiText.t("돌아가기"),666,8,116,38,false,BLUE);
-        if(diagnosticPage)diagnosticsRenderer.draw(c,samples,diagnostic,model.dctTemperatures(now),track,carPlayRawStatus,carPlayLibraryStatus,carPlayProcessStatus);
+        if(diagnosticPage)diagnosticsRenderer.draw(c,samples,diagnostic,model.dctTemperatures(now),track,carPlayRawStatus,carPlayLibraryStatus,carPlayProcessStatus,bluetoothStatus);
         else if(performancePage)performanceRenderer.draw(c,model,now);
         else if(graphLayout!=null)graphRenderer.draw(c,model,now,graphLayout);
         else if(gaugeLayout!=null)gaugeRenderer.draw(c,model,now,gaugeLayout);

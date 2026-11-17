@@ -8,6 +8,7 @@ import com.veloster.dashboard.debugger.JsHudProbe;
 import com.veloster.dashboard.debugger.HudEventLog;
 import com.veloster.dashboard.debugger.CarPlayRawLog;
 import com.veloster.dashboard.debugger.CarPlayRuntimeProbe;
+import com.veloster.dashboard.debugger.BluetoothRuntimeProbe;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -28,6 +29,7 @@ public final class DashboardActivity extends Activity {
     private VehicleDataClient client;
     private JsHudProbe hudProbe;
     private boolean wifiWatching,jsProfile;
+    private final java.util.concurrent.atomic.AtomicBoolean bluetoothProbeRunning=new java.util.concurrent.atomic.AtomicBoolean();
     private android.os.HandlerThread hudLogThread;
     private volatile android.os.Handler hudLogHandler;
     private HudEventLog hudLog;
@@ -89,7 +91,14 @@ public final class DashboardActivity extends Activity {
             DashboardView.carPlayRuntimeStatus(status.library,status.process);
         }},"carplay-runtime-probe").start();
         if(hudProbe!=null)hudProbe.startNavigationObservation();
-        if(jsProfile){try{registerReceiver(wifiReceiver,new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));wifiWatching=true;}catch(RuntimeException e){wifiWatching=false;}refreshWifi();}}
+        if(jsProfile){try{registerReceiver(wifiReceiver,new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));wifiWatching=true;}catch(RuntimeException e){wifiWatching=false;}refreshWifi();probeBluetooth();}}
+    private void probeBluetooth(){
+        if(!bluetoothProbeRunning.compareAndSet(false,true))return;
+        new Thread(new Runnable(){public void run(){
+            final BluetoothRuntimeProbe.Snapshot status=BluetoothRuntimeProbe.read();
+            runOnUiThread(new Runnable(){public void run(){DashboardView.bluetoothStatus(status);bluetoothProbeRunning.set(false);}});
+        }} ,"bluetooth-hal-probe").start();
+    }
     private void stopWifiObserver(){if(wifiWatching){try{unregisterReceiver(wifiReceiver);}catch(RuntimeException ignored){}wifiWatching=false;}}
     protected void onPause(){stopWifiObserver();
         if(hudProbe!=null)hudProbe.close();client.stop();DashboardView.pauseStandalone(this);super.onPause();}
