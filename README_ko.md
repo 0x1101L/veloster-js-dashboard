@@ -159,10 +159,14 @@ JS 진단의 `차량 > DCT`에서 변속기 설정 버튼을 눌러 DCT 또는 �
 
 ### Mac 실시간 UI 프리뷰
 
-터미널에서 `python3 tools/js_ui_preview.py`를 실행하면 OS 네이티브 창에 현재 Java 렌더러의 800×480 화면이 열립니다. JDK(`java`, `javac`), Python 3 및 Tkinter가 필요합니다. 화면·언어·테마·차량을 위쪽 두 줄에서 선택하고, 데이터 상태와 현재/전체 갱신은 프리뷰 바로 아래에서 조작합니다. 차량은 `js`(Veloster), `js_n`(Veloster N), `pd`(i30 (N LIne))이며 현재 세 모델의 출력 크기는 800×480입니다. 차량별 크기는 설정에 따로 두어 후속 모델의 다른 해상도도 추가할 수 있습니다. 전체 조망은 두 테마 모두 기존 5×4 한 페이지 배열을 유지합니다. `R`은 현재 화면 갱신, `Shift+R`은 선택 차량의 모든 화면·상태·언어·테마를 갱신합니다. **프리뷰 캡처**를 누르면 화면 오른쪽 아래에 렌더링 이미지 미리보기와 **클립보드 복사**, **저장** 버튼이 표시됩니다. 앱 창과 설정 UI는 이미지에 포함되지 않습니다. 브라우저 프리뷰(`python3 tools/js_ui_preview.py --browser`)도 같은 위치에 캡처 미리보기를 띄우며 복사와 PNG 저장을 제공합니다. 클립보드 이미지 복사는 OS와 브라우저가 제공하는 이미지 클립보드 기능을 사용합니다.
+터미널에서 `python3 tools/js_ui_preview.py`를 실행하면 Java 데스크톱 창에서 실제 `DashboardView`가 열립니다. JDK(`java`, `javac`)와 Python 3이 필요합니다. 마우스 누름·이동·뗌은 플랫폼 대역의 `MotionEvent`로 변환되어 앱의 `DashboardView.onTouchEvent()`를 실행합니다. 별도 페이지 선택 메뉴나 Python 좌표 판정은 없습니다. 화면 상단 버튼으로 이동하고, 설정 페이지에서 언어·테마를 변경하며, 게이지·그래프를 길게 눌러 편집합니다. 언어 저장, 테마 적용·취소, 게이지·그래프 편집은 앱의 Java 콜백과 세션 내 메모리 설정을 사용합니다.
+
+창 위쪽에서는 차량과 예시 데이터 상태를 선택합니다. 차량은 `js`(Veloster), `js_n`(Veloster N), `pd`(i30 (N Line))이며 초기 캔버스는 800×480입니다. **프리뷰 캡처**를 누르면 현재 캔버스의 미리보기와 **클립보드 복사**, **저장** 버튼이 표시됩니다. 창과 선택 대화상자는 캡처에 포함되지 않습니다. 정적 이미지 비교는 `python3 tools/js_ui_preview.py --check`, 브라우저 렌더 갤러리는 `python3 tools/js_ui_preview.py --browser`를 사용합니다. 브라우저 갤러리는 화면·상태·언어·테마를 선택해 PNG를 확인하는 용도이며 Java 터치 이벤트를 실행하지 않습니다.
 
 Finder에서 더블클릭해 실행할 macOS 앱은 `sh tools/build_macos_app.sh`로 만들 수 있습니다. 앱 메뉴의 **File → Open…** 또는 `⌘O`로 디렉토리를 고를 수 있고, **Open Recent**와 시작 창에서 최근 경로를 다시 엽니다. **New Repository…** 또는 `⌘N`은 부모 디렉토리와 폴더 이름을 선택해 새 폴더를 만든 뒤 `git init`하고 최근 목록에 등록합니다. 실제 저장소는 선택한 위치에 두고 경로 목록은 `~/Library/Application Support/JS Dashboard Preview/recent-directories.json`에 저장합니다.
 
-프리뷰를 실행하려면 선택한 디렉토리에 `tools/js_ui_preview.py`와 렌더러 소스가 있어야 합니다. 새 빈 Git 저장소와 임의 프로젝트는 최근 목록에 저장되지만 JS Dashboard 렌더러가 없으면 프리뷰를 열 수 없습니다. `.app` 런처는 현재 저장소와 Mac에 설치된 Python 3/Tkinter 및 JDK(`java`, `javac`)를 사용하므로 독립 배포용 앱은 아닙니다.
+macOS 런처는 macOS 11 이상을 대상으로 arm64와 x86_64를 각각 컴파일한 Universal 실행 파일입니다. 빌드 스크립트가 두 아키텍처 포함 여부를 확인하고 로컬 ad-hoc 서명과 서명 검증을 수행합니다.
 
-이 화면은 Android Canvas API 호출을 PC Java2D 대역으로 그린 결과이며 값은 예시입니다. Android의 폰트·그래픽·터치나 실차 실행을 검증하지 않습니다. 네이티브 창은 화면·상태·언어 프리뷰를 제공하며 카드 편집·설정 팝업 등 앱 전체 터치는 지원하지 않습니다. 창 없이 렌더링을 확인하려면 `python3 tools/js_ui_preview.py --check`를 사용합니다.
+프리뷰를 실행하려면 선택한 디렉토리에 `tools/js_ui_preview.py`와 렌더러 소스가 있어야 합니다. 새 빈 Git 저장소와 임의 프로젝트는 최근 목록에 저장되지만 JS Dashboard 렌더러가 없으면 프리뷰를 열 수 없습니다. `.app` 런처는 현재 저장소와 실행할 Mac에 설치된 Python 3 및 JDK(`java`, `javac`)를 사용하므로 독립 배포용 앱은 아닙니다. Python과 JDK는 앱 번들에 포함되지 않습니다.
+
+Android의 Canvas·View·위젯·타이머·설정 저장소는 Java2D/Swing 대역이며 OEM 연결, 실제 미디어 제어, Android 시스템 설정과 파일 가져오기는 실행하지 않습니다. 설정은 프리뷰 프로세스가 끝나면 사라집니다. 앱의 입력 로직은 실제 Java 소스를 실행하지만 Android의 폰트·대화상자 모양·이벤트 전달·실차 동작을 검증하는 환경은 아닙니다. `python3 tests/test_dashboard_runtime.py`는 이 데스크톱 대역을 통해 실제 Java의 화면 전환, 드래그 취소, 길게 누르기, 언어 저장과 테마 적용·취소를 검사합니다.

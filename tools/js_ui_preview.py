@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tests'))
 import test_js_diagnostics_renderer as renderer
 
-PAGES = ('전체 조망', 'HUD·내비', 'CarPlay', '차량', '연결', 'Bindings', '퍼포먼스', 'F1', '게이지', '그래프')
+PAGES = ('전체 조망', 'HUD·내비', 'CarPlay', '차량', '연결', 'Bindings', '퍼포먼스', 'F1', '게이지', '그래프', '설정')
 STATES = ('waiting', 'received', 'invalid', 'held', 'expired')
 LANGUAGES = ('ko', 'en')
 THEMES = ('Original', 'Aurora Focus')
@@ -49,6 +49,8 @@ class Renderer:
         if self.process:
             self.process.terminate()
             self.process.wait(timeout=5)
+            self.process.stdin.close()
+            self.process.stdout.close()
             self.process = None
 
     def copy_png_to_clipboard(self, image_path):
@@ -86,10 +88,12 @@ class Renderer:
    if(!state.equals("waiting")){media.mode(0x73);media.update(3,true,"Example Track",true,"Example Artist",true,12000,true,180000,false,1000);}
    float fit=Math.min(outWidth/800f,outHeight/480f);Canvas c=new Canvas(outWidth,outHeight);c.save();c.translate((outWidth-800*fit)/2,(outHeight-480*fit)/2);c.scale(fit,fit);
    if("js".equals(vehicle)){JsPitRenderer r=new JsPitRenderer();r.setTheme(theme);r.setOverviewLayout(overview);
+    if(page==10)r.setSettingsPage(true,"ko".equals(v[2])?"한국어":"English",theme.displayName);
     if(page>=1&&page<=5){r.setDiagnosticPage(true,d.snapshot(now));float x=40+(page-1)*154;r.selectDiagnosticTab(x,80,x,80);}
     if(page==6)r.setPerformancePage(true);if(page==8)r.setGaugeLayout(new GaugeLayout());if(page==9)r.setGraphLayout(new GraphLayout());
     r.draw(c,800,480,page==7,t,now,ShiftGuide.DEFAULT,false,media.snapshot(now));
    }else{PitRenderer r=new PitRenderer();r.setTheme(theme);r.setOverviewLayout(overview);
+    if(page==10)r.setSettingsPage(true,"ko".equals(v[2])?"한국어":"English",theme.displayName);
     if(page==6)r.setPerformancePage(true);if(page==8)r.setGaugeLayout(new GaugeLayout());if(page==9)r.setGraphLayout(new GraphLayout());
     r.draw(c,800,480,page==7,t,now,ShiftGuide.DEFAULT,false,media.snapshot(now));
    }
@@ -128,18 +132,18 @@ public final class PngClipboard {
                   'OverviewRenderer':'view/overview', 'OverviewLayout':'view/overview', 'JsGaugeRenderer':'view/gauge',
                   'GaugeLayout':'view/gauge', 'GaugeRenderer':'view/gauge',
                   'GraphLayout':'view/graph', 'GraphRenderer':'view/graph',
-                  'PerformanceRenderer':'view/performance', 'JsPerformanceRenderer':'view/performance', 'JsPowertrain':'vehicle/js',
+                  'PerformanceRenderer':'view/performance', 'JsPerformanceRenderer':'view/performance', 'SettingsPageRenderer':'view', 'JsPowertrain':'vehicle/js',
                   'JsGearState':'vehicle/js', 'JsTelemetryDecoder':'vehicle/js',
                   'PdPowertrain':'vehicle/pd', 'PdGearState':'vehicle/pd'}
         names = ('Telemetry','PdPowertrain','PdGearState','JsPowertrain','JsGearState','BluetoothRuntimeProbe',
                  'JsTelemetryDecoder','JsPitRenderer','PitRenderer','ClusterRenderer','JsClusterRenderer','JsOverviewRenderer',
-                 'OverviewRenderer','PerformanceRenderer','JsGaugeRenderer','JsPerformanceRenderer','DashboardPage','ShiftGuide','MediaState',
+                 'OverviewRenderer','PerformanceRenderer','JsGaugeRenderer','JsPerformanceRenderer','SettingsPageRenderer','DashboardPage','ShiftGuide','MediaState',
                  'GaugeLayout','GaugeRenderer','OverviewLayout','GraphLayout','GraphRenderer')
         for name in names:
             if name == 'BluetoothRuntimeProbe':
                 sources.append(ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/BluetoothRuntimeProbe.java')
                 continue
-            group = groups.get(name, 'view' if name in ('JsPitRenderer','PitRenderer','DashboardPage') else 'vehicle')
+            group = groups.get(name, 'view' if name in ('JsPitRenderer','PitRenderer','DashboardPage','SettingsPageRenderer') else 'vehicle')
             sources.append(base / group / (name + '.java'))
         sources.extend([base / 'vehicle/pd/PdTelemetryDecoder.java', base / 'vehicle/jsn/JsnTelemetryDecoder.java',
                         ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/JsDiagState.java',
@@ -193,7 +197,7 @@ def source_stamp():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--check', action='store_true', help='render all screens without a window')
-    parser.add_argument('--browser', action='store_true', help='open the legacy browser preview')
+    parser.add_argument('--browser', action='store_true', help='open the static browser render gallery')
     args = parser.parse_args()
     if args.check:
         with tempfile.TemporaryDirectory(prefix='js-ui-preview-check-') as folder:
@@ -227,7 +231,7 @@ def main():
         return
 
     if not args.browser:
-        from js_ui_window import run
+        from dashboard_runtime import run
         run()
         return
 
@@ -284,7 +288,7 @@ def main():
                     all_screens, selected = pending
 
     html = r"""<!doctype html><html lang="ko"><meta charset="utf-8">
-<title>Dashboard · Java2D 프리뷰</title>
+<title>Dashboard · 정적 렌더 갤러리</title>
 <style>body{background:#171a20;color:#eee;font:15px -apple-system,sans-serif;margin:20px}.settings{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:14px}.row,.actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}select,button{font:inherit;padding:6px;margin-right:8px}img{display:block;width:800px;max-width:100%;height:auto;background:#080b10}.actions{margin-top:10px}#status{white-space:pre-wrap;color:#bfc9d7;margin-top:8px}#captureToast{display:none;position:fixed;right:18px;bottom:18px;z-index:10;background:#252a33;color:#fff;padding:10px;border:1px solid #626a78;border-radius:10px;box-shadow:0 8px 32px #0009;width:240px}#captureToast.visible{display:block}#captureThumb{width:240px;height:auto;border-radius:4px;margin:8px 0}#toastActions{display:flex;gap:8px}#toastActions button{flex:1;margin:0}</style>
 <div class="settings"><div class="row"><label>화면 <select id="page"></select></label><label>언어 <select id="lang"></select></label><label>테마 <select id="theme"></select></label></div><div class="row"><label>차량 <select id="vehicle"></select></label><label>조망 페이지 <select id="overview"></select></label></div></div>
 <img id="screen" alt="JS Dashboard 프리뷰"><div class="actions"><label>데이터 <select id="state"></select></label><button id="refresh">현재 갱신 (r)</button><button id="all">전체 갱신 (Shift+R)</button><button id="capture" disabled>프리뷰 캡처</button></div><div id="status">준비 중…</div>
@@ -310,12 +314,6 @@ function saveCaptureBlob(){if(!captureBlob)return;const link=document.createElem
 capture.onclick=()=>{if(capture.disabled)return;captureFilename='dashboard-'+selection().replaceAll(',','-')+'.png';const canvas=document.createElement('canvas');canvas.width=screen.naturalWidth;canvas.height=screen.naturalHeight;const context=canvas.getContext('2d');context.drawImage(screen,0,0);canvas.toBlob(blob=>{if(blob)showCaptureToast(blob)},'image/png')};
 document.querySelector('#copyCapture').onclick=async()=>{try{if(!captureBlob||!navigator.clipboard||!window.ClipboardItem)throw new Error('이 브라우저는 이미지 클립보드 복사를 지원하지 않습니다.');await navigator.clipboard.write([new ClipboardItem({'image/png':captureBlob})]);status.textContent='스크린샷을 클립보드에 복사했습니다.';captureToast.classList.remove('visible')}catch(e){status.textContent='클립보드 복사 실패: '+e.message}};
 document.querySelector('#saveCapture').onclick=()=>saveCaptureBlob();
-screen.addEventListener('click',e=>{const rect=screen.getBoundingClientRect(),x=(e.clientX-rect.left)*800/rect.width,y=(e.clientY-rect.top)*480/rect.height;let p=Number(page.value), next=-1;
- if(p===0&&y>=448&&theme.value!=='original'&&!overview.disabled){overview.value=overview.value==='0'?'1':'0';refresh();return}
- if(y>=8&&y<=46){if(x>=18&&x<138)next=6;else if(x>=144&&x<=244)next=(vehicle.value==='js'&&p===0?1:0);else if(x>=250&&x<=322)next=7;else if(x>=328&&x<=412)next=8;else if(x>=418&&x<=528)next=9;else if(x>=534&&x<=602){alert('이 프리뷰에서는 앱의 설정 모달을 실행할 수 없습니다. 위쪽 언어와 테마 선택을 이용하세요.');return}}
- else if(p>=1&&p<=5&&y>=62&&y<=100){for(let i=0;i<5;i++)if(x>=18+i*154&&x<=166+i*154)next=i+1}
- if(next>=0){page.value=String(next);refresh()}
-});
 document.addEventListener('keydown',e=>{if(e.metaKey||e.ctrlKey||e.altKey)return;if(e.key==='r'||e.key==='R'){e.preventDefault();refresh(e.key==='R')}});
 async function poll(){try{let res=await fetch('/status?selection='+encodeURIComponent(selection()),{cache:'no-store'});let data=await res.json();if(data.error){capture.disabled=true;readyKey='';status.textContent='렌더링 오류: '+data.error}else if(data.busy){capture.disabled=true;readyKey='';status.textContent='렌더링 중…'}else {status.textContent='PC Java2D · 예시 데이터 | r: 현재 갱신 · Shift+R: 전체 갱신 후 처음';if(generation!==data.generation||lastSelection!==selection()){generation=data.generation;lastSelection=selection();readyKey='';requestedKey=selection();requestedUrl=new URL('/image?selection='+encodeURIComponent(requestedKey)+'&v='+generation,location.href).href;screen.src=requestedUrl}updateCapture()}}catch(e){capture.disabled=true;status.textContent='프리뷰 서버 연결 끊김'}setTimeout(poll,120)}
 refresh();poll();</script></html>""".replace('__PAGES__', json.dumps(PAGES, ensure_ascii=False)).replace('__STATES__', json.dumps(STATES)).replace('__LANGS__', json.dumps(LANGUAGES)).replace('__THEMES__', json.dumps(list(THEME_IDS.values()))).replace('__GRIDS__', json.dumps(THEME_GRIDS)).replace('__VEHICLES__', json.dumps(VEHICLES)).replace('__VEHICLE_PAGES__', json.dumps({v:vehicle_pages(v) for v in VEHICLES}))
