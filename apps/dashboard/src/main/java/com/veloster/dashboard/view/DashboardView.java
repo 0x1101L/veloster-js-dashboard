@@ -256,7 +256,7 @@ public final class DashboardView extends View implements Runnable {
     }
     private boolean overviewCovered(float y){return y>=347&&mediaState.snapshot(SystemClock.elapsedRealtime()).notice;}
     private void applyTheme(ThemeSpec theme){activeTheme=theme==null?ThemeSpec.original():theme;activeThemeResources=com.veloster.dashboard.theme.ThemeResources.load(activity,activeTheme);overviewLayout.theme(activeTheme);renderer.setTheme(activeTheme,activeThemeResources);jsRenderer.setTheme(activeTheme,activeThemeResources);invalidate();}
-    private String languageLabel(){String selected=LanguageSettings.selection(activity);return "auto".equals(selected)?"System / 시스템":"ko".equals(selected)?"한국어":"English";}
+    private String languageLabel(){String selected=LanguageSettings.selection(activity);return "auto".equals(selected)?UiText.t("시스템 설정 따름"):"ko".equals(selected)?"한국어":"English";}
     private void showThemePicker(){
         final ThemeSpec previous=activeTheme;
         final int previousPage=overviewLayout.page();

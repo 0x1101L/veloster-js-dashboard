@@ -193,9 +193,12 @@ public class PerformancePreview {
   gear(gearbox,0x1e,7,4300);jsGearPages(gearbox,4300,"M","7");
   gear(gearbox,0x1d,5,4350);gear(gearbox,0x1e,6,4400);jsGearPages(gearbox,4400,"D","6");
   jsDctOverview(args[0]);focusOverview(args[0]);
-  check(SettingsPageRenderer.hit(140,164)==0&&SettingsPageRenderer.hit(140,284)==1&&SettingsPageRenderer.hit(700,164)==-1,"settings page rows have bounded hit areas");
+  check(SettingsPageRenderer.hit(60,174)==0&&SettingsPageRenderer.hit(738,250)==1&&SettingsPageRenderer.hit(35,174)==-1&&SettingsPageRenderer.hit(765,250)==-1&&SettingsPageRenderer.hit(60,289)==-1,"settings rows respond across their width and reject surrounding space");
+  UiText.configure("ko","ko");
   Canvas settings=new Canvas(800,480);new SettingsPageRenderer().draw(settings,ThemeSpec.original(),new com.veloster.dashboard.theme.ThemeResources(),"한국어","Original");
-  check(settings.texts.contains("SETTINGS / 설정")&&settings.texts.contains("Language / 언어")&&settings.texts.contains("Theme / 테마"),"settings page content rendered");
+  check(settings.texts.contains("설정")&&settings.texts.contains("언어")&&settings.texts.contains("테마"),"localized settings rows rendered");
+  UiText.configure("en","en");Canvas englishSettings=new Canvas(800,480);new SettingsPageRenderer().draw(englishSettings,ThemeSpec.original(),new com.veloster.dashboard.theme.ThemeResources(),"English","Original");
+  check(englishSettings.texts.contains("Language")&&englishSettings.texts.contains("Theme")&&!englishSettings.texts.contains("언어"),"English settings labels rendered");
   jsTransmissionTrial();themedPages();
   jsRpmAccent(args[0]);jsF1Modes();jsSpeedRetained();
   System.out.println("PASS "+rendered+" performance renders and 4 existing page renders");

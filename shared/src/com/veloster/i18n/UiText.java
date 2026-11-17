@@ -272,6 +272,7 @@ public final class UiText {
         EN.put("스로틀 %","Throttle %");
         EN.put("시각 미확인","Timestamp unknown");
         EN.put("시스템 logcat 권한 없음","System logcat permission unavailable");
+        EN.put("시스템 설정 따름","System default");
         EN.put("시험 접속정보 보기","Show test credentials");
         EN.put("시험 추정·서비스 연결은 변속기 실물 확인이 아닙니다.","Trial estimates and service connections do not identify the installed transmission.");
         EN.put("시험 추정은 실물 확인이 아닙니다.","Trial estimates do not confirm installed hardware.");
@@ -303,6 +304,7 @@ public final class UiText {
         EN.put("앱 관리","Manage apps");
         EN.put("앱 연동 없음 · 미확인","No app bridge · Unknown");
         EN.put("앱 화면을 열지 못했습니다. 알림에서 다시 시도하세요.","Could not open My Apps. Try the notification.");
+        EN.put("언어","Language");
         EN.put("언어 설정을 저장하지 못했습니다.","Could not save the language setting.");
         EN.put("없음/접근 불가","Absent / inaccessible");
         EN.put("엔지니어 Wi-Fi","Engineer Wi-Fi");
@@ -417,6 +419,7 @@ public final class UiText {
         EN.put("클러스터 서비스","Cluster service");
         EN.put("클러치 수명","Clutch life");
         EN.put("타이어 공기압","Tire pressure");
+        EN.put("테마","Theme");
         EN.put("토크 (계산)","Torque (calc.)");
         EN.put("파일 선택기를 열 수 없습니다","Could not open the file picker");
         EN.put("파일 없음","File not found");
