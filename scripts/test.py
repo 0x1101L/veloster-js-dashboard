@@ -27,14 +27,14 @@ def main():
                ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd/PdGearState.java",
                *[ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/js" / (name + ".java") for name in ("JsPowertrain", "JsGearState", "JsTelemetryDecoder")],
                ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/ShiftGuide.java",
-               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemeSpec.java",
-               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemeCatalog.java",
-               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemeRepository.java",
-               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemeJsonParser.java",
-               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemePalette.java",
-               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemeSelectionDraft.java",
-               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemeResources.java",
-               ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view/overview/ThemeLayout.java",
+               ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemeSpec.java",
+               ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemeCatalog.java",
+               ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemeRepository.java",
+               ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemeJsonParser.java",
+               ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemePalette.java",
+               ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemeSelectionDraft.java",
+               ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemeResources.java",
+               ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/view/overview/ThemeLayout.java",
                ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view/overview/OverviewLayout.java",
                ROOT / "shared/src/com/veloster/i18n/UiText.java",
                ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/HscanFrameDecoder.java",
@@ -58,8 +58,9 @@ def main():
                    "com.veloster.dashboard.theme." if test.stem == "ThemeResourcesTest" else "") + test.stem
             command=[str(java), "-ea", "-cp", temporary, cls]
             if test.stem=="ThemeManifestTest":
-                command += [str(ROOT/"apps/dashboard/src/main/assets/themes/catalog.json"),
-                            str(ROOT/"apps/dashboard/src/main/assets/themes")]
+                command += [str(ROOT/"tests/fixtures/theme_v2/catalog.json"),
+                            str(ROOT/"apps/dashboard/src/0x1101L/assets/themes"),
+                            str(ROOT/"tests/fixtures/theme_v2")]
             subprocess.run(command, check=True)
     print("PASS: " + str(len(tests)) + " synthetic host test programs. Vehicle operation is outside this scope.")
 

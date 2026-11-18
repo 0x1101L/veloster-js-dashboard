@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 3,
+  "id": "original",
+  "displayName": "Original",
+  "files": {
+    "colors": "colors.json",
+    "fonts": "fonts.json",
+    "components": "components.json",
+    "overview": "layouts/overview.json"
+  }
+}

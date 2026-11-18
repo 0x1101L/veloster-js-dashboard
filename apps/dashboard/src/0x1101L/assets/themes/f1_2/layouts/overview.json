@@ -1,0 +1,19 @@
+{
+  "layout": {
+    "columns": 5,
+    "rows": 4
+  },
+  "cardDefaults": {
+    "padding": {
+      "top": 12,
+      "right": 12,
+      "bottom": 12,
+      "left": 12
+    },
+    "unitPosition": "valueRight",
+    "titleValueGap": 4,
+    "titleUnitGap": 4,
+    "valueUnitGap": 4,
+    "valueGaugeGap": 4
+  }
+}

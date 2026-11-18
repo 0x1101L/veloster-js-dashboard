@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 3,
+  "id": "aurora_focus",
+  "displayName": "Aurora Focus",
+  "extends": "original",
+  "files": {
+    "colors": "colors.json",
+    "components": "components.json",
+    "overview": "layouts/overview.json"
+  }
+}

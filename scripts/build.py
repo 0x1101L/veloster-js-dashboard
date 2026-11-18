@@ -77,7 +77,10 @@ def main():
     if (app / "res").is_dir():
         run("resources", [aapt2, "compile", "--dir", app / "res", "-o", out / "resources.zip"])
         resources = ["--auto-add-overlay", "-R", out / "resources.zip"]
-    asset_args = ["-A", app / "src" / "main" / "assets"] if (app / "src" / "main" / "assets").is_dir() else []
+    asset_roots = [app / "src" / "main" / "assets"]
+    if args.app == "dashboard":
+        asset_roots.append(app / "src" / "0x1101L" / "assets")
+    asset_args = [value for root in asset_roots if root.is_dir() for value in ("-A", root)]
     run("manifest", [aapt2, "link", "-I", sdk, "--manifest", app / "AndroidManifest.xml", *resources, *asset_args,
                      "--min-sdk-version", "17", "--target-sdk-version", "17", "-o", out / "base.apk"])
     target = out / (args.app + "-UNSIGNED.apk")

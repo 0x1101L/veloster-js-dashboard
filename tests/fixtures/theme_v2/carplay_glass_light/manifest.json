@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 2,
+  "id": "carplay_glass_light",
+  "displayName": "CarPlay Glass Light",
+  "tokens": {
+    "background": "#FFE6ECF2",
+    "panel": "#99FFFFFF",
+    "panelRaised": "#CCFFFFFF",
+    "stroke": "#80FFFFFF",
+    "textPrimary": "#FF111418",
+    "textSecondary": "#FF5C6672",
+    "accent": "#FF007AFF",
+    "warning": "#FFFF9500",
+    "critical": "#FFFF3B30",
+    "unavailable": "#FF9AA4B0",
+    "cutPanels": false
+  },
+  "layout": {"columns": 5, "rows": 4},
+  "fonts": {
+    "body": "fonts/Pretendard-Regular.otf",
+    "numeric": "fonts/Pretendard-Regular.otf",
+    "display": "fonts/Pretendard-Regular.otf"
+  },
+  "assets": {"background": ""},
+  "typography": {"bodyScale": 100, "numericScale": 100, "displayScale": 100, "gearSize": 184, "combinedGearSize": 130},
+  "spacing": {"buttonPadding": 12, "cardPadding": 10, "settingsPadding": 24, "pedalPadding": 14, "f1SidePadding": 4, "gearPadding": 0, "gridGapX": 8, "gridGapY": 6},
+  "material": {"style": "legacy", "radius": 0, "topAlpha": 255, "bottomAlpha": 255, "highlight": "#D9FFFFFF", "shadow": "#0F2859A0", "backdropEnd": "#FFE5EFFF"}
+}

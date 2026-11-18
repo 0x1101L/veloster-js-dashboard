@@ -18,7 +18,7 @@
 
 ## 주요 계약
 
-- 번들 catalog는 `apps/dashboard/src/main/assets/themes/catalog.json`, 각 manifest는 `themes/<id>/manifest.json`이다. 현재 catalog는 `original`과 `aurora_focus`를 포함한다. 파서나 manifest 오류가 있으면 두 테마 일부만 노출하지 않고 canonical Original만 제공한다.
+- 당시 번들 catalog는 `apps/dashboard/src/main/assets/themes/catalog.json`에 있었다. 2026-11-18에 `apps/dashboard/src/0x1101L/assets/themes/catalog.json`으로 이동했으며 앱 내부 경로는 유지한다. 각 manifest는 `themes/<id>/manifest.json`이다. 당시 catalog는 `original`과 `aurora_focus`를 포함했다. 파서나 manifest 오류가 있으면 canonical Original만 제공한다.
 - 현재 번들 테마는 모두 기존 5×4를 사용한다. 렌더러는 기존 4×3 geometry와 overview 페이징 경로도 유지하며, catalog 검증은 두 지원 grid만 허용한다.
 - 테마 ID는 기존 차량 UI/신호 preference와 분리해 보관한다. Apply에서만 ID를 저장하며 draft 변경과 페이지 이동은 운영 설정을 변경하지 않는다.
 - 리소스 로더의 경로는 `themes/<id>/fonts/...` 및 `themes/<id>/backgrounds/...`로 제한한다. 현재 두 manifest의 font/background 값은 비어 있어 실제 추가 폰트·배경 파일은 번들되지 않았다. 로드 성공 경로와 누락 fallback은 호스트 대역으로 검사했다. 글리프 범위·라이선스·Android 폰트 렌더 품질은 확인하지 않았다.

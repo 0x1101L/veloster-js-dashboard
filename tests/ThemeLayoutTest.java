@@ -27,18 +27,17 @@ public final class ThemeLayoutTest {
         ThemeCatalog catalog=new ThemeCatalog();
         ThemeRepository repository=new ThemeRepository(catalog);
         check(catalog.size()==2&&"original".equals(catalog.resolve(null).id),"Bundled catalog has stable Original fallback");
-        check("aurora_focus".equals(repository.load("aurora_focus",1).id),"Known v1 theme resolves by stable ID");
+        check("aurora_focus".equals(repository.load("aurora_focus",ThemeSpec.VERSION).id),"Known current theme resolves by stable ID");
         check("original".equals(repository.load("missing",1).id),"Unknown theme falls back to Original");
-        check("original".equals(repository.load("aurora_focus",2).id),"Unsupported schema falls back to Original");
+        check("original".equals(repository.load("aurora_focus",ThemeSpec.VERSION+1).id),"Unsupported schema falls back to Original");
         ThemeSelectionDraft cancelled=new ThemeSelectionDraft(ThemeSpec.original());cancelled.choose(ThemeSpec.auroraFocus());
         check("aurora_focus".equals(cancelled.selected().id)&&"original".equals(cancelled.cancel().id),"cancel rolls back the uncommitted preview draft");
         ThemeSelectionDraft applied=new ThemeSelectionDraft(ThemeSpec.original());applied.choose(ThemeSpec.auroraFocus());
         check("aurora_focus".equals(applied.apply().id)&&applied.closed(),"apply returns the selected ID for persistence");
         OverviewLayout layout=new OverviewLayout();
         check(layout.count()==20&&layout.pageCount()==1,"Original preserves all overview slots");
-        check(layout.left(layout.signalAt(0))==18&&layout.top(layout.signalAt(0))==58,"Original origin unchanged");
-        check(layout.width(layout.signalAt(0))==147&&layout.height(layout.signalAt(0))==98,"Original card size unchanged");
-        check(valueGeometryMatches(layout,ThemeSpec.auroraFocus()),"Aurora Focus keeps the existing grid geometry");
+        check(layout.left(layout.signalAt(0))==10&&layout.top(layout.signalAt(0))==62,"Original uses theme padding");
+        check(layout.width(layout.signalAt(0))==143.2f&&layout.height(layout.signalAt(0))==93f,"Original uses available width and height");
         for(int i=0;i<20;i++){
             int signal=layout.signalAt(i);float x=layout.left(signal),y=layout.top(signal);
             check(layout.hit(x+layout.width(signal)/2,y+layout.height(signal)/2)==signal,"Original hit mapping");
@@ -51,7 +50,7 @@ public final class ThemeLayoutTest {
             float x=layout.left(signal),y=layout.top(signal),w=layout.width(signal),h=layout.height(signal);
             check(x>=0&&y>=52&&x+w<=800&&y+h<=480,"Focus card remains inside its content bounds");
             check(layout.hit(x+w/2,y+h/2)==signal,"Focus draw and hit geometry agree");
-            check(w==147&&h==98,"Focus retains the existing card dimensions");
+            check(w==149.6f&&h==97.5f,"Focus uses the available width and height");
             for(int j=i+1;j<layout.count();j++){
                 int other=layout.signalAt(j);float ox=layout.left(other),oy=layout.top(other);
                 check(x+w<=ox||ox+layout.width(other)<=x||y+h<=oy||oy+layout.height(other)<=y,"Focus cards do not overlap");
@@ -66,15 +65,5 @@ public final class ThemeLayoutTest {
         check(!layout.page(1)&&layout.page()==0,"Second overview page is unavailable");
         verifyProfile(false,false);verifyProfile(false,true);verifyProfile(true,false);
         System.out.println("PASS ThemeLayoutTest");
-    }
-    private static boolean valueGeometryMatches(OverviewLayout original,ThemeSpec theme){
-        OverviewLayout candidate=new OverviewLayout();candidate.theme(theme);
-        if(candidate.count()!=original.count()||candidate.pageCount()!=original.pageCount())return false;
-        for(int i=0;i<original.count();i++){
-            int a=original.signalAt(i),b=candidate.signalAt(i);
-            if(original.left(a)!=candidate.left(b)||original.top(a)!=candidate.top(b)||
-                    original.width(a)!=candidate.width(b)||original.height(a)!=candidate.height(b))return false;
-        }
-        return true;
     }
 }

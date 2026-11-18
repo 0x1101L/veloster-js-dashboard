@@ -1,0 +1,22 @@
+{
+  "mediaControls": "container",
+  "material": {
+    "topAlpha": 203,
+    "bottomAlpha": 136,
+    "highlight": "#8AFFFFFF",
+    "shadow": "#08222F40"
+  },
+  "surfaceStyles": {
+    "dataCard": "flat",
+    "gearCard": "glass",
+    "settingsGroup": "flat",
+    "mediaContainer": "flat",
+    "navigationDock": "flat"
+  },
+  "surfaceBlur": {
+    "dataCard": 24,
+    "settingsGroup": 24,
+    "mediaContainer": 24,
+    "navigationDock": 24
+  }
+}

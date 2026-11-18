@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 2,
+  "id": "aurora_focus",
+  "displayName": "Aurora Focus",
+  "tokens": {
+    "background": "#FF071118",
+    "panel": "#FF10232C",
+    "panelRaised": "#FF173641",
+    "stroke": "#FF28505A",
+    "textPrimary": "#FFEDF8FA",
+    "textSecondary": "#FF9BB9C0",
+    "accent": "#FF65E0D0",
+    "warning": "#FFFFC45C",
+    "critical": "#FFFF6679",
+    "unavailable": "#FF8299A0",
+    "cutPanels": false
+  },
+  "layout": {"columns": 5, "rows": 4},
+  "fonts": {"body": "", "numeric": "", "display": ""},
+  "assets": {"background": ""},
+  "typography": {"bodyScale": 100, "numericScale": 100, "displayScale": 100, "gearSize": 184, "combinedGearSize": 130},
+  "spacing": {"buttonPadding": 12, "cardPadding": 10, "settingsPadding": 24, "pedalPadding": 14, "f1SidePadding": 4, "gearPadding": 0, "gridGapX": 8, "gridGapY": 6},
+  "material": {"style": "legacy", "radius": 0, "topAlpha": 255, "bottomAlpha": 255, "highlight": "#D9FFFFFF", "shadow": "#0F2859A0", "backdropEnd": "#FFE5EFFF"}
+}

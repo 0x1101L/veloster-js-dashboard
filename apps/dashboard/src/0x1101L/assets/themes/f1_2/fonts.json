@@ -1,0 +1,14 @@
+{
+  "fonts": {
+    "body": "fonts/Pretendard-Regular.otf",
+    "numeric": "fonts/Pretendard-Regular.otf",
+    "display": "fonts/Pretendard-Regular.otf"
+  },
+  "typography": {
+    "bodyScale": 100,
+    "numericScale": 96,
+    "displayScale": 105,
+    "gearSize": 128,
+    "combinedGearSize": 100
+  }
+}

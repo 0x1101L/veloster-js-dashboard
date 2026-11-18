@@ -1,0 +1,23 @@
+{
+  "tokens": {
+    "background": "#FF040506",
+    "panel": "#FF101315",
+    "panelRaised": "#FF233B46",
+    "stroke": "#FF303638",
+    "textPrimary": "#FFE1EDF2",
+    "textSecondary": "#FF91A5AE",
+    "accent": "#FFA4D9EF",
+    "warning": "#FFFFB547",
+    "critical": "#FFFF4059",
+    "unavailable": "#FF91A5AE",
+    "cutPanels": true
+  },
+  "palette": "componentDefaults",
+  "backdrop": {
+    "style": "gradient",
+    "startColor": "#FF111315",
+    "endColor": "#FF030405",
+    "endXPercent": 100,
+    "scanlineColor": "#063F4948"
+  }
+}

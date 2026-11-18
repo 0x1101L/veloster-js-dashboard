@@ -1,0 +1,24 @@
+{
+  "shell": {
+    "position": "left",
+    "alignment": "center",
+    "width": 80,
+    "padding": {
+      "top": 16,
+      "right": 16,
+      "bottom": 16,
+      "left": 16
+    },
+    "topPadding": {
+      "top": 8,
+      "right": 16,
+      "bottom": 8,
+      "left": 16
+    },
+    "mediaPadding": 16,
+    "screenCorner": "squircle",
+    "screenCornerRadius": 32,
+    "gap": 5,
+    "buttonHeight": 40
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "fonts": {
+    "body": "",
+    "numeric": "",
+    "display": ""
+  },
+  "typography": {
+    "bodyScale": 100,
+    "numericScale": 100,
+    "displayScale": 100,
+    "gearSize": 184,
+    "combinedGearSize": 130
+  }
+}

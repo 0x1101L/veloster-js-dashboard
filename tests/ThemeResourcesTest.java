@@ -15,7 +15,7 @@ public final class ThemeResourcesTest {
         ThemeSpec missing=ThemeSpec.fromManifest("missing_asset","Missing",0xff000000,0xff111111,
                 0xff222222,0xff333333,0xffffffff,0xffaaaaaa,0xff00ffff,0xffffff00,
                 0xffff0000,0xff888888,4,3,false,"fonts/missing-body.ttf",
-                "fonts/missing-number.ttf","fonts/missing-display.ttf","backgrounds/missing.png");
+                "fonts/missing-number.ttf","fonts/missing-display.ttf","backgrounds/missing.png",ThemeSpec.defaultTypography(),ThemeSpec.defaultSpacing(4),ThemeSpec.defaultMaterial(),ThemeSpec.Backdrop.SOLID);
         ThemeResources fallback=ThemeResources.load(new Context(),missing);
         check(fallback.background()==null,"missing bitmap asset falls back without throwing");
         check(fallback.body()==null&&fallback.numeric()==null&&fallback.display()==null,"missing font files fall back");

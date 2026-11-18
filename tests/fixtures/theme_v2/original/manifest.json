@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 2,
+  "id": "original",
+  "displayName": "Original",
+  "tokens": {
+    "background": "#FF040506",
+    "panel": "#FF101315",
+    "panelRaised": "#FF233B46",
+    "stroke": "#FF303638",
+    "textPrimary": "#FFE1EDF2",
+    "textSecondary": "#FF91A5AE",
+    "accent": "#FFA4D9EF",
+    "warning": "#FFFFB547",
+    "critical": "#FFFF4059",
+    "unavailable": "#FF91A5AE",
+    "cutPanels": true
+  },
+  "layout": {"columns": 5, "rows": 4},
+  "fonts": {"body": "", "numeric": "", "display": ""},
+  "assets": {"background": ""},
+  "typography": {"bodyScale": 100, "numericScale": 100, "displayScale": 100, "gearSize": 184, "combinedGearSize": 130},
+  "spacing": {"buttonPadding": 12, "cardPadding": 10, "settingsPadding": 24, "pedalPadding": 14, "f1SidePadding": 4, "gearPadding": 0, "gridGapX": 8, "gridGapY": 6},
+  "material": {"style": "legacy", "radius": 0, "topAlpha": 255, "bottomAlpha": 255, "highlight": "#D9FFFFFF", "shadow": "#0F2859A0", "backdropEnd": "#FFE5EFFF"}
+}

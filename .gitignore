@@ -15,3 +15,22 @@ logs/
 *.odex
 .menu-venv/
 /@memory
+
+# Astryx design workspace: keep sources and lockfile, exclude dependencies/cache/output.
+/theme/node_modules/
+/theme/.npm-cache/
+/theme/.cache/
+/theme/.next/
+/theme/out/
+/theme/dist/
+/theme/build/
+/theme/artifacts/
+/theme/*.log
+/theme/src/themes/
+/theme/themes/*/*.css
+/theme/themes/*/*.js
+/theme/themes/*/*.d.ts
+/theme/themes/*/*.html
+/theme/themes/*/*.png
+/theme/themes/*/*.pictures.json
+/theme/themes/*/*.history.json

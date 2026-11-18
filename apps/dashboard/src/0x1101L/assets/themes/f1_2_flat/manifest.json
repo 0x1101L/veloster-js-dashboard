@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 3,
+  "id": "f1_2_flat",
+  "displayName": "Liquid Glass (Flat)",
+  "extends": "f1_2",
+  "files": {
+    "components": "components.json"
+  }
+}
