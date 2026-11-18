@@ -98,7 +98,7 @@ public class JsDiagnosticsPreview {
      check(c.texts.contains(UiText.t(expected)),"distinct signal state: "+state);
      if(state.equals("invalid"))check(!c.texts.contains("14.20 V")&&t.sample(Telemetry.BAT_VOLTAGE,now).receivedCount==1,"invalid-only reception is counted without a fabricated value");
      if(state.equals("held"))check(c.texts.contains("14.20 V")&&c.texts.contains("2 · 0.0s / 1.0s")&&t.sample(Telemetry.BAT_VOLTAGE,now).receivedCount==2,"held value keeps separate reception and valid ages");
-     if(state.equals("expired"))check(!c.texts.contains("14.20 V"),"expired battery value hidden");
+     if(state.equals("expired"))check(c.texts.contains("14.20 V"),"expired battery still shows its last valid voltage");
     }else if(tab==3){
      check(c.texts.contains(UiText.t("Wi-Fi 상태"))&&c.texts.contains(UiText.t("Wi-Fi 서비스")),"Wi-Fi status rendered");
      check(c.texts.contains(UiText.t("Bluetooth HAL 관찰"))&&c.texts.contains(UiText.t("컨트롤러"))&&c.texts.contains(UiText.t("로그 기록만으로는 미확정")),"Wi-Fi and Bluetooth share one page");

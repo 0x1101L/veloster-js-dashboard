@@ -24,7 +24,7 @@ Owner-provided in-car photo. Missing readings display a dash. Location/camera me
 | Media controls and artwork when available from the source | Bluetooth pairing and restart confirmation |
 | Saved display layouts and Korean/English selection | Editable app list and Korean/English selection |
 
-Vehicle telemetry uses existing receive paths without adding ECU diagnostic requests. Missing or expired readings stay unknown. Bluetooth album-art reception, exhaust temperature and e-LSD remain unresolved; wireless CarPlay and automatic updates are not implemented. [Full limitations](docs/LIMITATIONS.md)
+Vehicle telemetry uses existing receive paths without adding ECU diagnostic requests. Readings without a valid sample stay unknown. Bluetooth album-art reception, exhaust temperature and e-LSD remain unresolved; wireless CarPlay and automatic updates are not implemented. [Full limitations](docs/LIMITATIONS.md)
 
 ## Source profiles and references
 
@@ -94,7 +94,7 @@ Once installed, normal use does not require a PC. If neither the edge button nor
 | 06 · Development and research | [Documentation index](docs/README.md#development-and-research) | [개발·연구 색인](docs/README.md#development-and-research) |
 
 
-JS source now uses a separate copy of the PD decoder and separate JS rendering. Invalid slow-changing readings retain the last valid value with a `LAST` age label for up to 60 seconds, except TPMS, which retains its last valid value without a `LAST` label until the ignition session resets or HSCAN disconnects; ambient temperature has no time expiry within an ignition session. Fast-changing readings expire after 2 seconds and are not displayed as retained. These are application policies, not validated OEM timeouts. JSN and PD retain their existing behavior. This is uninstalled source; vehicle validation is pending.
+JS uses a separate decoder and renderer. After the first valid reading, dashboard numbers keep showing the last valid value without an age label, even if later input is invalid or expires. An ignition session reset clears these values; HSCAN disconnect also clears TPMS. Freshness rules for calculations, diagnostics, and graph history still apply. JSN and PD retain their existing behavior. This source change has not been verified on a vehicle.
 
 When a valid JS DCT gear is received, the display combines the selector mode and number, such as D1 or M1. The JS sequential signal mapping still needs vehicle verification.
 

@@ -28,10 +28,10 @@ public final class JsOverviewRenderer {
  public void draw(Canvas c,Telemetry.Sample[] samples,OverviewLayout layout,boolean pd,boolean js,Telemetry.DctTemperatures dct,Telemetry.JsDriveMode mode,float trial){this.trialFuel=trial;this.samples=samples;overviewLayout=layout;pdProfile=pd;jsProfile=js;drawDashboard(c,dct,mode);}
     private static final String[] PREFIX={"엔진 RPM","오일 온도","냉각수 온도","앞 왼쪽 휠","앞 오른쪽 휠","뒤 왼쪽 휠","뒤 오른쪽 휠","속도 km/h","현재 기어","스로틀 %","브레이크 압력 bar","횡가속","종가속","조향각","외기 온도","출력 (계산)","토크 (계산)","부스트 (계산)","앞 왼쪽 공기압","앞 오른쪽 공기압","뒤 왼쪽 공기압","뒤 오른쪽 공기압","TCS","ESC","ABS","배터리 SOC","배터리 전압","조향 속도","e-LSD 수치","흡기 온도","가속 페달 %","TCS 사용 상태","ESC 사용 상태","ABS 경고등","계기판 연비","주행가능거리"};
     private int index(String prefix){for(int i=0;i<PREFIX.length;i++)if(PREFIX[i].equals(prefix))return i;return -1;}
-    private String value(String prefix){int i=index(prefix);if(i<0||i>=samples.length||!(samples[i].valid||samples[i].held))return "—";
+    private String value(String prefix){int i=index(prefix);if(i<0||i>=samples.length||!(samples[i].valid||(i!=8&&samples[i].hasDisplayValue())))return "—";
         if(i==8)return JsGearState.valueLabel((int)samples[i].value);
-        if(Telemetry.jsTenthSignal(i))return (samples[i].held?"LAST "+samples[i].lastValidAgeMs/1000+"s ":"")+Telemetry.jsTenth(samples[i].value,i==11||i==12);
-        return (samples[i].held&&i!=7&&!(i>=Telemetry.TPMS_FL&&i<=Telemetry.TPMS_RR)?"LAST "+samples[i].lastValidAgeMs/1000+"s ":"")+String.format(Locale.US,i==0||i==7||(i>=Telemetry.TPMS_FL&&i<=Telemetry.BAT_SOC)||i==Telemetry.STEERING_SPEED?"%.0f":i==11||i==12?"%+.2f":i==13?"%+.1f":i==17?"%.2f":"%.1f",Telemetry.displayValue(i,samples[i].value));}
+        if(Telemetry.jsTenthSignal(i))return Telemetry.jsTenth(samples[i].value,i==11||i==12);
+        return String.format(Locale.US,i==0||i==7||(i>=Telemetry.TPMS_FL&&i<=Telemetry.BAT_SOC)||i==Telemetry.STEERING_SPEED?"%.0f":i==11||i==12?"%+.2f":i==13?"%+.1f":i==17?"%.2f":"%.1f",Telemetry.displayValue(i,samples[i].value));}
     private String gearTitle(String title){return title;}
     private void box(Canvas c,float l,float t,float r,float b,int color){paint.setColor(color);c.drawRect(l,t,r,b,paint);}
     private void panel(Canvas c,float x,float y,float w,float h,int fill,int edge){
@@ -125,7 +125,7 @@ public final class JsOverviewRenderer {
             }
         }
     }
-    private String fuelValue(int index,String format){Telemetry.Sample s=samples[index];if(!s.valid&&!s.held)return "—";return (s.held?"LAST "+s.lastValidAgeMs/1000+"s ":"")+String.format(Locale.US,format,s.value);}
+    private String fuelValue(int index,String format){Telemetry.Sample s=samples[index];if(!s.hasDisplayValue())return "—";return String.format(Locale.US,format,s.value);}
     private void fuelRow(Canvas c,String label,String value,float x,float y,float w){fitted(c,label,x+10,y,10,53,theme.textSecondary);fitted(c,value,x+65,y,13,w-75,theme.accent);}
     private void overviewCard(Canvas c,int i,String title,int accent){
         float x=overviewLayout.left(i),y=overviewLayout.top(i),w=overviewLayout.width(i),h=overviewLayout.height(i);
@@ -133,7 +133,7 @@ public final class JsOverviewRenderer {
         int style=overviewLayout.style(i),color=samples[i].changed?0xffe9f7ff:theme.accent;
         overviewFrame(c,x,y,w,h,accent);
         fitted(c,i==8?gearTitle(title):title,x+10,y+(head?18:22),head?11:13,w-20,theme.textSecondary);
-        String number=(ok||samples[i].held)?value(PREFIX[i]):"—";
+        String number=value(PREFIX[i]);
         float lo=JsGaugeRenderer.min(i,Telemetry.UNITS[i]),hi=JsGaugeRenderer.max(i,Telemetry.UNITS[i]);
         // Unsupported gears keep the existing dash and have no gauge position.
         boolean position=ok&&(i!=8||(samples[i].value>=1&&samples[i].value<=6));

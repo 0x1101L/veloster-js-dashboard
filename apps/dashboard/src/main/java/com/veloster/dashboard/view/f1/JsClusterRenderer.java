@@ -87,10 +87,10 @@ public final class JsClusterRenderer {
     }
     private static final String[] PREFIX={"엔진 RPM","오일 온도","냉각수 온도","앞 왼쪽 휠","앞 오른쪽 휠","뒤 왼쪽 휠","뒤 오른쪽 휠","속도 km/h","현재 기어","스로틀 %","브레이크 압력 bar","횡가속","종가속","조향각","외기 온도","출력 (계산)","토크 (계산)","부스트 (계산)","앞 왼쪽 공기압","앞 오른쪽 공기압","뒤 왼쪽 공기압","뒤 오른쪽 공기압","TCS","ESC","ABS","배터리 SOC","배터리 전압","조향 속도","e-LSD 수치","흡기 온도","가속 페달 %","TCS 사용 상태","ESC 사용 상태","ABS 경고등"};
     private int index(String prefix){for(int i=0;i<PREFIX.length;i++)if(PREFIX[i].equals(prefix))return i;return -1;}
-    private String value(String prefix){int i=index(prefix);if(i<0||i>=samples.length||!(samples[i].valid||(jsPresentation&&samples[i].held)))return "—";
+    private String value(String prefix){int i=index(prefix);if(i<0||i>=samples.length||!(samples[i].valid||(jsPresentation&&i!=8&&samples[i].hasDisplayValue())))return "—";
         if(i==8)return jsPresentation?JsGearState.valueLabel((int)samples[i].value):Telemetry.gearLabel((int)samples[i].value);
-        if(jsPresentation&&Telemetry.jsTenthSignal(i))return (samples[i].held?"LAST "+samples[i].lastValidAgeMs/1000+"s ":"")+Telemetry.jsTenth(samples[i].value,i==11||i==12);
-        return (jsPresentation&&samples[i].held&&i!=7&&!(i>=Telemetry.TPMS_FL&&i<=Telemetry.TPMS_RR)?"LAST "+samples[i].lastValidAgeMs/1000+"s ":"")+String.format(Locale.US,i==0||i==7||(i>=Telemetry.TPMS_FL&&i<=Telemetry.BAT_SOC)||i==Telemetry.STEERING_SPEED?"%.0f":i==11||i==12?"%+.2f":i==13?"%+.1f":i==17||i==Telemetry.BAT_VOLTAGE&&!jsPresentation?"%.2f":"%.1f",Telemetry.displayValue(i,samples[i].value));}
+        if(jsPresentation&&Telemetry.jsTenthSignal(i))return Telemetry.jsTenth(samples[i].value,i==11||i==12);
+        return String.format(Locale.US,i==0||i==7||(i>=Telemetry.TPMS_FL&&i<=Telemetry.BAT_SOC)||i==Telemetry.STEERING_SPEED?"%.0f":i==11||i==12?"%+.2f":i==13?"%+.1f":i==17||i==Telemetry.BAT_VOLTAGE&&!jsPresentation?"%.2f":"%.1f",Telemetry.displayValue(i,samples[i].value));}
     private float numeric(String prefix){int i=index(prefix);return i>=0&&i<samples.length&&samples[i].valid?Telemetry.displayValue(i,samples[i].value):0;}
     private String gearTitle(String title){return title;}
     public void drawMedia(Canvas c){

@@ -176,10 +176,21 @@ public class PerformancePreview {
    Canvas c=new Canvas(800,480);PitRenderer r=new PitRenderer();if(page==2)r.setGaugeLayout(new GaugeLayout());if(page==3)r.setGraphLayout(new GraphLayout());r.draw(c,800,480,page==1,fixture(),1000);
    check(!c.texts.contains("PERFORMANCE"),"existing page remains selectable");c.write(args[0]+"/existing-page-"+page+".png");
   }
-  Telemetry js=new Telemetry();js.profile(false,true,false);js.temperatures(new byte[]{100,120},1000);js.temperatures(new byte[]{(byte)255,(byte)255},2000);
-  for(int page=0;page<4;page++){
-   Canvas c=new Canvas(800,480);JsPitRenderer r=new JsPitRenderer();if(page==1)r.setPerformancePage(true);if(page==2){GaugeLayout layout=new GaugeLayout();r.setGaugeLayout(layout);}if(page==3)r.setGraphLayout(new GraphLayout());r.draw(c,800,480,false,js,3000);
-   if(page<2){boolean found=false;for(String text:c.texts)if(text.contains("LAST 2s"))found=true;check(found,"JS held value labeled on page "+page);}
+  Telemetry js=new Telemetry();js.profile(false,true,false);
+  js.temperatures(new byte[]{100,120},1000);
+  js.hscanJs(0xc7,0x0a,new byte[]{0,0,0,(byte)142,0,0,0,0},1000);
+  js.temperatures(new byte[]{(byte)255,(byte)255},2000);
+  js.hscanJs(0xc7,0x0a,new byte[]{0,0,0,(byte)255,0,0,0,0},2000);
+  for(long now:new long[]{3000,62000})for(int page=0;page<6;page++){
+   Canvas c=new Canvas(800,480);JsPitRenderer r=new JsPitRenderer();
+   if(page==1)r.setPerformancePage(true);
+   if(page==2){GaugeLayout g=new GaugeLayout();g.set(0,Telemetry.BAT_VOLTAGE,2);r.setGaugeLayout(g);}
+   if(page==3){GraphLayout g=new GraphLayout();g.signal(0,Telemetry.BAT_VOLTAGE);r.setGraphLayout(g);}
+   r.draw(c,800,480,page>=4,js,now,6000,page==5,null);
+   String expected=page>=4?"42.0":page==1||page==3?"14.2 V":"14.2";
+   boolean displayed=c.texts.contains(expected)||(page>=4&&c.texts.contains(expected+" °C"));
+   check(displayed,"last valid number on page "+page+" at "+now+": "+c.texts);
+   for(String value:c.texts)check(!value.startsWith("LAST "),"no LAST prefix on page "+page);
   }
   Telemetry gearbox=new Telemetry();gearbox.profile(false,true,false);
   gear(gearbox,0x1d,5,4000);gear(gearbox,0x1e,3,4050);

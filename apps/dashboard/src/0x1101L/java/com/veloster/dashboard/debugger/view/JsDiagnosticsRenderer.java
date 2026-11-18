@@ -60,8 +60,8 @@ public final class JsDiagnosticsRenderer {
     }
     private String diagnosticSample(int index,String unit,boolean candidate){
         Telemetry.Sample s=samples[index];
-        if(!s.valid&&!s.held)return "—";
-        String prefix=(s.held?"LAST "+(s.lastValidAgeMs/1000)+"s ":"")+(candidate?UiText.t("후보")+" ":"");
+        if(!s.hasDisplayValue())return "—";
+        String prefix=(candidate?UiText.t("후보")+" ":"");
         return prefix+String.format(Locale.US,index==Telemetry.BAT_VOLTAGE?"%.2f":"%.0f",s.value)+unit;
     }
     private String dctValue(Telemetry.DctTemperatures dct){
@@ -152,7 +152,7 @@ public final class JsDiagnosticsRenderer {
             fitted(c,UiText.t(Telemetry.LABELS[i]),32,y,13,112,ThemePalette.primary(theme,0xffe1edf2));
             fitted(c,sampleState(s),150,y,13,78,!s.seen?ThemePalette.secondary(theme,0xff91a5ae):s.valid?ECO_GREEN:s.held?ThemePalette.accent(theme,0xffa4d9ef):ThemePalette.critical(theme,0xffff4059));
             String reading="—";
-            if(s.valid||s.held)reading=String.format(Locale.US,i==Telemetry.BAT_VOLTAGE?"%.2f":i==11||i==12?"%+.2f":"%.1f",s.value)+" "+Telemetry.UNITS[i];
+            if(s.hasDisplayValue())reading=String.format(Locale.US,i==Telemetry.BAT_VOLTAGE?"%.2f":i==11||i==12?"%+.2f":"%.1f",s.value)+" "+Telemetry.UNITS[i];
             fitted(c,reading,235,y,13,112,ThemePalette.primary(theme,0xffe1edf2));
             fitted(c,s.receivedCount+" · "+diagAge(s.seen?s.ageMs:-1)+" / "+diagAge(s.lastValidAgeMs),352,y,12,154,ThemePalette.secondary(theme,0xff91a5ae));
         }

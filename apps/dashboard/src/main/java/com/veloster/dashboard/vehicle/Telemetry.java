@@ -177,6 +177,8 @@ public final class Telemetry {
         public final String source;
         public final boolean valid, changed, seen, stale, held;
         public final long lastValidAgeMs,lastChangedAgeMs;
+        /** JS stores its last good number for display even when it is no longer current. */
+        public boolean hasDisplayValue(){return valid||lastValidAgeMs!=Long.MAX_VALUE;}
         Sample(float v, boolean ok, boolean diff, boolean received, boolean old,long age,boolean heldValue,long validAge,long changedAge,long count,String source) {
             ageMs=age;value=v; valid=ok; changed=diff; seen=received; stale=old;
             held=heldValue;lastValidAgeMs=validAge;lastChangedAgeMs=changedAge;receivedCount=count;
@@ -250,8 +252,8 @@ public final class Telemetry {
         if(seen[7]) {
             // Unit events must not refresh the timestamp or reception count of old speed.
             if(!js||valid[7]){
-                values[7]=speedUnit==1?rawSpeed*1.609344f:rawSpeed;
                 valid[7]=speedUnit>=0 && rawSpeed>=0 && rawSpeed<511;
+                if(!js||valid[7])values[7]=speedUnit==1?rawSpeed*1.609344f:rawSpeed;
             }
             changed[7]=false;
         }
