@@ -150,7 +150,7 @@ def render(folder):
         for name, body in GRAPHICS.items():
             if name == "Canvas":
                 body = body.replace("texts.add(s);", '''
- if(y>55&&(x<0||x+p.measureText(s)>800.1f||y>480))
+ if(y>55&&(x<0||(x+p.measureText(s))*g.getTransform().getScaleX()>image.getWidth()+.1f||y*g.getTransform().getScaleY()>image.getHeight()+.1f))
   throw new AssertionError("Diagnostic text outside logical bounds: "+s);
  texts.add(s);''')
             p = root / "android/graphics" / (name + ".java")
@@ -163,19 +163,22 @@ def render(folder):
         names = ("Telemetry", "ThemeSpec", "ThemePalette", "ThemeResources", "ThemeLayout", "PdPowertrain", "PdGearState", "JsPowertrain", "JsGearState", "SettingsPageRenderer",
                  "JsTelemetryDecoder", "JsDiagState", "BluetoothRuntimeProbe", "JsPitRenderer", "ClusterRenderer", "JsClusterRenderer", "JsOverviewRenderer", "JsDiagnosticsRenderer", "JsGaugeRenderer",
                  "JsPerformanceRenderer", "DashboardPage", "ShiftGuide", "MediaState",
-                 "GaugeLayout", "GaugeRenderer", "OverviewLayout", "GraphLayout", "GraphRenderer")
-        groups = {'ThemeLayout': 'overview', 'OverviewLayout': 'overview', 'OverviewRenderer': 'overview', 'JsOverviewRenderer': 'overview', 'GaugeEditor': 'gauge', 'GaugeLayout': 'gauge', 'GaugeRenderer': 'gauge', 'JsGaugeRenderer': 'gauge', 'GraphEditor': 'graph', 'GraphLayout': 'graph', 'GraphRenderer': 'graph', 'ClusterRenderer': 'cluster', 'JsClusterRenderer': 'cluster', 'JsDiagnosticsRenderer': 'diagnostics', 'PerformanceRenderer': 'performance', 'JsPerformanceRenderer': 'performance'}
+                 "GaugeLayout", "GaugeRenderer", "OverviewLayout", "OverviewCardRenderer", "GraphLayout", "GraphRenderer")
+        groups = {'OverviewLayout': 'overview', 'OverviewRenderer': 'overview', 'OverviewCardRenderer': 'overview', 'JsOverviewRenderer': 'overview', 'GaugeEditor': 'gauge', 'GaugeLayout': 'gauge', 'GaugeRenderer': 'gauge', 'JsGaugeRenderer': 'gauge', 'GraphEditor': 'graph', 'GraphLayout': 'graph', 'GraphRenderer': 'graph', 'ClusterRenderer': 'cluster', 'JsClusterRenderer': 'cluster', 'JsDiagnosticsRenderer': 'diagnostics', 'PerformanceRenderer': 'performance', 'JsPerformanceRenderer': 'performance'}
         def source_path(name):
-            if name == "ThemeSpec": return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemeSpec.java"
-            if name == "ThemePalette": return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemePalette.java"
+            if name == "ThemeSpec": return ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemeSpec.java"
+            if name == "ThemePalette": return ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemePalette.java"
             if name == "ThemeResources": return ROOT / "tests/java_stubs/com/veloster/dashboard/theme/ThemeResources.java"
             if name in ("JsDiagState", "JsLogger", "BluetoothRuntimeProbe", "JsDiagnosticsRenderer"): return ROOT / ("apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/view" if name == "JsDiagnosticsRenderer" else "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger") / (name + ".java")
+            if name == "ThemeLayout": return ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/view/overview/ThemeLayout.java"
             if name in groups: return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view" / ("f1" if groups[name] == "cluster" else groups[name]) / (name + ".java")
             if name in UI_SOURCES: return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view" / (name + ".java")
             if name in ("JsPowertrain", "JsGearState", "JsTelemetryDecoder"): return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/js" / (name + ".java")
             if name in ("PdPowertrain", "PdGearState"): return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd" / (name + ".java")
             return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle" / (name + ".java")
         sources += [source_path(name) for name in names]
+        sources += [ROOT / 'apps/dashboard/src/main/java/com/veloster/dashboard/view' / (name + '.java') for name in ('MediaBar', 'MenuIcons')]
+        sources.append(ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemeSurface.java")
         sources += [ROOT / "tests/java_stubs/android/content/Context.java", ROOT / "tests/java_stubs/android/content/res/AssetManager.java"]
         sources += [ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd/PdTelemetryDecoder.java", ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/jsn/JsnTelemetryDecoder.java"]
         sources.append(ROOT / "shared/src/com/veloster/i18n/UiText.java")
