@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "spacing": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "buttonPadding": {
+          "type": "integer",
+          "minimum": 4,
+          "maximum": 24
+        },
+        "cardPadding": {
+          "type": "integer",
+          "minimum": 4,
+          "maximum": 24
+        },
+        "settingsPadding": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 40
+        },
+        "pedalPadding": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 28
+        },
+        "f1SidePadding": {
+          "type": "integer",
+          "minimum": 4,
+          "maximum": 24
+        },
+        "gearPadding": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "gridGapX": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "gridGapY": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        }
+      }
+    },
+    "material": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "style": {
+          "enum": [
+            "legacy",
+            "flat",
+            "glass"
+          ]
+        },
+        "radius": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 36
+        },
+        "topAlpha": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "bottomAlpha": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "highlight": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        },
+        "shadow": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        },
+        "backdropEnd": {
+          "deprecated": true,
+          "description": "Accepted for older files. Use colors.json backdrop.endColor.",
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        }
+      }
+    },
+    "surfaceStyles": {
+      "type": "object",
+      "description": "Optional per-role surface styles. Omitted roles use material.style after theme inheritance.",
+      "additionalProperties": false,
+      "properties": {
+        "navigationButton": {
+          "$ref": "#/properties/material/properties/style"
+        },
+        "controlButton": {
+          "$ref": "#/properties/material/properties/style"
+        },
+        "mediaButton": {
+          "$ref": "#/properties/material/properties/style"
+        },
+        "mediaContainer": {"$ref": "#/properties/material/properties/style"},
+        "navigationDock": {"$ref": "#/properties/material/properties/style"},
+        "gearCard": {"$ref": "#/properties/material/properties/style"},
+        "dataCard": {
+          "$ref": "#/properties/material/properties/style"
+        },
+        "panel": {
+          "$ref": "#/properties/material/properties/style"
+        },
+        "settingsGroup": {
+          "$ref": "#/properties/material/properties/style"
+        }
+      }
+    },
+    "surfaceBlur": {
+      "description": "Backdrop blur strength per container in 800×480 design units. Zero disables blur.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dataCard": {"$ref": "#/$defs/blurStrength"},
+        "gearCard": {"$ref": "#/$defs/blurStrength"},
+        "settingsGroup": {"$ref": "#/$defs/blurStrength"},
+        "mediaContainer": {"$ref": "#/$defs/blurStrength"},
+        "navigationDock": {"$ref": "#/$defs/blurStrength"}
+      }
+    },
+    "mediaControls": {
+      "enum": ["both", "container", "buttons"],
+      "default": "both"
+    },
+    "mediaFooter": {
+      "description": "Bottom bar appearance only. Omitted values inherit from the parent theme or fall back to mediaControls.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "buttonBackground": {"type": "boolean", "description": "Draw an individual surface behind each of the four media controls."},
+        "controls": {"enum": ["text", "buttons"], "deprecated": true, "description": "Legacy alias for buttonBackground; the boolean takes precedence."},
+        "containerVisible": {"type": "boolean", "description": "Whether to draw the separate shared bar backdrop."}
+      }
+    },
+    "decorations": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "overviewCardTopLine": {
+          "type": "boolean",
+          "default": true
+        },
+        "navigationUnderline": {
+          "enum": [
+            "auto",
+            "on",
+            "off"
+          ],
+          "default": "auto"
+        }
+      }
+    },
+    "fills": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "navigation": {
+          "$ref": "#/$defs/fill"
+        },
+        "navigationSelected": {
+          "$ref": "#/$defs/fill"
+        },
+        "gaugeToggle": {
+          "$ref": "#/$defs/fill"
+        }
+      }
+    },
+    "assets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "background": {
+          "type": "string",
+          "pattern": "^(|backgrounds/[A-Za-z0-9_.-]+\\.(png|jpg|jpeg))$"
+        }
+      }
+    },
+    "wallpapers": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 48,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "asset", "thumbnail", "default"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$"},
+          "name": {"type": "string", "minLength": 1, "maxLength": 32},
+          "asset": {"type": "string", "pattern": "^backgrounds/(?:[A-Za-z0-9_-][A-Za-z0-9_.-]*/)?[A-Za-z0-9_.-]+\\.(png|jpg|jpeg)$"},
+          "thumbnail": {"type": "string", "pattern": "^backgrounds/(?:[A-Za-z0-9_-][A-Za-z0-9_.-]*/)?[A-Za-z0-9_.-]+\\.(png|jpg|jpeg)$"},
+          "default": {"type": "boolean"}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "blurStrength": {"type": "integer", "minimum": 0, "maximum": 36},
+    "fill": {
+      "type": "string",
+      "pattern": "^(token|#[0-9A-Fa-f]{8})$"
+    }
+  }
+}

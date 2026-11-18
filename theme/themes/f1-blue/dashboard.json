@@ -1,0 +1,35 @@
+{
+  "fonts": {
+    "body": "",
+    "numeric": "",
+    "display": ""
+  },
+  "typography": {
+    "bodyScale": 100,
+    "numericScale": 100,
+    "displayScale": 100,
+    "gearSize": 128,
+    "combinedGearSize": 100
+  },
+  "spacing": {
+    "buttonPadding": 12,
+    "cardPadding": 10,
+    "settingsPadding": 24,
+    "pedalPadding": 14,
+    "f1SidePadding": 4,
+    "gearPadding": 0,
+    "gridGapX": 8,
+    "gridGapY": 6
+  },
+  "material": {
+    "style": "flat",
+    "radius": 0,
+    "topAlpha": 255,
+    "bottomAlpha": 255,
+    "highlight": "#D9FFFFFF",
+    "shadow": "#0F2859A0"
+  },
+  "backdrop": {
+    "style": "solid"
+  }
+}

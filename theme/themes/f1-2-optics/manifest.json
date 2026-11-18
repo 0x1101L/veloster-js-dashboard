@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 3,
+  "id": "f1_2_optics",
+  "displayName": "Liquid Glass (Optics)",
+  "extends": "f1_2",
+  "files": {
+    "colors": "colors.json",
+    "components": "components.json",
+    "shell": "layouts/shell.json"
+  }
+}

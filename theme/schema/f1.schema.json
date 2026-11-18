@@ -1,0 +1,790 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "f1": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "shift": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "x": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 799
+            },
+            "y": {
+              "type": "integer",
+              "minimum": 52,
+              "maximum": 447
+            },
+            "width": {
+              "type": "integer",
+              "minimum": 40,
+              "maximum": 800
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 20,
+              "maximum": 396
+            },
+            "fontRole": {
+              "enum": [
+                "body",
+                "numeric",
+                "display"
+              ]
+            },
+            "colorRole": {
+              "enum": [
+                "primary",
+                "secondary",
+                "accent",
+                "warning",
+                "critical"
+              ]
+            },
+            "padding": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "top": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "right": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "bottom": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "left": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                }
+              }
+            },
+            "alignment": {
+              "enum": [
+                "stretch",
+                "start",
+                "center",
+                "end"
+              ]
+            }
+          }
+        },
+        "gear": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "x": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 799
+            },
+            "y": {
+              "type": "integer",
+              "minimum": 52,
+              "maximum": 447
+            },
+            "width": {
+              "type": "integer",
+              "minimum": 40,
+              "maximum": 800
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 20,
+              "maximum": 396
+            },
+            "fontRole": {
+              "enum": [
+                "body",
+                "numeric",
+                "display"
+              ]
+            },
+            "colorRole": {
+              "enum": [
+                "primary",
+                "secondary",
+                "accent",
+                "warning",
+                "critical"
+              ]
+            },
+            "padding": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "top": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "right": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "bottom": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "left": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                }
+              }
+            },
+            "alignment": {
+              "enum": [
+                "stretch",
+                "start",
+                "center",
+                "end"
+              ]
+            }
+          }
+        },
+        "speed": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "x": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 799
+            },
+            "y": {
+              "type": "integer",
+              "minimum": 52,
+              "maximum": 447
+            },
+            "width": {
+              "type": "integer",
+              "minimum": 40,
+              "maximum": 800
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 20,
+              "maximum": 396
+            },
+            "fontRole": {
+              "enum": [
+                "body",
+                "numeric",
+                "display"
+              ]
+            },
+            "colorRole": {
+              "enum": [
+                "primary",
+                "secondary",
+                "accent",
+                "warning",
+                "critical"
+              ]
+            },
+            "padding": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "top": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "right": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "bottom": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "left": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                }
+              }
+            },
+            "alignment": {
+              "enum": [
+                "stretch",
+                "start",
+                "center",
+                "end"
+              ]
+            }
+          }
+        },
+        "boost": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "x": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 799
+            },
+            "y": {
+              "type": "integer",
+              "minimum": 52,
+              "maximum": 447
+            },
+            "width": {
+              "type": "integer",
+              "minimum": 40,
+              "maximum": 800
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 20,
+              "maximum": 396
+            },
+            "fontRole": {
+              "enum": [
+                "body",
+                "numeric",
+                "display"
+              ]
+            },
+            "colorRole": {
+              "enum": [
+                "primary",
+                "secondary",
+                "accent",
+                "warning",
+                "critical"
+              ]
+            },
+            "padding": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "top": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "right": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "bottom": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "left": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                }
+              }
+            },
+            "alignment": {
+              "enum": [
+                "stretch",
+                "start",
+                "center",
+                "end"
+              ]
+            }
+          }
+        },
+        "rpm": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "x": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 799
+            },
+            "y": {
+              "type": "integer",
+              "minimum": 52,
+              "maximum": 447
+            },
+            "width": {
+              "type": "integer",
+              "minimum": 40,
+              "maximum": 800
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 20,
+              "maximum": 396
+            },
+            "fontRole": {
+              "enum": [
+                "body",
+                "numeric",
+                "display"
+              ]
+            },
+            "colorRole": {
+              "enum": [
+                "primary",
+                "secondary",
+                "accent",
+                "warning",
+                "critical"
+              ]
+            },
+            "padding": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "top": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "right": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "bottom": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "left": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                }
+              }
+            },
+            "alignment": {
+              "enum": [
+                "stretch",
+                "start",
+                "center",
+                "end"
+              ]
+            }
+          }
+        },
+        "temperatures": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "x": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 799
+            },
+            "y": {
+              "type": "integer",
+              "minimum": 52,
+              "maximum": 447
+            },
+            "width": {
+              "type": "integer",
+              "minimum": 40,
+              "maximum": 800
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 20,
+              "maximum": 396
+            },
+            "fontRole": {
+              "enum": [
+                "body",
+                "numeric",
+                "display"
+              ]
+            },
+            "colorRole": {
+              "enum": [
+                "primary",
+                "secondary",
+                "accent",
+                "warning",
+                "critical"
+              ]
+            },
+            "padding": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "top": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "right": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "bottom": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "left": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                }
+              }
+            },
+            "alignment": {
+              "enum": [
+                "stretch",
+                "start",
+                "center",
+                "end"
+              ]
+            }
+          }
+        },
+        "pedal": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "x": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 799
+            },
+            "y": {
+              "type": "integer",
+              "minimum": 52,
+              "maximum": 447
+            },
+            "width": {
+              "type": "integer",
+              "minimum": 40,
+              "maximum": 800
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 20,
+              "maximum": 396
+            },
+            "fontRole": {
+              "enum": [
+                "body",
+                "numeric",
+                "display"
+              ]
+            },
+            "colorRole": {
+              "enum": [
+                "primary",
+                "secondary",
+                "accent",
+                "warning",
+                "critical"
+              ]
+            },
+            "padding": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "top": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "right": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "bottom": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "left": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                }
+              }
+            },
+            "alignment": {
+              "enum": [
+                "stretch",
+                "start",
+                "center",
+                "end"
+              ]
+            }
+          }
+        },
+        "brake": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "x": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 799
+            },
+            "y": {
+              "type": "integer",
+              "minimum": 52,
+              "maximum": 447
+            },
+            "width": {
+              "type": "integer",
+              "minimum": 40,
+              "maximum": 800
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 20,
+              "maximum": 396
+            },
+            "fontRole": {
+              "enum": [
+                "body",
+                "numeric",
+                "display"
+              ]
+            },
+            "colorRole": {
+              "enum": [
+                "primary",
+                "secondary",
+                "accent",
+                "warning",
+                "critical"
+              ]
+            },
+            "padding": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "top": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "right": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "bottom": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "left": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 40
+                }
+              }
+            },
+            "alignment": {
+              "enum": [
+                "stretch",
+                "start",
+                "center",
+                "end"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "viewport": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "padding": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "top": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 64
+            },
+            "right": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 64
+            },
+            "bottom": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 64
+            },
+            "left": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 64
+            }
+          }
+        },
+        "alignment": {
+          "enum": [
+            "start",
+            "center",
+            "end"
+          ]
+        }
+      }
+    },
+    "f1Grid": {
+      "type": "object",
+      "properties": {
+        "columns": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "rowWeights": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "minItems": 1,
+          "maxItems": 8
+        },
+        "inset": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 24
+        },
+        "gap": {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 16
+        },
+        "padding": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 16
+        },
+        "radius": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 24
+        },
+        "cells": {
+          "type": "object",
+          "properties": {
+            "shift": {
+              "$ref": "#/$defs/cell"
+            },
+            "rpm": {
+              "$ref": "#/$defs/cell"
+            },
+            "gear": {
+              "$ref": "#/$defs/cell"
+            },
+            "speed": {
+              "$ref": "#/$defs/cell"
+            },
+            "temperatures": {
+              "$ref": "#/$defs/cell"
+            },
+            "boost": {
+              "$ref": "#/$defs/cell"
+            },
+            "pedal": {
+              "$ref": "#/$defs/cell"
+            },
+            "brake": {
+              "$ref": "#/$defs/cell"
+            }
+          },
+          "required": [
+            "shift",
+            "rpm",
+            "gear",
+            "speed",
+            "temperatures",
+            "boost",
+            "pedal",
+            "brake"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "columns",
+        "rowWeights",
+        "inset",
+        "gap",
+        "padding",
+        "radius",
+        "cells"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "cell": {
+      "type": "object",
+      "properties": {
+        "column": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 7
+        },
+        "row": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 7
+        },
+        "columnSpan": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "rowSpan": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        }
+      },
+      "required": [
+        "column",
+        "row",
+        "columnSpan",
+        "rowSpan"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "not": {
+    "required": [
+      "f1",
+      "f1Grid"
+    ]
+  }
+}

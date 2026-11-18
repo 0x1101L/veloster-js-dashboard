@@ -1,0 +1,45 @@
+{
+  "fonts": {
+    "body": "fonts/Pretendard-Regular.otf",
+    "numeric": "fonts/Pretendard-Regular.otf",
+    "display": "fonts/Pretendard-Regular.otf"
+  },
+  "typography": {
+    "bodyScale": 100,
+    "numericScale": 96,
+    "displayScale": 105,
+    "gearSize": 128,
+    "combinedGearSize": 100
+  },
+  "spacing": {
+    "buttonPadding": 10,
+    "cardPadding": 14,
+    "settingsPadding": 28,
+    "pedalPadding": 20,
+    "f1SidePadding": 16,
+    "gearPadding": 16,
+    "gridGapX": 12,
+    "gridGapY": 10
+  },
+  "material": {
+    "style": "glass",
+    "radius": 24,
+    "topAlpha": 217,
+    "bottomAlpha": 102,
+    "highlight": "#D9FFFFFF",
+    "shadow": "#0F2859A0"
+  },
+  "backdrop": {
+    "style": "gradient",
+    "endColor": "#FFE5EFFF"
+  },
+  "mediaControls": "container",
+  "mediaFooter": {
+    "buttonBackground": false,
+    "containerVisible": true
+  },
+  "decorations": {
+    "overviewCardTopLine": false,
+    "navigationUnderline": "off"
+  }
+}

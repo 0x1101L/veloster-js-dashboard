@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "shell": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "position": {
+          "enum": [
+            "top",
+            "left"
+          ]
+        },
+        "navigationAppearance": {
+          "enum": ["buttons", "dock"],
+          "default": "buttons",
+          "description": "Dock is available with left navigation only."
+        },
+        "alignment": {
+          "enum": [
+            "start",
+            "center",
+            "end"
+          ]
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 80,
+          "maximum": 240
+        },
+        "padding": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "top": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 60
+            },
+            "right": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 40
+            },
+            "bottom": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 60
+            },
+            "left": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 40
+            }
+          }
+        },
+        "topPadding": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["top", "right", "bottom", "left"],
+          "properties": {
+            "top": {"type": "integer", "minimum": 0, "maximum": 24},
+            "right": {"type": "integer", "minimum": 0, "maximum": 40},
+            "bottom": {"type": "integer", "minimum": 0, "maximum": 24},
+            "left": {"type": "integer", "minimum": 0, "maximum": 40}
+          }
+        },
+        "mediaPadding": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 40
+        },
+        "screenCorner": {
+          "enum": ["circle", "squircle", "sqircle"],
+          "default": "circle",
+          "description": "Global corner shape for the display frame and rounded UI components. Sqircle is an alias for squircle."
+        },
+        "screenCornerRadius": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 240,
+          "default": 0,
+          "description": "Outer display frame radius in 800 by 480 design units."
+        },
+        "gap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16
+        },
+        "buttonHeight": {
+          "type": "integer",
+          "minimum": 24,
+          "maximum": 50
+        }
+      }
+    }
+  }
+}

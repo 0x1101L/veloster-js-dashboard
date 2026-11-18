@@ -1,0 +1,12 @@
+{
+  "material": {
+    "topAlpha": 175,
+    "bottomAlpha": 115,
+    "highlight": "#85FFFFFF",
+    "shadow": "#08222F40"
+  },
+  "surfaceStyles": {
+    "dataCard": "flat",
+    "settingsGroup": "flat"
+  }
+}

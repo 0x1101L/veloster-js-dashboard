@@ -1,0 +1,309 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:veloster:dashboard:theme:2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "displayName",
+    "tokens",
+    "layout",
+    "fonts",
+    "assets",
+    "typography",
+    "spacing",
+    "material"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 2
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,47}$"
+    },
+    "displayName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "tokens": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "background",
+        "panel",
+        "panelRaised",
+        "stroke",
+        "textPrimary",
+        "textSecondary",
+        "accent",
+        "warning",
+        "critical",
+        "unavailable",
+        "cutPanels"
+      ],
+      "properties": {
+        "background": {
+          "type": "string",
+          "pattern": "^#[Ff]{2}[0-9A-Fa-f]{6}$"
+        },
+        "panel": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        },
+        "panelRaised": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        },
+        "stroke": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        },
+        "textPrimary": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        },
+        "textSecondary": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        },
+        "accent": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        },
+        "warning": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        },
+        "critical": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        },
+        "unavailable": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        },
+        "cutPanels": {
+          "type": "boolean"
+        }
+      }
+    },
+    "layout": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "columns",
+            "rows"
+          ],
+          "properties": {
+            "columns": {
+              "const": 5
+            },
+            "rows": {
+              "const": 4
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "columns",
+            "rows"
+          ],
+          "properties": {
+            "columns": {
+              "const": 4
+            },
+            "rows": {
+              "const": 3
+            }
+          }
+        }
+      ]
+    },
+    "fonts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "body",
+        "numeric",
+        "display"
+      ],
+      "properties": {
+        "body": {
+          "type": "string",
+          "pattern": "^(|fonts/[A-Za-z0-9_.-]+\\.(ttf|otf))$"
+        },
+        "numeric": {
+          "type": "string",
+          "pattern": "^(|fonts/[A-Za-z0-9_.-]+\\.(ttf|otf))$"
+        },
+        "display": {
+          "type": "string",
+          "pattern": "^(|fonts/[A-Za-z0-9_.-]+\\.(ttf|otf))$"
+        }
+      }
+    },
+    "assets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "background"
+      ],
+      "properties": {
+        "background": {
+          "type": "string",
+          "pattern": "^(|backgrounds/[A-Za-z0-9_.-]+\\.(png|jpg|jpeg))$"
+        }
+      }
+    },
+    "typography": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bodyScale",
+        "numericScale",
+        "displayScale",
+        "gearSize",
+        "combinedGearSize"
+      ],
+      "properties": {
+        "bodyScale": {
+          "type": "integer",
+          "minimum": 60,
+          "maximum": 140
+        },
+        "numericScale": {
+          "type": "integer",
+          "minimum": 60,
+          "maximum": 140
+        },
+        "displayScale": {
+          "type": "integer",
+          "minimum": 60,
+          "maximum": 140
+        },
+        "gearSize": {
+          "type": "integer",
+          "minimum": 64,
+          "maximum": 220
+        },
+        "combinedGearSize": {
+          "type": "integer",
+          "minimum": 64,
+          "maximum": 160
+        }
+      }
+    },
+    "spacing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "buttonPadding",
+        "cardPadding",
+        "settingsPadding",
+        "pedalPadding",
+        "f1SidePadding",
+        "gearPadding",
+        "gridGapX",
+        "gridGapY"
+      ],
+      "properties": {
+        "buttonPadding": {
+          "type": "integer",
+          "minimum": 4,
+          "maximum": 24
+        },
+        "cardPadding": {
+          "type": "integer",
+          "minimum": 4,
+          "maximum": 24
+        },
+        "settingsPadding": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 40
+        },
+        "pedalPadding": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 28
+        },
+        "f1SidePadding": {
+          "type": "integer",
+          "minimum": 4,
+          "maximum": 24
+        },
+        "gearPadding": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "gridGapX": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "gridGapY": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        }
+      }
+    },
+    "material": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "style",
+        "radius",
+        "topAlpha",
+        "bottomAlpha",
+        "highlight",
+        "shadow",
+        "backdropEnd"
+      ],
+      "properties": {
+        "style": {
+          "enum": [
+            "legacy",
+            "flat",
+            "glass"
+          ]
+        },
+        "radius": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 36
+        },
+        "topAlpha": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "bottomAlpha": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "highlight": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        },
+        "shadow": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        },
+        "backdropEnd": {
+          "type": "string",
+          "pattern": "^#[Ff]{2}[0-9A-Fa-f]{6}$"
+        }
+      }
+    }
+  }
+}

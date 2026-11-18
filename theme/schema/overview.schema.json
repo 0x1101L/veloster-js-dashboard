@@ -1,0 +1,460 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "columns": {
+          "enum": [
+            4,
+            5
+          ]
+        },
+        "rows": {
+          "enum": [
+            3,
+            4
+          ]
+        }
+      }
+    },
+    "overview": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "columns": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6
+        },
+        "rows": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4
+        },
+        "padding": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "top": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 60
+            },
+            "right": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 60
+            },
+            "bottom": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 60
+            },
+            "left": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 60
+            }
+          }
+        },
+        "gapX": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30
+        },
+        "gapY": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30
+        },
+        "cards": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]{0,47}$"
+              },
+              "source": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 35
+              },
+              "page": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9
+              },
+              "column": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 5
+              },
+              "row": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 3
+              },
+              "columnSpan": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 6
+              },
+              "rowSpan": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4
+              }
+            },
+            "required": [
+              "id",
+              "source",
+              "page",
+              "column",
+              "row",
+              "columnSpan",
+              "rowSpan"
+            ]
+          }
+        }
+      }
+    },
+    "viewport": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "padding": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "top": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 64
+            },
+            "right": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 64
+            },
+            "bottom": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 64
+            },
+            "left": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 64
+            }
+          }
+        },
+        "alignment": {
+          "enum": [
+            "start",
+            "center",
+            "end"
+          ]
+        }
+      }
+    },
+    "cardDefaults": {
+      "$ref": "#/$defs/standardCard"
+    },
+    "cardTypes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tirePressure": {
+          "$ref": "#/$defs/tirePressureCard"
+        },
+        "dctTemperature": {
+          "$ref": "#/$defs/dctTemperatureCard"
+        },
+        "fuelEconomy": {
+          "$ref": "#/$defs/fuelEconomyCard"
+        },
+        "stability": {
+          "$ref": "#/$defs/stabilityCard"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "cardPadding": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "top": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "right": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "bottom": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "left": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        }
+      }
+    },
+    "standardCard": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "padding": {
+          "$ref": "#/$defs/cardPadding"
+        },
+        "titleSize": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 36
+        },
+        "valueSize": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 64
+        },
+        "titleValueGap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "titleUnitGap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "unitPosition": {
+          "enum": [
+            "topRight",
+            "bottomLeft",
+            "bottomRight"
+          ]
+        },
+        "unitSize": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 32
+        },
+        "valueUnitGap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "valueGaugeGap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "barHeight": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 20
+        },
+        "dialSize": {
+          "type": "integer",
+          "minimum": 12,
+          "maximum": 64
+        }
+      }
+    },
+    "tirePressureCard": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "padding": {
+          "$ref": "#/$defs/cardPadding"
+        },
+        "titleSize": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 36
+        },
+        "valueSize": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 64
+        },
+        "titleValueGap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "unitSize": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 32
+        },
+        "labelSize": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 32
+        },
+        "valueUnitGap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "rowGap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "labelValueGap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "columnGap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        }
+      }
+    },
+    "dctTemperatureCard": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "padding": {
+          "$ref": "#/$defs/cardPadding"
+        },
+        "titleSize": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 36
+        },
+        "valueSize": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 64
+        },
+        "titleValueGap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "labelSize": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 32
+        },
+        "rowGap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "labelValueGap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "valueGaugeGap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "gaugeWidth": {
+          "type": "integer",
+          "minimum": 16,
+          "maximum": 64
+        }
+      }
+    },
+    "fuelEconomyCard": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "padding": {
+          "$ref": "#/$defs/cardPadding"
+        },
+        "titleSize": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 36
+        },
+        "valueSize": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 64
+        },
+        "titleValueGap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "labelSize": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 32
+        },
+        "rowGap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "labelValueGap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        }
+      }
+    },
+    "stabilityCard": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "padding": {
+          "$ref": "#/$defs/cardPadding"
+        },
+        "titleSize": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 36
+        },
+        "valueSize": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 64
+        },
+        "titleValueGap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "labelSize": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 32
+        },
+        "rowGap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "labelValueGap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "overview": {
+    "columns": 3,
+    "rows": 3,
+    "padding": {
+      "top": 4,
+      "right": 8,
+      "bottom": 6,
+      "left": 10
+    },
+    "gapX": 8,
+    "gapY": 6,
+    "cards": [
+      {
+        "id": "speed",
+        "source": 7,
+        "page": 0,
+        "column": 0,
+        "row": 0,
+        "columnSpan": 2,
+        "rowSpan": 1
+      },
+      {
+        "id": "gear",
+        "source": 8,
+        "page": 0,
+        "column": 2,
+        "row": 0,
+        "columnSpan": 1,
+        "rowSpan": 1
+      },
+      {
+        "id": "rpm",
+        "source": 0,
+        "page": 0,
+        "column": 0,
+        "row": 1,
+        "columnSpan": 1,
+        "rowSpan": 1
+      },
+      {
+        "id": "coolant",
+        "source": 2,
+        "page": 0,
+        "column": 1,
+        "row": 1,
+        "columnSpan": 1,
+        "rowSpan": 1
+      },
+      {
+        "id": "dct",
+        "source": 1,
+        "page": 0,
+        "column": 2,
+        "row": 1,
+        "columnSpan": 1,
+        "rowSpan": 1
+      },
+      {
+        "id": "fuel",
+        "source": 34,
+        "page": 0,
+        "column": 0,
+        "row": 2,
+        "columnSpan": 2,
+        "rowSpan": 1
+      },
+      {
+        "id": "voltage",
+        "source": 26,
+        "page": 0,
+        "column": 2,
+        "row": 2,
+        "columnSpan": 1,
+        "rowSpan": 1
+      },
+      {
+        "id": "boost",
+        "source": 17,
+        "page": 1,
+        "column": 0,
+        "row": 0,
+        "columnSpan": 1,
+        "rowSpan": 1
+      },
+      {
+        "id": "intake",
+        "source": 29,
+        "page": 1,
+        "column": 1,
+        "row": 0,
+        "columnSpan": 1,
+        "rowSpan": 1
+      },
+      {
+        "id": "tires",
+        "source": 18,
+        "page": 1,
+        "column": 2,
+        "row": 0,
+        "columnSpan": 1,
+        "rowSpan": 1
+      }
+    ]
+  }
+}

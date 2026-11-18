@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "tokens": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "background": {
+          "type": "string",
+          "description": "Opaque screen color in #FFRRGGBB format.",
+          "pattern": "^#[Ff]{2}[0-9A-Fa-f]{6}$"
+        },
+        "panel": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        },
+        "panelRaised": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        },
+        "stroke": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        },
+        "textPrimary": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        },
+        "textSecondary": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        },
+        "accent": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        },
+        "warning": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        },
+        "critical": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        },
+        "unavailable": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        },
+        "cutPanels": {
+          "type": "boolean"
+        }
+      }
+    },
+    "backdrop": {
+      "type": "object",
+      "description": "Full screen backdrop, independent of surface material.",
+      "additionalProperties": false,
+      "properties": {
+        "style": {
+          "enum": [
+            "solid",
+            "gradient",
+            "legacy"
+          ]
+        },
+        "endColor": {
+          "$ref": "#/properties/tokens/properties/background"
+        },
+        "startColor": {
+          "type": "string",
+          "pattern": "^(background|#[Ff]{2}[0-9A-Fa-f]{6})$"
+        },
+        "endXPercent": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "default": 65
+        },
+        "scanlineColor": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{8}$"
+        }
+      }
+    },
+    "palette": {
+      "enum": [
+        "theme",
+        "componentDefaults"
+      ],
+      "default": "theme"
+    }
+  }
+}

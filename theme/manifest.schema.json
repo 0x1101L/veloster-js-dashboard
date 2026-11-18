@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:veloster:dashboard:theme:3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "displayName",
+    "files"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 3
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,47}$"
+    },
+    "displayName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "extends": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,47}$"
+    },
+    "files": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "colors": {
+          "type": "string",
+          "pattern": "^(layouts/)?[a-z][a-z0-9_]{0,47}\\.json$"
+        },
+        "fonts": {
+          "type": "string",
+          "pattern": "^(layouts/)?[a-z][a-z0-9_]{0,47}\\.json$"
+        },
+        "components": {
+          "type": "string",
+          "pattern": "^(layouts/)?[a-z][a-z0-9_]{0,47}\\.json$"
+        },
+        "shell": {
+          "type": "string",
+          "pattern": "^(layouts/)?[a-z][a-z0-9_]{0,47}\\.json$"
+        },
+        "f1": {
+          "type": "string",
+          "pattern": "^(layouts/)?[a-z][a-z0-9_]{0,47}\\.json$"
+        },
+        "overview": {
+          "type": "string",
+          "pattern": "^(layouts/)?[a-z][a-z0-9_]{0,47}\\.json$"
+        },
+        "gauges": {
+          "type": "string",
+          "pattern": "^(layouts/)?[a-z][a-z0-9_]{0,47}\\.json$"
+        },
+        "graphs": {
+          "type": "string",
+          "pattern": "^(layouts/)?[a-z][a-z0-9_]{0,47}\\.json$"
+        },
+        "performance": {
+          "type": "string",
+          "pattern": "^(layouts/)?[a-z][a-z0-9_]{0,47}\\.json$"
+        },
+        "settings": {
+          "type": "string",
+          "pattern": "^(layouts/)?[a-z][a-z0-9_]{0,47}\\.json$"
+        },
+        "diagnostics": {
+          "type": "string",
+          "pattern": "^(layouts/)?[a-z][a-z0-9_]{0,47}\\.json$"
+        }
+      }
+    }
+  }
+}

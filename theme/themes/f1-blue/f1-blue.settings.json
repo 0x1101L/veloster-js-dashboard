@@ -1,0 +1,54 @@
+{
+  "name": "f1-blue",
+  "like": "neutral",
+  "mode": "light-only",
+  "settings": [
+    {
+      "thing": "corners",
+      "value": "square",
+      "source": "dial"
+    },
+    {
+      "thing": "spacing",
+      "value": "compact",
+      "source": "dial"
+    },
+    {
+      "thing": "accent",
+      "value": "#004CFF",
+      "source": "dial"
+    },
+    {
+      "thing": "neutral",
+      "value": "#64748B",
+      "source": "dial"
+    },
+    {
+      "thing": "surfaces",
+      "value": "flat",
+      "source": "dial"
+    },
+    {
+      "thing": "buttons",
+      "value": "solid",
+      "source": "dial"
+    },
+    {
+      "thing": "--color-background-body",
+      "value": "#FFFFFF",
+      "source": "token"
+    },
+    {
+      "thing": "--color-background-surface",
+      "value": "#F2F6FF",
+      "source": "token"
+    },
+    {
+      "thing": "--color-accent",
+      "value": "#004CFF",
+      "source": "token"
+    }
+  ],
+  "palette": "911db0c6790b5db635de1728de8a0c938252b9cb8a36757255f224aad4b78896",
+  "lifted": []
+}

@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "fonts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "body": {
+          "type": "string",
+          "pattern": "^(|fonts/[A-Za-z0-9_.-]+\\.(ttf|otf))$"
+        },
+        "numeric": {
+          "type": "string",
+          "pattern": "^(|fonts/[A-Za-z0-9_.-]+\\.(ttf|otf))$"
+        },
+        "display": {
+          "type": "string",
+          "pattern": "^(|fonts/[A-Za-z0-9_.-]+\\.(ttf|otf))$"
+        }
+      }
+    },
+    "typography": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bodyScale": {
+          "type": "integer",
+          "minimum": 60,
+          "maximum": 140
+        },
+        "numericScale": {
+          "type": "integer",
+          "minimum": 60,
+          "maximum": 140
+        },
+        "displayScale": {
+          "type": "integer",
+          "minimum": 60,
+          "maximum": 140
+        },
+        "gearSize": {
+          "type": "integer",
+          "minimum": 64,
+          "maximum": 220
+        },
+        "combinedGearSize": {
+          "type": "integer",
+          "minimum": 64,
+          "maximum": 160
+        }
+      }
+    },
+    "weights": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "body": {
+          "enum": [
+            "auto",
+            "regular",
+            "bold"
+          ]
+        },
+        "numeric": {
+          "enum": [
+            "auto",
+            "regular",
+            "bold"
+          ]
+        },
+        "display": {
+          "enum": [
+            "auto",
+            "regular",
+            "bold"
+          ]
+        }
+      }
+    }
+  }
+}
