@@ -8,15 +8,16 @@
   },
   "surfaceStyles": {
     "dataCard": "flat",
-    "gearCard": "glass",
+    "gearCard": "flat",
     "settingsGroup": "flat",
     "mediaContainer": "flat",
     "navigationDock": "flat"
   },
   "surfaceBlur": {
-    "dataCard": 24,
-    "settingsGroup": 24,
-    "mediaContainer": 24,
-    "navigationDock": 24
+    "dataCard": 10,
+    "gearCard": 10,
+    "settingsGroup": 10,
+    "mediaContainer": 16,
+    "navigationDock": 12
   }
 }

@@ -91,12 +91,14 @@ public final class ThemeManifestTest {
             check(!render.footerButtonBackground()&&render.footerContainerVisible()&&!render.footerUsesLegacyIcons(),
                   spec.id+" keeps labeled buttons on a shared background even after display overrides");
         }
-        for(SurfaceRole role:new SurfaceRole[]{SurfaceRole.DATA_CARD,SurfaceRole.SETTINGS_GROUP,
-                                               SurfaceRole.MEDIA_CONTAINER,SurfaceRole.NAVIGATION_DOCK})
-            check(optics.blurFor(role)==24&&"flat".equals(optics.materialFor(role).style),"Optics blurs behind "+role);
-        check(optics.materialFor(SurfaceRole.GEAR_CARD).glass()&&(optics.panel>>>24)==0x91
+        for(SurfaceRole role:new SurfaceRole[]{SurfaceRole.DATA_CARD,SurfaceRole.GEAR_CARD,SurfaceRole.SETTINGS_GROUP})
+            check(optics.blurFor(role)==10&&"flat".equals(optics.materialFor(role).style),"Optics keeps "+role+" subdued");
+        check(optics.blurFor(SurfaceRole.MEDIA_CONTAINER)==16&&optics.blurFor(SurfaceRole.NAVIGATION_DOCK)==12
+              &&"flat".equals(optics.materialFor(SurfaceRole.MEDIA_CONTAINER).style)
+              &&"flat".equals(optics.materialFor(SurfaceRole.NAVIGATION_DOCK).style)
+              &&(optics.panel>>>24)==0x91
               &&!f12.shell().dock()&&f12.blurFor(SurfaceRole.DATA_CARD)==0,
-              "Optics changes container opacity and blur without changing the parent");
+              "Optics separates subdued content surfaces from lightly blurred control containers");
         check(optics.background==f12.background&&optics.backdrop.mode==f12.backdrop.mode
               &&optics.backdrop.endColor==f12.backdrop.endColor&&optics.backgroundAsset.equals(f12.backgroundAsset)
               &&optics.defaultWallpaperId().equals(f12.defaultWallpaperId())&&optics.wallpapers().size()==4

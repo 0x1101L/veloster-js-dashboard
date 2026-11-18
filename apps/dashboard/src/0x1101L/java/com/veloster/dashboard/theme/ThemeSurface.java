@@ -192,7 +192,6 @@ public final class ThemeSurface {
             blur(c,theme,theme.blurFor(role),x,y,w,h,radius);
             gradient(c,theme,x,y,w,h,radius,(m.topAlpha<<24)|(color&0xffffff),(m.bottomAlpha<<24)|(color&0xffffff));
             edge(c,theme,x,y,w,h,radius,m.highlight);
-            edge(c,theme,x+1.5f,y+1.5f,w-3,h-3,Math.max(0,radius-1.5f),stroke);
         }else{blur(c,theme,theme.blurFor(role),x,y,w,h,radius);fill(c,theme,x,y,w,h,radius,color);edge(c,theme,x,y,w,h,radius,stroke);}
         return true;
     }
