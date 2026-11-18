@@ -19,6 +19,7 @@ public final class ThemeSurface {
     private int cachedBackdropStart;
     private Shader backdropGradient;
     private final Paint paint=new Paint(3);
+    private final LiquidGlassEngine liquidGlassEngine=new LiquidGlassEngine();
     private final Path legacyShape=new Path();
     private final Path componentShape=new Path();
     private final Paint cornerPaint=new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -116,7 +117,7 @@ public final class ThemeSurface {
         mask.close();
     }
 
-    private void blur(Canvas c,ThemeSpec theme,int strength,float x,float y,float w,float h,float radius){
+    void blur(Canvas c,ThemeSpec theme,int strength,float x,float y,float w,float h,float radius){
         if(strength==0||frameWidth<=0||frameHeight<=0)return;
         BitmapShader shader=blurShaders.get(strength);
         if(shader==null){
@@ -159,17 +160,17 @@ public final class ThemeSurface {
             }
         }
     }
-    private void fill(Canvas c,ThemeSpec theme,float x,float y,float w,float h,float radius,int color){
+    void fill(Canvas c,ThemeSpec theme,float x,float y,float w,float h,float radius,int color){
         paint.setShader(null);paint.setStyle(Paint.Style.FILL);paint.setColor(color);
         roundRect(c,theme,new RectF(x,y,x+w,y+h),radius,radius,paint);
     }
-    private void gradient(Canvas c,ThemeSpec theme,float x,float y,float w,float h,float radius,int top,int bottom){
+    void gradient(Canvas c,ThemeSpec theme,float x,float y,float w,float h,float radius,int top,int bottom){
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(0xffffffff);
         paint.setShader(new LinearGradient(x,y,x+w*.65f,y+h,top,bottom,Shader.TileMode.CLAMP));
         roundRect(c,theme,new RectF(x,y,x+w,y+h),radius,radius,paint);paint.setShader(null);
     }
-    private void edge(Canvas c,ThemeSpec theme,float x,float y,float w,float h,float radius,int color){
+    void edge(Canvas c,ThemeSpec theme,float x,float y,float w,float h,float radius,int color){
         paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1);paint.setColor(color);
         roundRect(c,theme,new RectF(x,y,x+w,y+h),radius,radius,paint);paint.setStyle(Paint.Style.FILL);
     }
@@ -188,10 +189,9 @@ public final class ThemeSurface {
         boolean sidebarButton=role==SurfaceRole.NAVIGATION_BUTTON&&theme.shell().left();
         float radius=Math.min(m.radius,Math.min(w,h)/(sidebarButton?4:2));
         if(m.glass()){
-            fill(c,theme,x,y+4,w,h,radius,m.shadow);
-            blur(c,theme,theme.blurFor(role),x,y,w,h,radius);
-            gradient(c,theme,x,y,w,h,radius,(m.topAlpha<<24)|(color&0xffffff),(m.bottomAlpha<<24)|(color&0xffffff));
-            edge(c,theme,x,y,w,h,radius,m.highlight);
+            liquidGlassEngine.drawGlass(this,c,theme,role,m,x,y,w,h,radius,color);
+        }else if(theme.usesLiquidGlass()){
+            liquidGlassEngine.drawFlat(this,c,theme,role,x,y,w,h,radius,color,stroke);
         }else{blur(c,theme,theme.blurFor(role),x,y,w,h,radius);fill(c,theme,x,y,w,h,radius,color);edge(c,theme,x,y,w,h,radius,stroke);}
         return true;
     }

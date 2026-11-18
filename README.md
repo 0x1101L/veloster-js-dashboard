@@ -34,6 +34,8 @@ Standard Overview cards use base sizes 12 for titles, 24 for values, and 10 for 
 
 The [theme engine](docs/theme_engine_v3.md#역할별-표면-재질) reads surface styles, card top lines, navigation underlines and button fills from each theme's `components.json`. Themes can opt into a shared left dock, grouped media controls and cached blur inside containers. `colors.json` defines the palette and full screen backdrop. The backdrop base and gradient stops must be opaque; container fills can be translucent. The overview pager follows the number of pages in the layout.
 
+Themes using Glass offer five transparency and five blur levels in Settings → UI settings → Liquid Glass, plus highlight intensity. Reduced transparency disables blur; other levels respect each surface's configured blur strength. Preferences survive theme changes and view recreation.
+
 F1 uses matching value text sizes in the left and right slots regardless of whether they show speed, RPM or gear; the center slot keeps its larger emphasis. If either side needs to fit a long value, both use the smaller fitting size. F1 display options are shared across themes. Settings → F1 settings offers independent continuous/segmented pedal and brake bars, plus all six left-to-right speed/RPM/gear orders. Settings editors use the same page layout. [Behavior and CarPlay background research](docs/common_display_settings.md).
 
 

@@ -51,8 +51,11 @@ public final class GlassOpticsProbe extends DashboardDesktop {
    t.hscanJs(0xc7,0x04,new byte[]{0,0,0,0,0,0x10,0,0},1000);
   }
   Activity a=new Activity();
-  LanguageSettings.save(a,"en");
-  a.getSharedPreferences("dashboard_theme",0).edit().putString("theme_id",id).apply();
+  LanguageSettings.save(a,System.getProperty("preview.language","en"));
+  android.content.SharedPreferences.Editor themePrefs=a.getSharedPreferences("dashboard_theme",0).edit().putString("theme_id",id);
+  themePrefs.putInt("liquid_glass_transparency",Integer.getInteger("glass.transparency",0));
+  themePrefs.putInt("liquid_glass_blur",Integer.getInteger("glass.blur",1));
+  themePrefs.putInt("liquid_glass_highlight",Integer.getInteger("glass.highlight",1)).apply();
   a.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("dashboard_page",1).putInt("menu_icon_mode",1).apply();
   DashboardView v=create(a,profile);
   check(id.equals(theme(v).id),"test theme loaded: "+id);
@@ -162,6 +165,41 @@ public final class GlassOpticsProbe extends DashboardDesktop {
   output=Paths.get(args[0]);
   javax.swing.SwingUtilities.invokeAndWait(()->{try{
    PreviewProfile normal=PreviewProfile.ALL[0],wide=PreviewProfile.ALL[3];
+   if(args.length>1&&"settings-ui".equals(args[1])){
+    DashboardView v=view("f1_2_optics",normal);
+    openSettingsPage(v,9);save(draw(v),"settings-ui-group");
+    tapEditorLabel(v,"Liquid Glass");save(draw(v),"settings-liquid-glass");
+    openSettingsPage(v,18);save(draw(v),"settings-transparency");
+    openSettingsPage(v,19);save(draw(v),"settings-blur");
+    return;
+   }
+   if(args.length>1&&"glass-settings".equals(args[1])){
+    String[] names={"glass-default","glass-transparency-reduced","glass-more-transparent","glass-very-transparent","glass-blur-off","glass-blur-very-high","glass-highlight-subtle","glass-highlight-strong"};
+    int[][] options={{0,1,1},{1,1,1},{3,1,1},{2,1,1},{0,3,1},{0,4,1},{0,1,0},{0,1,2}};
+    java.awt.image.BufferedImage baseline=null;
+    for(int i=0;i<names.length;i++){
+     System.setProperty("glass.transparency",Integer.toString(options[i][0]));
+     System.setProperty("glass.blur",Integer.toString(options[i][1]));
+     System.setProperty("glass.highlight",Integer.toString(options[i][2]));
+     DashboardView v=view("f1_2_optics",normal);Canvas frame=draw(v);save(frame,names[i]);
+     ThemeSpec actual=theme(v);
+     check(actual.liquidGlassTransparencyLevel()==options[i][0]&&actual.liquidGlassBlurLevel()==options[i][1]
+       &&actual.liquidGlassHighlightLevel()==options[i][2],names[i]+" settings reach the renderer");
+     java.awt.image.BufferedImage image=javax.imageio.ImageIO.read(output.resolve(names[i]+".png").toFile());
+     if(i==0)baseline=image;
+     else{int changed=0;for(int y=0;y<image.getHeight();y++)for(int x=0;x<image.getWidth();x++)if(image.getRGB(x,y)!=baseline.getRGB(x,y))changed++;
+      System.out.println(names[i]+": "+changed+" pixels differ from default");}
+    }
+    java.awt.image.BufferedImage sheet=new java.awt.image.BufferedImage(1640,2090,java.awt.image.BufferedImage.TYPE_INT_RGB);
+    java.awt.Graphics2D g=sheet.createGraphics();g.setColor(java.awt.Color.WHITE);g.fillRect(0,0,sheet.getWidth(),sheet.getHeight());
+    for(int i=0;i<names.length;i++){
+     java.awt.image.BufferedImage image=javax.imageio.ImageIO.read(output.resolve(names[i]+".png").toFile());
+     int x=20+(i%2)*810,y=20+(i/2)*515;g.setColor(java.awt.Color.BLACK);g.setFont(new java.awt.Font("SansSerif",java.awt.Font.BOLD,18));g.drawString(names[i],x,y+20);
+     g.drawImage(image,x,y+30,800,480,null);
+    }
+    g.dispose();javax.imageio.ImageIO.write(sheet,"png",output.resolve("glass-settings-comparison.png").toFile());
+    return;
+   }
    if(args.length>1&&"no-blur".equals(args[1])){
     DashboardView v=view(TRIAL,normal);
     check(theme(v).blurFor(ThemeSpec.SurfaceRole.DATA_CARD)==0,"blur control uses no blur");
@@ -225,6 +263,9 @@ public class MediaControl {
 
 def main():
     output = HERE / "artifacts" / "f1-2-optics"
+    glass_material = len(sys.argv)>1 and sys.argv[1]=="--glass-settings-glass"
+    if glass_material:
+        output = output / "glass-material"
     output.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="glass-optics-") as temp:
         folder = Path(temp)
@@ -243,8 +284,22 @@ def main():
         assets = folder / "assets"
         shutil.copytree(ROOT / "apps/dashboard/src/0x1101L/assets", assets)
         theme = assets / "themes/f1_2_optics"
+        if glass_material:
+            components=theme / "components.json"
+            config=json.loads(components.read_text())
+            config["surfaceStyles"]={role:"glass" for role in config["surfaceStyles"]}
+            components.write_text(json.dumps(config))
         command = [java, "-Djava.awt.headless=true", "-Ddashboard.assets=" + str(assets),
                    "-cp", str(classes), "GlassOpticsProbe", str(output)]
+        if len(sys.argv)>1 and sys.argv[1]=="--glass-settings-ui":
+            subprocess.run([command[0],"-Djava.awt.headless=true","-Ddashboard.assets="+str(assets),
+                            "-Dpreview.language=ko","-cp",str(classes),"GlassOpticsProbe",str(output),"settings-ui"],check=True)
+            print("PASS Liquid Glass settings UI rendered by the Java dashboard renderer. Images:",output)
+            return
+        if len(sys.argv)>1 and sys.argv[1] in ("--glass-settings","--glass-settings-glass"):
+            subprocess.run([*command,"glass-settings"],check=True)
+            print("PASS Liquid Glass setting variants rendered by the Java dashboard renderer. Images:",output)
+            return
         subprocess.run(command, check=True)
         components = theme / "components.json"
         config = json.loads(components.read_text())

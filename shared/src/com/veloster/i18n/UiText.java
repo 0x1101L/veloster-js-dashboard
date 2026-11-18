@@ -56,6 +56,7 @@ public final class UiText {
         EN.put("HUD 정보","HUD information");
         EN.put("HUD 출력","HUD output");
         EN.put("JS 시동 시 자동 진단 요청 시도","JS attempts diagnostic requests when ignition is on");
+        EN.put("Liquid Glass","Liquid Glass");
         EN.put("MICOM 서비스","MICOM service");
         EN.put("Mono","Mono");
         EN.put("N 계기판","N Dashboard");
@@ -108,6 +109,7 @@ public final class UiText {
         EN.put("값","Value");
         EN.put("값·상태·수신 횟수와 경과를 표시합니다. 보관값은 현재 실측값이 아닙니다.","Values, status, receive counts and ages are shown. Held values are not current measurements.");
         EN.put("강제 재시작","Restart head unit");
+        EN.put("강하게","Strong");
         EN.put("개발자 설정","Developer options");
         EN.put("검색 요청 실패: ","Discovery request failed: ");
         EN.put("검색 종료","Stop discovery");
@@ -152,6 +154,7 @@ public final class UiText {
         EN.put("기준본 해시 일치","Reference hash matches");
         EN.put("꺼지는 중","Turning off");
         EN.put("꺼짐","Off");
+        EN.put("낮음","Low");
         EN.put("내 앱","My Apps");
         EN.put("내 앱 / My Apps","My Apps");
         EN.put("내 앱 열기 · 길게 끌어서 위치 변경 / My Apps","Open My Apps; drag to move");
@@ -168,11 +171,14 @@ public final class UiText {
         EN.put("내비게이션 재시작","Restart head unit");
         EN.put("내비게이션 재시작 요청을 전달했습니다.","Head-unit restart requested.");
         EN.put("냉각수 온도","Coolant temperature");
+        EN.put("높음","High");
         EN.put("눌러서 N 계기판과 앱 목록 열기","Tap to open N Dashboard and your app list");
         EN.put("다른 칸과 위치 바꾸기","Swap with another slot");
         EN.put("다음","Next");
         EN.put("닫기","Close");
         EN.put("대기 중","Waiting");
+        EN.put("더 투명하게","More transparent");
+        EN.put("덜 투명하게","Less transparent");
         EN.put("돌아가기","Back");
         EN.put("뒤 오른쪽","Rear right");
         EN.put("뒤 오른쪽 공기압","Rear-right pressure");
@@ -190,6 +196,8 @@ public final class UiText {
         EN.put("마지막 초기화 기록","Last initialization record");
         EN.put("막대","Bar");
         EN.put("만료","Expired");
+        EN.put("매우 높음","Very high");
+        EN.put("매우 투명하게","Very transparent");
         EN.put("메뉴 위치","Menu location");
         EN.put("메뉴 표시 방식","Menu display");
         EN.put("메서드 확인","Method found");
@@ -247,6 +255,7 @@ public final class UiText {
         EN.put("브레이크 바","Brake bar");
         EN.put("브레이크 압력","Brake pressure");
         EN.put("브레이크 압력 bar","Brake pressure bar");
+        EN.put("블러 강도","Background blur");
         EN.put("블루투스 기기 검색·페어링","Bluetooth discovery and pairing");
         EN.put("블루투스 꺼짐 · 차량 설정에서 먼저 켜주세요.","Bluetooth is off. Turn it on in the vehicle settings first.");
         EN.put("블루투스 연결 설정","Bluetooth settings");
@@ -361,6 +370,7 @@ public final class UiText {
         EN.put("위치를 바꿀 칸","Choose a slot to swap");
         EN.put("유효","Valid");
         EN.put("유효·무효는 디코더 판정입니다. 배터리 전압·가속도는 실차 대조가 필요합니다.","Validity is a decoder result. Battery voltage and acceleration need vehicle comparison.");
+        EN.put("은은하게","Subtle");
         EN.put("음악","Music");
         EN.put("음악 제어 요청을 보낼 수 없습니다","Could not send the playback command");
         EN.put("응답 해석만 구현 · 자동 진단 요청 없음","Response decoding only · No automatic diagnostic requests");
@@ -412,6 +422,7 @@ public final class UiText {
         EN.put("주변 기기를 검색합니다.","Searching for nearby devices.");
         EN.put("주행가능","Range");
         EN.put("주행가능거리","Driving range");
+        EN.put("줄임","Reduced");
         EN.put("지금","Now");
         EN.put("진단","Diagnostics");
         EN.put("진단 화면의 탭 전환은 차량 요청이나 송신을 실행하지 않습니다.","Switching diagnostic tabs does not send vehicle requests or messages.");
@@ -454,6 +465,8 @@ public final class UiText {
         EN.put("테마 기본값","Theme default");
         EN.put("테마 미리보기","Theme preview");
         EN.put("토크 (계산)","Torque (calc.)");
+        EN.put("투명도","Transparency");
+        EN.put("투명도 감소","Reduce transparency");
         EN.put("파일 선택기를 열 수 없습니다","Could not open the file picker");
         EN.put("파일 없음","File not found");
         EN.put("파일 읽기 불가","File unreadable");
@@ -472,9 +485,11 @@ public final class UiText {
         EN.put("페이지 메뉴","Page menu");
         EN.put("표시 항목","Signal");
         EN.put("표시할 설치 앱이 없습니다. 앱 설치 뒤 다시 열거나 목록 편집에서 선택하세요.","No installed apps to show. Reopen after installing an app or select one in Edit app list.");
+        EN.put("표준","Standard");
         EN.put("프로세스 로드","Process mapping");
         EN.put("프로세스 목록 접근 제한 · 미확인","Process list restricted · Unknown");
         EN.put("하단 미디어 바","Bottom media bar");
+        EN.put("하이라이트","Highlight");
         EN.put("핫스팟 끄기 확인 실패. 백업을 보존했습니다. 다시 복구하세요.","Could not confirm hotspot shutdown. Backup retained; retry restoration.");
         EN.put("핫스팟 요청 실패/시간 초과. 성공으로 판정하지 않습니다. 원상복구하세요.","Hotspot request failed or timed out. Success is not confirmed; restore the original settings.");
         EN.put("항상 보기","Always show");
@@ -496,6 +511,7 @@ public final class UiText {
         EN.put("활성 시험 백업이 없습니다. 기존 핫스팟 접속정보는 차량 설정에서 확인하세요.","No active test backup. Check existing hotspot credentials in the vehicle settings.");
         EN.put("횟수 · 경과","Count · age");
         EN.put("횡가속","Lateral G");
+        EN.put("효과 설정","Effects");
         EN.put("후방 카메라","Rear camera");
         EN.put("후보","Candidate");
         EN.put("흡기 온도","Intake temperature");
@@ -508,6 +524,7 @@ public final class UiText {
         KO.put("DCT 관측","DCT 관측");
         KO.put("ESC 사용 상태","ESC 사용 상태");
         KO.put("HAL 펌웨어 초기화 완료","HAL 펌웨어 초기화 완료");
+        KO.put("Liquid Glass","Liquid Glass");
         KO.put("TCS · ESC · ABS 상태","TCS · ESC · ABS 상태");
         KO.put("TCS 사용 상태","TCS 사용 상태");
         KO.put("Wi-Fi","Wi-Fi");
@@ -520,19 +537,27 @@ public final class UiText {
         KO.put("가장자리 버튼 + 알림 / Floating + notification","가장자리 버튼 + 알림");
         KO.put("값","값");
         KO.put("값·상태·수신 횟수와 경과를 표시합니다. 보관값은 현재 실측값이 아닙니다.","값·상태·수신 횟수와 경과를 표시합니다. 보관값은 현재 실측값이 아닙니다.");
+        KO.put("강하게","강하게");
         KO.put("관측 방식","관측 방식");
         KO.put("권한 거부·기록 없음은 미확인으로 표시됩니다.","권한 거부·기록 없음은 미확인으로 표시됩니다.");
         KO.put("권한 거부·버퍼 덮어쓰기·기록 없음은 미확인으로 표시됩니다.","권한 거부·버퍼 덮어쓰기·기록 없음은 미확인으로 표시됩니다.");
         KO.put("기어","기어");
+        KO.put("낮음","낮음");
         KO.put("내 앱 / My Apps","내 앱");
         KO.put("내 앱 열기 · 길게 끌어서 위치 변경 / My Apps","내 앱 열기 · 끌어서 위치 변경");
+        KO.put("높음","높음");
+        KO.put("더 투명하게","더 투명하게");
+        KO.put("덜 투명하게","덜 투명하게");
         KO.put("뒤 오른쪽","뒤 오른쪽");
         KO.put("뒤 왼쪽","뒤 왼쪽");
         KO.put("로그 기록만으로는 미확정","로그 기록만으로는 미확정");
         KO.put("로그 시각","로그 시각");
         KO.put("로컬 이름·HCD 선택·fwcfg 결과만 추출하며 원문 로그는 표시하지 않습니다.","로컬 이름·HCD 선택·fwcfg 결과만 추출하며 원문 로그는 표시하지 않습니다.");
         KO.put("마지막 초기화 기록","마지막 초기화 기록");
+        KO.put("매우 높음","매우 높음");
+        KO.put("매우 투명하게","매우 투명하게");
         KO.put("배터리","배터리");
+        KO.put("블러 강도","블러 강도");
         KO.put("사용 안 함 / Off","사용 안 함");
         KO.put("선택된 HCD","선택된 HCD");
         KO.put("설명 / Help","설명");
@@ -548,7 +573,9 @@ public final class UiText {
         KO.put("연결","연결");
         KO.put("온도는 기존 DCT 진단 응답과 HSCAN 수신만 표시합니다.","온도는 기존 DCT 진단 응답과 HSCAN 수신만 표시합니다.");
         KO.put("온도는 기존 진단 응답만 표시합니다.","온도는 기존 진단 응답만 표시합니다.");
+        KO.put("은은하게","은은하게");
         KO.put("저장 / Save","저장");
+        KO.put("줄임","줄임");
         KO.put("차량","차량");
         KO.put("초기화 결과","초기화 결과");
         KO.put("초기화 기록 불완전","초기화 기록 불완전");
@@ -561,10 +588,15 @@ public final class UiText {
         KO.put("컨트롤러","컨트롤러");
         KO.put("컨트롤러·HCD·fwcfg 결과만 추리며 원문 로그는 표시하지 않습니다.","컨트롤러·HCD·fwcfg 결과만 추리며 원문 로그는 표시하지 않습니다.");
         KO.put("켜면 재부팅 뒤에도 작은 바로가기만 복원합니다. 앱 화면은 자동으로 열지 않습니다. 가장자리 버튼은 끌어서 옮길 수 있습니다.\n\n시스템이 다른 앱 위 표시를 허용하지 않으면 알림만 유지합니다. 순정 화면에서 알림을 열 수 없는 경우에는 별도 메뉴 진입점이 필요합니다. 강제 종료하면 직접 앱을 다시 열 때까지 자동 복원이 중지될 수 있습니다.\n\nWhen enabled, reboot restores only the shortcut. Drag the edge button to move it. If overlays are denied, a notification remains. If the factory UI hides notifications too, use a separate menu entry. Force-stop may block restoration until My Apps is opened again.","켜면 재부팅 뒤에도 작은 바로가기만 복원합니다. 앱 화면은 자동으로 열지 않습니다. 가장자리 버튼은 끌어서 옮길 수 있습니다.\n\n시스템이 다른 앱 위 표시를 허용하지 않으면 알림만 유지합니다. 순정 화면에서 알림을 열 수 없는 경우에는 별도 메뉴 진입점이 필요합니다. 강제 종료하면 직접 앱을 다시 열 때까지 자동 복원이 중지될 수 있습니다.");
+        KO.put("투명도","투명도");
+        KO.put("투명도 감소","투명도 감소");
         KO.put("퍼포먼스","퍼포먼스");
         KO.put("펌웨어 초기화 실패","펌웨어 초기화 실패");
+        KO.put("표준","표준");
+        KO.put("하이라이트","하이라이트");
         KO.put("현재 활성 상태","현재 활성 상태");
         KO.put("횟수 · 경과","횟수 · 경과");
+        KO.put("효과 설정","효과 설정");
     }
     private UiText() {}
     public static String selection(String selected){return "ko".equals(selected)||"en".equals(selected)?selected:"auto";}

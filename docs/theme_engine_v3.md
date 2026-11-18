@@ -43,7 +43,9 @@ v2 catalog와 v2 단일 manifest는 명시적 호환 경로로 읽으며 레거�
 | `panel` | 게이지·그래프·퍼포먼스·진단 본문 패널, 하단 미디어 바 배경 |
 | `settingsGroup` | 설정 목록의 행 묶음 배경 |
 
-`flat`은 공통 단색 채움과 단일 테두리, `glass`는 공통 알파 그라데이션·하이라이트·안쪽 테두리·그림자를 사용한다. 같은 스타일은 역할에 관계없이 같은 `material.radius`와 재질 값을 사용한다. 반경은 박스 크기에 맞게 제한한다. 테마 색상과 선택 강조, 콘텐츠 및 터치 영역은 각 요소가 유지한다. `legacy`는 역할의 기존 그리기 방식을 사용한다. `f1Grid.radius`는 레거시 F1 카드와 하단 바의 모서리에 사용된다.
+`flat`은 공통 단색 채움과 단일 테두리, `glass`는 Liquid Glass 협력 엔진의 알파 그라데이션·단일 하이라이트·그림자를 사용한다. 같은 스타일은 역할에 관계없이 같은 `material.radius`와 재질 값을 사용한다. 반경은 박스 크기에 맞게 제한한다. 테마 색상과 선택 강조, 콘텐츠 및 터치 영역은 각 요소가 유지한다. `legacy`는 역할의 기존 그리기 방식을 사용한다. `f1Grid.radius`는 레거시 F1 카드와 하단 바의 모서리에 사용된다.
+
+`ThemeSurface`는 역할 재질을 선택하고 `glass` 표면을 전용 `LiquidGlassEngine`에 위임한다. 엔진은 공통 테마 엔진과 같은 `ThemeSpec`·캔버스·역할 계약을 사용하며 별도 렌더링 스택을 만들지 않는다. Glass 재질을 하나라도 사용하는 테마에서는 UI 설정에 투명도, 블러 강도, 하이라이트 단계를 표시한다. 투명도는 감소·덜 투명·표준·더 투명·매우 투명 다섯 단계이며, 블러는 끔·낮음·표준·높음·매우 높음이다. 블러는 테마가 해당 역할에 지정한 강도에 0·0.5·1·1.7·3배를 적용하고 36으로 제한하므로, 테마의 기본 강도가 0인 역할은 흐려지지 않는다. 투명도 감소는 기존처럼 블러를 끄고 표면을 불투명하게 한다. 선택값은 `ThemeSettingsStore`에 저장되고, Glass 재질과 해당 테마의 반투명 flat 표면에 적용된다. Flat처럼 Glass 역할이 없는 테마에는 이 설정을 숨기며 기존 렌더링 경로를 유지한다.
 
 `components.json`의 `mediaFooter`는 하단 미디어 바 전용이다. `buttonBackground`는 개별 버튼의 배경을, `containerVisible`은 바 전체의 공통 배경을 각각 켜거나 끈다. 버튼의 레이블·재생 기호, 곡 정보, 앨범아트, 터치 영역과 바 표시 정책은 유지한다. Liquid Glass는 `{"buttonBackground":false,"containerVisible":true}`를 지정하고 Flat과 Optics는 이 설정을 상속한다. 기존 `controls: "text"`와 `"buttons"`는 각각 `buttonBackground: false`와 `true`에 해당하며, 두 속성이 함께 있으면 `buttonBackground`가 우선한다.
 
@@ -76,7 +78,7 @@ v2 catalog와 v2 단일 manifest는 명시적 호환 경로로 읽으며 레거�
 
 Liquid Glass는 `material.style: "glass"`와 자체 그라데이션 배경을 정의한다. Liquid Glass (Flat)은 `extends: "f1_2"`인 자식 테마이며, 자체 `components.json`은 `{"material":{"style":"flat"}}`만 지정한다. 색상, 배경, 글꼴, 레이아웃, 장식과 나머지 재질 값은 부모에서 상속한다. 기존 `f1_2` 선택은 Glass를 가리킨다.
 
-Liquid Glass (Optics)도 `f1_2`를 상속한다. 패널과 테두리 색상에 알파를 지정하고 데이터 카드·설정 그룹·하단과 와이드 미디어 컨테이너·왼쪽 독에 `surfaceBlur: 24`를 적용한다. 와이드 플레이어는 `mediaControls: "container"`로 공통 배경과 아이콘을 표시한다. `shell.navigationAppearance: "dock"`은 왼쪽 메뉴 뒤에 표면을 추가한다. 바탕색·배경 이미지·글꼴과 배치 치수는 부모 값을 사용한다.
+Liquid Glass (Optics)도 `f1_2`를 상속한다. 정보 카드·기어·설정 그룹은 낮은 블러의 flat 표면이고 미디어 컨테이너와 왼쪽 독은 더 강한 블러를 쓴다. 와이드 플레이어는 `mediaControls: "container"`로 공통 배경과 아이콘을 표시한다. `shell.navigationAppearance: "dock"`은 왼쪽 메뉴 뒤에 표면을 추가한다. 바탕색·배경 이미지·글꼴과 배치 치수는 부모 값을 사용한다.
 
 ## 배치와 입력
 

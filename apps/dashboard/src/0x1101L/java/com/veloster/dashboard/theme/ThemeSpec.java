@@ -6,6 +6,7 @@ public final class ThemeSpec {
     public static final int MENU_THEME=0,MENU_TOP=1,MENU_LEFT=2;
     public static final int DOCK_THEME=0,DOCK_ON=1,DOCK_OFF=2;
     private int pedalBarStyle,brakeBarStyle,f1Order;
+    private int liquidGlassTransparency,liquidGlassBlur,liquidGlassHighlight;
     public int pedalBarStyle(){return pedalBarStyle;}
     public int brakeBarStyle(){return brakeBarStyle;}
     public int f1Order(){return f1Order;}
@@ -14,7 +15,25 @@ public final class ThemeSpec {
         ThemeSpec copy=withShell(shell);
         copy.pedalBarStyle=pedal==1?1:0;copy.brakeBarStyle=brake==1?1:0;
         copy.f1Order=order>=0&&order<6?order:0;
+        copy.liquidGlassTransparency=liquidGlassTransparency;copy.liquidGlassBlur=liquidGlassBlur;copy.liquidGlassHighlight=liquidGlassHighlight;
         return copy;
+    }
+    /** Render-only accessibility and appearance options; persisted by ThemeSettingsStore. */
+    public ThemeSpec withLiquidGlassOptions(int transparency,int blur,int highlight){
+        ThemeSpec copy=withShell(shell);
+        copy.pedalBarStyle=pedalBarStyle;copy.brakeBarStyle=brakeBarStyle;copy.f1Order=f1Order;
+        copy.liquidGlassTransparency=transparency>=0&&transparency<=4?transparency:0;
+        copy.liquidGlassBlur=blur>=0&&blur<=4?blur:1;
+        copy.liquidGlassHighlight=highlight>=0&&highlight<=2?highlight:1;
+        return copy;
+    }
+    public boolean liquidGlassTransparencyReduced(){return liquidGlassTransparency==1;}
+    public int liquidGlassTransparencyLevel(){return liquidGlassTransparency;}
+    public int liquidGlassBlurLevel(){return liquidGlassBlur;}
+    public int liquidGlassHighlightLevel(){return liquidGlassHighlight;}
+    public boolean usesLiquidGlass(){
+        for(SurfaceRole role:SurfaceRole.values())if(materialFor(role).glass())return true;
+        return false;
     }
     public final Typography typography;
     public final Spacing spacing;
@@ -120,6 +139,7 @@ public final class ThemeSpec {
         copy.viewports=viewports;copy.weights=weights;
         copy.palette=palette;copy.overviewCardTopLine=overviewCardTopLine;copy.navigationUnderline=navigationUnderline;copy.fills=fills;
         copy.pedalBarStyle=pedalBarStyle;copy.brakeBarStyle=brakeBarStyle;copy.f1Order=f1Order;
+        copy.liquidGlassTransparency=liquidGlassTransparency;copy.liquidGlassBlur=liquidGlassBlur;copy.liquidGlassHighlight=liquidGlassHighlight;
         copy.bodyFontOwner=bodyFontOwner;copy.numericFontOwner=numericFontOwner;
         copy.displayFontOwner=displayFontOwner;copy.backgroundAssetOwner=backgroundAssetOwner;
         copy.wallpapers=wallpapers;copy.defaultWallpaperId=defaultWallpaperId;

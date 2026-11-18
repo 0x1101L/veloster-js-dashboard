@@ -53,6 +53,18 @@ public final class ThemeSettingsStore {
     public int pedalBarStyle(){return option("pedal_bar_style",2);}
     public int brakeBarStyle(){return option("brake_bar_style",2);}
     public int f1Order(){return option("f1_order",6);}
+    private int glassOption(String key,int count,int defaultValue){
+        try{int value=preferences.getInt(key,defaultValue);return value>=0&&value<count?value:defaultValue;}
+        catch(ClassCastException ignored){return defaultValue;}
+    }
+    public int liquidGlassTransparency(){return glassOption("liquid_glass_transparency",5,0);}
+    public int liquidGlassBlur(){return glassOption("liquid_glass_blur",5,1);}
+    public int liquidGlassHighlight(){return glassOption("liquid_glass_highlight",3,1);}
+    public void saveLiquidGlassOptions(int transparency,int blur,int highlight){
+        preferences.edit().putInt("liquid_glass_transparency",transparency>=0&&transparency<=4?transparency:0)
+                .putInt("liquid_glass_blur",blur>=0&&blur<=4?blur:1)
+                .putInt("liquid_glass_highlight",highlight>=0&&highlight<=2?highlight:1).apply();
+    }
     public boolean menuIcons(){return option("menu_icon_mode",2)==1;}
     public void saveMenuIcons(boolean value){uiPreferences.edit().putInt("menu_icon_mode",value?1:0).apply();}
     public void saveDisplayOptions(int pedal,int brake,int order){

@@ -112,6 +112,7 @@ class Renderer:
                         ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/view/JsDiagnosticsRenderer.java',
                         ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemeSpec.java',
                         ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemePalette.java',
+                        ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/LiquidGlassEngine.java',
                         ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemeSurface.java',
                         ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/view/overview/ThemeLayout.java',
                         ROOT / 'tests/java_stubs/com/veloster/dashboard/theme/ThemeResources.java',

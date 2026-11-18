@@ -486,5 +486,21 @@
   "왼쪽 → 오른쪽": "Left → right",
   "미리보기": "Preview",
   "테마 미리보기": "Theme preview",
-  "예시 데이터": "Sample data"
+  "예시 데이터": "Sample data",
+  "Liquid Glass": "Liquid Glass",
+  "효과 설정": "Effects",
+  "투명도 감소": "Reduce transparency",
+  "줄임": "Reduced",
+  "표준": "Standard",
+  "블러 강도": "Background blur",
+  "낮음": "Low",
+  "높음": "High",
+  "하이라이트": "Highlight",
+  "은은하게": "Subtle",
+  "강하게": "Strong",
+  "투명도": "Transparency",
+  "덜 투명하게": "Less transparent",
+  "더 투명하게": "More transparent",
+  "매우 투명하게": "Very transparent",
+  "매우 높음": "Very high"
 }

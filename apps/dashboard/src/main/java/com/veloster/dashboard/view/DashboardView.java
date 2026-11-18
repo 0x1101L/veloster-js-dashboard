@@ -286,7 +286,7 @@ public final class DashboardView extends View implements Runnable {
         return new DashboardPage.Content(activeTheme,viewportPage(),display,footer);
     }
     private int uiSettingsRowCount(DashboardPage.Regions display){
-        return 5+(activeTheme.shell().left()?1:0)+(display.mediaEnabled?0:2);
+        return 5+(activeTheme.shell().left()?1:0)+(display.mediaEnabled?0:2)+(activeTheme.usesLiquidGlass()?1:0);
     }
     private void syncUiSettings(DashboardPage.Regions display){
         if(display.mediaEnabled)media=false;
@@ -299,10 +299,15 @@ public final class DashboardView extends View implements Runnable {
         }
     }
     private static String noticeLabel(boolean enabled){return UiText.t(enabled?"사용함":"사용 안 함");}
+    private static final int[] GLASS_TRANSPARENCY_CHOICES={1,4,0,3,2},GLASS_BLUR_CHOICES={3,0,1,2,4};
+    private static int glassChoiceIndex(int[] choices,int value){for(int i=0;i<choices.length;i++)if(choices[i]==value)return i;return 0;}
+    private static String[] glassTransparencyLabels(){return tr("투명도 감소","덜 투명하게","표준","더 투명하게","매우 투명하게");}
+    private static String[] glassBlurLabels(){return tr("사용 안 함","낮음","표준","높음","매우 높음");}
     private void applyTheme(ThemeSpec theme){
         selectedTheme=theme==null?ThemeSpec.original():theme;
         activeTheme=ThemeCatalog.withMenuPosition(selectedTheme,menuPosition).withMenuDock(menuDock)
-                .withDisplayOptions(pedalBarStyle,brakeBarStyle,f1Order);
+                .withDisplayOptions(pedalBarStyle,brakeBarStyle,f1Order)
+                .withLiquidGlassOptions(themeStore.liquidGlassTransparency(),themeStore.liquidGlassBlur(),themeStore.liquidGlassHighlight());
         ThemeSpec.Wallpaper selected=null;
         String selectedId=themeStore.selectedWallpaperId();
         if(selectedId.length()>0){
@@ -340,6 +345,9 @@ public final class DashboardView extends View implements Runnable {
             if(activeTheme.shell().left()){
                 labels[row]=UiText.t("왼쪽 메뉴 독");values[row]=menuDockLabel();actions[row++]=SettingsPageRenderer.MENU_DOCK;
             }
+            if(activeTheme.usesLiquidGlass()){
+                labels[row]=UiText.t("Liquid Glass");values[row]=UiText.t("효과 설정");actions[row++]=SettingsPageRenderer.LIQUID_GLASS;
+            }
             labels[row]=UiText.t("페이지 메뉴");values[row]=pageMenu.count()+" / 5";actions[row++]=SettingsPageRenderer.PAGE_MENU;
             labels[row]=UiText.t("메뉴 표시 방식");values[row]=UiText.t(pageMenu.icons()?"아이콘":"이름");actions[row++]=SettingsPageRenderer.MENU_STYLE;
             if(!display.mediaEnabled){
@@ -363,6 +371,19 @@ public final class DashboardView extends View implements Runnable {
         case SettingsPageRenderer.MENU_DOCK:
             if(!activeTheme.shell().left())return;
             title=UiText.t("왼쪽 메뉴 독");labels=tr("테마 기본값","사용함","사용 안 함");selected=menuDock;break;
+        case SettingsPageRenderer.LIQUID_GLASS:
+            if(!activeTheme.usesLiquidGlass())return;
+            title=UiText.t("Liquid Glass");labels=tr("투명도","블러 강도","하이라이트");
+            values=new String[]{glassTransparencyLabels()[glassChoiceIndex(GLASS_TRANSPARENCY_CHOICES,themeStore.liquidGlassTransparency())],
+                glassBlurLabels()[glassChoiceIndex(GLASS_BLUR_CHOICES,themeStore.liquidGlassBlur())],
+                UiText.t(new String[]{"은은하게","표준","강하게"}[themeStore.liquidGlassHighlight()])};
+            actions=new int[]{SettingsPageRenderer.LIQUID_GLASS_TRANSPARENCY,SettingsPageRenderer.LIQUID_GLASS_BLUR,SettingsPageRenderer.LIQUID_GLASS_HIGHLIGHT};break;
+        case SettingsPageRenderer.LIQUID_GLASS_TRANSPARENCY:
+            title=UiText.t("투명도");labels=glassTransparencyLabels();selected=glassChoiceIndex(GLASS_TRANSPARENCY_CHOICES,themeStore.liquidGlassTransparency());parent=SettingsPageRenderer.LIQUID_GLASS;break;
+        case SettingsPageRenderer.LIQUID_GLASS_BLUR:
+            title=UiText.t("블러 강도");labels=glassBlurLabels();selected=glassChoiceIndex(GLASS_BLUR_CHOICES,themeStore.liquidGlassBlur());parent=SettingsPageRenderer.LIQUID_GLASS;break;
+        case SettingsPageRenderer.LIQUID_GLASS_HIGHLIGHT:
+            title=UiText.t("하이라이트");labels=tr("은은하게","표준","강하게");selected=themeStore.liquidGlassHighlight();parent=SettingsPageRenderer.LIQUID_GLASS;break;
         case SettingsPageRenderer.WALLPAPER:{
             java.util.List<ThemeSpec.Wallpaper> wallpapers=themeCatalog.wallpapers();
             selected=-1;
@@ -492,7 +513,8 @@ public final class DashboardView extends View implements Runnable {
             previewThemeIndex=settingsEditor.selected;
             ThemeSpec choice=themeCatalog.all().values().toArray(new ThemeSpec[0])[previewThemeIndex];
             final ThemePreviewController preview=new ThemePreviewController(activity,DATA.pdProfile(),DATA.jsProfile(),DATA.jsnProfile(),menuPosition,menuDock);
-            preview.setDraft(choice.withDisplayOptions(pedalBarStyle,brakeBarStyle,f1Order));
+            preview.setDraft(choice.withDisplayOptions(pedalBarStyle,brakeBarStyle,f1Order)
+                    .withLiquidGlassOptions(themeStore.liquidGlassTransparency(),themeStore.liquidGlassBlur(),themeStore.liquidGlassHighlight()));
             preview.setMediaBarPolicy(mediaBarPolicy);
             settingsEditor.page(11,SettingsPageRenderer.THEME,UiText.t("테마 미리보기"),new String[0],new String[0],new int[0]);
             settingsEditor.preview=new SettingsPageRenderer.Editor.Preview(){
@@ -534,6 +556,12 @@ public final class DashboardView extends View implements Runnable {
         case SettingsPageRenderer.PEDAL_BAR:pedalBarStyle=selected;saveDisplayOptions();break;
         case SettingsPageRenderer.BRAKE_BAR:brakeBarStyle=selected;saveDisplayOptions();break;
         case SettingsPageRenderer.F1_ORDER:f1Order=selected;saveDisplayOptions();break;
+        case SettingsPageRenderer.LIQUID_GLASS_TRANSPARENCY:
+            themeStore.saveLiquidGlassOptions(GLASS_TRANSPARENCY_CHOICES[selected],themeStore.liquidGlassBlur(),themeStore.liquidGlassHighlight());applyTheme(selectedTheme);break;
+        case SettingsPageRenderer.LIQUID_GLASS_BLUR:
+            themeStore.saveLiquidGlassOptions(themeStore.liquidGlassTransparency(),GLASS_BLUR_CHOICES[selected],themeStore.liquidGlassHighlight());applyTheme(selectedTheme);break;
+        case SettingsPageRenderer.LIQUID_GLASS_HIGHLIGHT:
+            themeStore.saveLiquidGlassOptions(themeStore.liquidGlassTransparency(),themeStore.liquidGlassBlur(),selected);applyTheme(selectedTheme);break;
         case SettingsPageRenderer.MEDIA_BAR:
             mediaBarPolicy=selected;activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt(MEDIA_BAR_POLICY,selected).apply();break;
         case SettingsPageRenderer.MEDIA_NOTICES:

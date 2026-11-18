@@ -77,7 +77,8 @@ public final class ThemeManifestTest {
         ThemeSpec optics=bundled.find("f1_2_optics");
         check(optics!=null&&"Liquid Glass (Optics)".equals(optics.displayName)
               &&optics.shell().left()&&optics.shell().dock()&&optics.shell().width==f12.shell().width
-              &&optics.mediaControls()==ThemeSpec.MediaControls.CONTAINER,
+              &&optics.mediaControls()==ThemeSpec.MediaControls.CONTAINER&&f12.usesLiquidGlass()
+              &&!flat.usesLiquidGlass()&&optics.usesLiquidGlass(),
               "Optics is selectable with a left dock and retains its wide media container");
         for(ThemeSpec spec:new ThemeSpec[]{f12,flat,optics}){
             check(ThemePalette.accent(spec,0xffa4d9ef)==spec.accent

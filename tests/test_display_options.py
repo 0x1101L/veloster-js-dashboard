@@ -166,9 +166,49 @@ CHECK=r'''
   check(activeBackground(view)!=null&&wallpaperPixel(activeBackground(view))==wallpaperPixel("f1_2/backgrounds/blue.png"),
         "reset after a color selection restores F1-2 Blue");
  }
+ static void liquidGlassSettingsCheck()throws Exception{
+  Activity a=new Activity();a.getSharedPreferences("dashboard_theme",0).edit().putString("theme_id","f1_2_optics").apply();
+  a.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("dashboard_page",1).apply();
+  DashboardView view=create(a);
+  android.graphics.Canvas standardFrame=draw(view);
+  check(((com.veloster.dashboard.theme.ThemeSpec)field(view,"activeTheme")).usesLiquidGlass(),"Optics activates the dedicated material engine");
+  openPage(view,9);
+  check(java.util.Arrays.asList((String[])field(field(view,"settingsEditor"),"labels")).contains("Liquid Glass"),
+        "Liquid Glass settings appear while its engine is active");
+  tapEditorLabel(view,"Liquid Glass");
+  check(java.util.Arrays.asList((String[])field(field(view,"settingsEditor"),"labels")).containsAll(java.util.Arrays.asList("투명도","블러 강도","하이라이트")),
+        "engine settings expose transparency, blur and highlight controls");
+  tapEditorLabel(view,"투명도");tapEditorIndex(view,0);settingTap(view,700,88);
+  com.veloster.dashboard.theme.ThemeSpec active=(com.veloster.dashboard.theme.ThemeSpec)field(view,"activeTheme");
+  check(active.liquidGlassTransparencyReduced(),"reduce-transparency preference reaches the active material renderer");
+  tapEditorLabel(view,"블러 강도");tapEditorIndex(view,3);settingTap(view,700,88);
+  active=(com.veloster.dashboard.theme.ThemeSpec)field(view,"activeTheme");
+  check(active.liquidGlassBlurLevel()==2,"high blur preference reaches the active material renderer");
+  tapEditorLabel(view,"하이라이트");tapEditorIndex(view,0);settingTap(view,700,88);
+  active=(com.veloster.dashboard.theme.ThemeSpec)field(view,"activeTheme");
+  check(active.liquidGlassHighlightLevel()==0,"subtle highlight preference reaches the active material renderer");
+  DashboardView restored=create(a);active=(com.veloster.dashboard.theme.ThemeSpec)field(restored,"activeTheme");
+  check(active.liquidGlassTransparencyReduced()&&active.liquidGlassBlurLevel()==2&&active.liquidGlassHighlightLevel()==0,
+        "Liquid Glass preferences survive view recreation");
+  tapEditorLabel(view,"투명도");tapEditorIndex(view,4);settingTap(view,700,88);
+  tapEditorLabel(view,"블러 강도");tapEditorIndex(view,4);settingTap(view,700,88);
+  active=(com.veloster.dashboard.theme.ThemeSpec)field(create(a),"activeTheme");
+  check(active.liquidGlassTransparencyLevel()==2&&active.liquidGlassBlurLevel()==4,
+        "expanded transparency and blur extremes survive view recreation");
+  settingTap(view,70,88);settingTap(view,70,88);settingTap(view,70,88);
+  android.graphics.Canvas adjustedFrame=draw(view);int changed=0;
+  for(int y=0;y<480;y++)for(int x=0;x<800;x++)if(standardFrame.pixel(x,y)!=adjustedFrame.pixel(x,y))changed++;
+  check(changed>100,"Liquid Glass controls change rendered surface pixels");
+  a.getSharedPreferences("dashboard_theme",0).edit().putString("theme_id","f1_2_flat").apply();
+  DashboardView flat=create(a);openPage(flat,9);
+  check(!((com.veloster.dashboard.theme.ThemeSpec)field(flat,"activeTheme")).usesLiquidGlass()
+        &&!java.util.Arrays.asList((String[])field(field(flat,"settingsEditor"),"labels")).contains("Liquid Glass"),
+        "Liquid Glass settings are hidden when the engine is inactive");
+ }
  static void displayCheck()throws Exception{
   paddingCheck();
   wallpaperCheck();
+  liquidGlassSettingsCheck();
   for(String vehicle:new String[]{"js","js_n","pd"})for(String themeId:new String[]{"original","aurora_focus","f1_2","f1_2_flat","f1_2_optics"}){
    fixture("received",vehicle);
    Telemetry telemetry=(Telemetry)field(DashboardView.class,"DATA");Method put=Telemetry.class.getDeclaredMethod("put",int.class,float.class,boolean.class,long.class);put.setAccessible(true);

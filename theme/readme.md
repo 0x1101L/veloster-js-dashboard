@@ -43,7 +43,7 @@ npm run preview:live -- --theme f1-2
 
 `themes/f1-2/`는 정식 테마 Liquid Glass의 디자인 원본이며 좌측 메뉴, 재배치된 F1과 3열 전체 조망을 사용한다. Astryx 시안은 `surfaces=glass`, `corners=round`, `buttons=soft`를 사용한다. 앱과 앱 렌더러용 시안의 `dashboard.json`은 `glass` 표면과 그라데이션 배경을 따로 지정한다. 앱의 Liquid Glass (Flat)은 정식 Glass를 부모로 두고 `material.style`만 덮어쓰므로 별도의 Astryx 시안 폴더가 없다. 내보내기는 배경을 `colors.json`에 기록한다. 앱은 `apps/dashboard/src/0x1101L/assets/themes/f1_2/`의 승인된 사본을 읽는다. 색상과 컴포넌트는 Astryx 내보내기 결과를, 배치는 `layouts/`를 반영한다. Pretendard 글꼴은 F1-2에 번들되며 Flat과 Optics가 상속한다. F1 Blue 등 미등록 시안은 임시 카탈로그를 사용한다.
 
-Canvas 검수는 정식 `ThemeSurface` 엔진의 glass 재질을 사용한다. Pretendard OTF 파일과 `dashboard.json`의 폰트 배율·기어 크기·패딩·반경·알파를 실제로 읽는다. Apple의 Liquid Glass를 참고한 그라데이션·투명도·반사 테두리 근사 표현이며, 실시간 배경 블러·광학 굴절·움직임에 따른 반사는 구현하지 않았다.
+기본 테마 엔진은 역할별 표면을 선택하고, Glass 역할은 독립 `LiquidGlassEngine`에 위임한다. 이 협력 엔진은 테마 렌더러의 캔버스·색상·재질 값을 사용하며 별도의 화면 렌더링 경로를 만들지 않는다. Glass 테마가 활성화되면 설정 → UI 설정 → Liquid Glass에서 투명도와 블러를 각각 다섯 단계로, 하이라이트를 세 단계로 조절할 수 있다. 투명도 감소에서는 블러를 끄며, 그 밖의 단계에서 블러는 테마의 역할별 블러 값을 기준으로 한다. 설정은 저장·복원되며 Glass가 없는 Flat 테마에서는 항목을 숨긴다. 렌더링은 Apple의 Liquid Glass를 참고한 Canvas 근사 표현이며 iOS 네이티브 재질 API나 광학 굴절, 움직임에 따른 반사를 제공하지 않는다.
 
 F1-2 왼쪽 메뉴 폭은 80이고 네 방향 여백은 16 논리 단위다. 상단 메뉴 여백은 위·아래 8, 좌·우 16이며, 와이드 미디어 카드와 F1 그리드의 외곽 여백 기준값은 네 방향 16이다. F1 본문의 메뉴·미디어 인접 가로 여백에는 공통 렌더러 규칙을 적용한다. 시계는 최상단, 돌아가기는 최하단에 고정하며 전체 화면 배경을 본문과 공유한다. 설정 → UI 설정에서 메뉴 위치와 각 페이지의 표시·숨김을 선택한다. 메뉴 위치는 테마 기본값·상단·왼쪽을 지원하며, 본문이 들어가지 않는 위치는 선택할 수 없다. 설정·돌아가기는 유지한다. 음악 아이콘·이전·재생·다음은 각 컨테이너 중앙에 정렬한다.
 
@@ -59,6 +59,7 @@ F1-2의 `layouts/f1.json`은 `f1Grid`로 행 가중치와 열·행 span을 지�
 **Liquid Glass (Optics)**는 [검수 시안](themes/f1-2-optics/manifest.json)을 기반으로 한 탐색 테마다. F1-2의 배경·글꼴·본문 배치를 상속한다. 정보 카드·기어·설정 그룹은 평면 반투명 표면과 낮은 블러를 사용하고, 미디어 컨테이너와 왼쪽 독은 조금 더 강한 블러를 쓴다. 유리 조작부는 단일 하이라이트 선으로 렌더링하며 이중 외곽선을 그리지 않는다. 하단 바는 공통 배경을 표시하고 개별 버튼 배경을 숨긴다.
 
 `python3 theme/preview_glass_optics.py`는 앱에 등록된 Liquid Glass·Flat·Optics에 하단 바와 와이드 플레이어의 공통 배경 및 배경 없는 개별 버튼을 실제 Java 렌더러로 확인한다. 임시 자산에서는 공통 배경을 끈 경우와 버튼 배경을 켠 경우, 와이드 버튼과 블러 미적용을 비교한다. 표준·낮은 높이·와이드 화면의 입력을 호스트에서 확인하며, 결과는 `theme/artifacts/f1-2-optics/`에 저장된다.
+`python3 theme/preview_glass_optics.py --glass-settings`는 Liquid Glass의 투명도·블러 극값과 하이라이트를 실제 Java 렌더러로 캡처한다. `--glass-settings-glass`는 임시 자산에서 Optics의 flat 표면을 glass로 바꿔 같은 비교를 생성하며 앱 테마는 변경하지 않는다.
 
 - 디자인 원본은 `themes/`, Astryx가 생성하는 웹용 사본은 `src/themes/`에 둔다. 이 사본은 Android 앱 테마가 아니다.
 - F1 시안의 목적과 검수 결과는 `@memory/theme_support/designs/f1_blue/`에 기록한다.
