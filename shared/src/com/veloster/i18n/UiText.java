@@ -27,6 +27,7 @@ public final class UiText {
         EN.put("5분","5 min");
         EN.put("ABS 경고등","ABS warning");
         EN.put("AP 상태 13 확인. IP 주소와 iPhone의 SSID 검색을 다음으로 확인하세요.","AP state 13 confirmed. Next check the IP address and whether the iPhone sees the SSID.");
+        EN.put("AUTO · Day/Night 의미 미확인","AUTO · Day/Night meaning unknown");
         EN.put("Android 상태","Android status");
         EN.put("Binder 연결됨","Binder connected");
         EN.put("Blue","Blue");
@@ -263,6 +264,7 @@ public final class UiText {
         EN.put("블루투스 켜짐","Bluetooth is on");
         EN.put("블루투스가 꺼져 있습니다.","Bluetooth is off.");
         EN.put("비작동","Inactive");
+        EN.put("비트 후보","Candidate bits");
         EN.put("사용 불가","Unavailable");
         EN.put("사용 안 함","Off");
         EN.put("사용 안 함 / Off","Off");
@@ -366,6 +368,7 @@ public final class UiText {
         EN.put("왼쪽","Left");
         EN.put("왼쪽 → 오른쪽","Left → right");
         EN.put("왼쪽 메뉴 독","Left menu dock");
+        EN.put("원시 b3/b4","Raw b3/b4");
         EN.put("원형","Dial");
         EN.put("위치를 바꿀 칸","Choose a slot to swap");
         EN.put("유효","Valid");
@@ -434,6 +437,7 @@ public final class UiText {
         EN.put("차량 연결","Vehicle connections");
         EN.put("차량 정보","Vehicle information");
         EN.put("차량 표시 상태를 확인하지 못했습니다. N 계기판 버튼으로 다시 열어주세요.","Could not confirm vehicle display status. Try the N Dashboard button again.");
+        EN.put("차체 · 조명 (실험)","Body · lights (test)");
         EN.put("처리 실패: ","Operation failed: ");
         EN.put("처리 중입니다. 완료될 때까지 기다려 주세요.","Working. Please wait until this finishes.");
         EN.put("처음 설치했다면 실행 바로가기를 설정하세요. 순정 홈에는 앱이 자동으로 추가되지 않습니다.","After first installation, set up Quick entry. The factory home screen does not add this app automatically.");

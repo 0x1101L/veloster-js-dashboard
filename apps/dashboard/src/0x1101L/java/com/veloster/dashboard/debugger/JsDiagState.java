@@ -20,6 +20,8 @@ public final class JsDiagState {
     private boolean navValueKnown,routeDetachFailed,navDetachFailed;
     private long routeCount,routeInvalidCount,navQueryCount,navNoticeCount;
     private long routeAt=-1,navAt=-1,navNoticeAt=-1;
+    private int lightingByte3=-1,lightingByte4=-1;
+    private long lightingCount,lightingAt=-1;
     public static final class Snapshot {
         private final java.util.Map<String,SourceSnapshot> sources;
         public SourceSnapshot source(String name){SourceSnapshot s=sources.get(name);return s==null?new SourceSnapshot(new Source(),-1):s;}
@@ -30,6 +32,8 @@ public final class JsDiagState {
         public final int routeSource,routeError,navError;
         public final boolean navValueKnown,routeDetachFailed,navDetachFailed;
         public final long routeCount,routeInvalidCount,navQueryCount,navNoticeCount,routeAgeMs,navAgeMs,navNoticeAgeMs;
+        public final int lightingByte3,lightingByte4;
+        public final long lightingCount,lightingAgeMs;
         private Snapshot(JsDiagState s,long now){
             sources=new java.util.HashMap<String,SourceSnapshot>();
             for(java.util.Map.Entry<String,Source> entry:s.sources.entrySet())sources.put(entry.getKey(),new SourceSnapshot(entry.getValue(),now));
@@ -40,6 +44,7 @@ public final class JsDiagState {
             routeSource=s.routeSource;routeError=s.routeError;navError=s.navError;navValueKnown=s.navValueKnown;routeDetachFailed=s.routeDetachFailed;navDetachFailed=s.navDetachFailed;
             routeCount=s.routeCount;routeInvalidCount=s.routeInvalidCount;navQueryCount=s.navQueryCount;navNoticeCount=s.navNoticeCount;
             routeAgeMs=age(s.routeAt,now);navAgeMs=age(s.navAt,now);navNoticeAgeMs=age(s.navNoticeAt,now);
+            lightingByte3=s.lightingByte3;lightingByte4=s.lightingByte4;lightingCount=s.lightingCount;lightingAgeMs=age(s.lightingAt,now);
         }
     }
     private static long age(long at,long now){return at<0||now<at?-1:now-at;}
@@ -48,9 +53,15 @@ public final class JsDiagState {
         cluster=tbt=micom=nav=navValue=navNotice=hscan=wifiFeature=wifiService=wifiState=wifiWatch=clusterService=routeWatch=routeNotice=routeSource=-1;
         routeValue=routeError=navError=0;navValueKnown=routeDetachFailed=navDetachFailed=false;
         routeCount=routeInvalidCount=navQueryCount=navNoticeCount=0;routeAt=navAt=navNoticeAt=-1;
+        clearLighting();
     }
     public synchronized void wifi(int feature,int service,int state,int watch){wifiFeature=feature;wifiService=service;wifiState=state;wifiWatch=watch;}
     public synchronized void hscan(int value){hscan=value;}
+    public synchronized void lighting(int byte3,int byte4,long now){
+        if(byte3<0||byte3>255||byte4<0||byte4>255)return;
+        lightingByte3=byte3;lightingByte4=byte4;lightingCount++;lightingAt=now;
+    }
+    public synchronized void clearLighting(){lightingByte3=lightingByte4=-1;lightingCount=0;lightingAt=-1;}
     public synchronized void event(String name,String detail){event(name,detail,-1);}
     public synchronized void event(String name,String detail,long now){
         if(name==null||detail==null)return;

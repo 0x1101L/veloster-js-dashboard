@@ -34,10 +34,10 @@ public final class HscanDataClient {
         if (session == null) return;
         Session old = session; session = null;
         old.close();
-        if(profile==HscanProfile.Kind.JS){DashboardView.clearJsTirePressure();DashboardView.diagHscan(0);DashboardView.diagEvent("binding.hscan","stopped");}
+        if(profile==HscanProfile.Kind.JS){DashboardView.clearJsTirePressure();DashboardView.clearJsLighting();DashboardView.diagHscan(0);DashboardView.diagEvent("binding.hscan","stopped");}
     }
     private synchronized void report(Session source,int state){
-        if(profile==HscanProfile.Kind.JS&&session==source){if(state!=1){synchronized(source.delivery){source.connectionGeneration++;DashboardView.clearJsTirePressure();}}DashboardView.diagHscan(state==3?2:state);DashboardView.diagEvent("binding.hscan",state==1?"connected":state==3?"permission denied":state==2?"error":"disconnected");}
+        if(profile==HscanProfile.Kind.JS&&session==source){if(state!=1){synchronized(source.delivery){source.connectionGeneration++;DashboardView.clearJsTirePressure();DashboardView.clearJsLighting();}}DashboardView.diagHscan(state==3?2:state);DashboardView.diagEvent("binding.hscan",state==1?"connected":state==3?"permission denied":state==2?"error":"disconnected");}
     }
 
     private static final class Chunk {
@@ -125,6 +125,7 @@ public final class HscanDataClient {
                     synchronized (delivery) {
                         if(active&&decodingGeneration==connectionGeneration&&gate.accepts()){
                             if(profile==HscanProfile.Kind.JS)DashboardView.diagEvent("binding.hscan","received");
+                            if(profile==HscanProfile.Kind.JS&&function==0x01)DashboardView.diagLighting(0xc7,function,data,receivedAt);
                             if(profile==HscanProfile.Kind.JS)DashboardView.hscanJs(0xc7,function,data,receivedAt);
                             else if(profile==HscanProfile.Kind.PD)DashboardView.hscanPd(0xc7,function,data,receivedAt);
                             else DashboardView.hscanJsn(0xc7,function,data,receivedAt);

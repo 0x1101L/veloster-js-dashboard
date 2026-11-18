@@ -167,14 +167,22 @@ public final class JsDiagnosticsRenderer {
         text(c,UiText.t("DCT 관측"),544,138,16,ThemePalette.accent(theme,0xffa4d9ef),true);
         button(c,UiText.t("변속기 설정"),transmission(),false,ThemePalette.accent(theme,0xffa4d9ef));
         compactDiagRow(c,544,211,"변속기 종류",dct.transmissionSetting==1?"DCT":dct.transmissionSetting==2?"MT":dct.dctEstimate?"DCT (test)":"MT (test)");
-        compactDiagRow(c,544,243,"DCT 온도",dctValue(dct));
-        compactDiagRow(c,544,275,"DCT 서비스",connectionState(diagnostic.dctService));
-        compactDiagRow(c,544,307,"차량 속도",diagnosticSample(7," km/h",false));
-        compactDiagRow(c,544,339,"클러치 수명",UiText.t("미검증"));
-        fitted(c,UiText.t("온도는 기존 진단 응답만 표시합니다."),544,382,11,220,ThemePalette.secondary(theme,0xff91a5ae));
-        fitted(c,UiText.t("시험 추정은 실물 확인이 아닙니다."),544,401,11,220,ThemePalette.secondary(theme,0xff91a5ae));
+        compactDiagRow(c,544,235,"DCT 온도",dctValue(dct));
+        compactDiagRow(c,544,259,"DCT 서비스",connectionState(diagnostic.dctService));
+        compactDiagRow(c,544,283,"차량 속도",diagnosticSample(7," km/h",false));
+        compactDiagRow(c,544,307,"클러치 수명",UiText.t("미검증"));
+        fitted(c,UiText.t("온도는 기존 진단 응답만 표시합니다."),544,326,10,220,ThemePalette.secondary(theme,0xff91a5ae));
+        text(c,UiText.t("차체 · 조명 (실험)"),544,349,13,ThemePalette.accent(theme,0xffa4d9ef),true);
+        String raw=diagnostic.lightingByte3<0?UiText.t("미수신"):
+            hexByte(diagnostic.lightingByte3)+"/"+hexByte(diagnostic.lightingByte4)+" · "+diagnostic.lightingCount+"x · "+diagAge(diagnostic.lightingAgeMs);
+        String bits=diagnostic.lightingByte3<0?"—":
+            "lamp7="+((diagnostic.lightingByte3>>7)&1)+" sw="+Integer.toHexString((diagnostic.lightingByte4>>6)&3).toUpperCase(Locale.US);
+        compactDiagRow(c,544,370,"원시 b3/b4",raw);
+        compactDiagRow(c,544,391,"비트 후보",bits);
+        fitted(c,UiText.t("AUTO · Day/Night 의미 미확인"),544,413,10,220,ThemePalette.secondary(theme,0xff91a5ae));
         fitted(c,UiText.t("값·상태·수신 횟수와 경과를 표시합니다. 보관값은 현재 실측값이 아닙니다."),32,417,11,476,ThemePalette.secondary(theme,0xff91a5ae));
     }
+    private String hexByte(int value){return String.format(Locale.US,"%02X",value&255);}
     private void compactDiagRow(Canvas c,float x,float y,String label,String value){
         fitted(c,UiText.t(label),x,y,12,96,ThemePalette.secondary(theme,0xff91a5ae));
         fitted(c,value,x+99,y,12,130,ThemePalette.primary(theme,0xffe1edf2));

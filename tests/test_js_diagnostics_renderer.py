@@ -62,6 +62,7 @@ public class JsDiagnosticsPreview {
   d.event("navigation.state_destination","-1",1300);d.event("navigation.notification","notice",1500);
   d.event("cluster.service","present; matching descriptor");d.event("class","com.hkmc.cluster.NavigationCluster");
   d.event("method","updateTBTInfo");d.event("micom.service","present");d.wifi(1,1,1,1);d.hscan(1);d.event("binding.bcm","registered",1000);d.event("binding.bcm","received",1500);
+  if(state.equals("received")||state.equals("held")) { d.lighting(0x80,0xe0,1700);d.lighting(0x00,0x00,1900); }
   if(state.equals("invalid")){d.event("navigation.route.invalid","bad payload");d.event("navigation.state.error","SecurityException");}
   return d;
  }
@@ -94,6 +95,10 @@ public class JsDiagnosticsPreview {
     }else if(tab==2){
      check(c.texts.contains(UiText.t("신호별 수신 · 유효성")),"signal page");
      check(c.texts.contains(UiText.t("DCT 관측"))&&c.texts.contains(UiText.t("변속기 종류"))&&c.texts.contains(UiText.t("변속기 설정")),"vehicle signal and DCT share one page");
+     check(c.texts.contains(UiText.t("차체 · 조명 (실험)"))&&c.texts.contains(UiText.t("원시 b3/b4"))&&c.texts.contains(UiText.t("비트 후보")),"lighting experiment sits below DCT on vehicle page");
+     check(c.texts.contains(UiText.t("AUTO · Day/Night 의미 미확인")),"unverified lighting semantics remain explicit");
+     if(state.equals("received"))check(c.texts.contains("00/00 · 2x · 0.1s")&&c.texts.contains("lamp7=0 sw=0"),"lighting shows latest bytes, candidate bits, count, and age");
+     if(state.equals("waiting"))check(c.texts.contains(UiText.t("미수신")),"lighting stays unknown before first frame");
      String expected=state.equals("waiting")?"미수신":state.equals("invalid")?"무효 수신":state.equals("held")?"보관값":state.equals("expired")?"만료":"유효";
      check(c.texts.contains(UiText.t(expected)),"distinct signal state: "+state);
      if(state.equals("invalid"))check(!c.texts.contains("14.20 V")&&t.sample(Telemetry.BAT_VOLTAGE,now).receivedCount==1,"invalid-only reception is counted without a fabricated value");

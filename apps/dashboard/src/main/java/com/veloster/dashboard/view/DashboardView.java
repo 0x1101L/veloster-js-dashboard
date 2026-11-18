@@ -202,6 +202,14 @@ public final class DashboardView extends View implements Runnable {
     public static void diagEvent(String name,String detail){DIAG.event(name,detail,SystemClock.elapsedRealtime());DiagnosticEventSink sink=diagnosticEventSink;if(sink!=null&&("binding.media.3".equals(name)||name.startsWith("carplay.media.")))sink.event(name,detail);}
     public static void diagWifi(int feature,int service,int state,int watch){DIAG.wifi(feature,service,state,watch);}
     public static void diagHscan(int state){DIAG.hscan(state);}
+    public static void diagLighting(int cid,int function,byte[] data,long receivedAt){
+        if(cid!=0xc7||function!=0x01||data==null||data.length!=8)return;
+        DIAG.lighting(data[3]&255,data[4]&255,receivedAt);
+        final DashboardView view=current.get();if(view!=null)view.post(new Runnable(){public void run(){if(current.get()==view)view.invalidate();}});
+    }
+    public static void clearJsLighting(){
+        DIAG.clearLighting();final DashboardView view=current.get();if(view!=null)view.post(new Runnable(){public void run(){if(current.get()==view)view.invalidate();}});
+    }
     public static void rpm(byte[] data) { DATA.rpm(data,SystemClock.elapsedRealtime()); }
     public static void beginComputed(float rpm,float tqi,float acor,float standard,float boost,float ambient) { DATA.beginComputed(rpm,tqi,acor,standard,boost,ambient); }
     public static void computed(float power,float torque,float boostKpa) { DATA.computed(power,torque,boostKpa); }

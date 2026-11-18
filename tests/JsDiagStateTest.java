@@ -40,6 +40,11 @@ public class JsDiagStateTest {
   check(s.source("nmode",500).count==0&&s.source("nmode",500).ageMs==-1,"registration is independent of reception");
   s.event("binding.media.0","received",100);s.event("binding.media.0","invalid",100);s.event("binding.media.0","received",200);s.event("binding.media.0","processed",200);
   check(s.source("media.0",500).count==2&&s.source("media.0",500).processed==1&&s.source("media.0",500).invalid==1&&s.source("media.0",500).processedAgeMs==300,"arrival and processing kept independently");
+  s.lighting(0x80,0xe0,1000);s.lighting(0x00,0x00,1500);
+  JsDiagState.Snapshot lights=s.snapshot(2000);
+  check(lights.lightingByte3==0&&lights.lightingByte4==0&&lights.lightingCount==2&&lights.lightingAgeMs==500,"lighting keeps latest raw bytes and receive age");
+  s.lighting(-1,0,2100);check(s.snapshot(2200).lightingCount==2,"invalid lighting byte ignored");
+  s.clearLighting();check(s.snapshot(2300).lightingByte3==-1&&s.snapshot(2300).lightingCount==0,"lighting observation clears on disconnect");
   s.event("binding.bcm","stopped",600);check(s.source("bcm",700).status.equals("stopped"),"stop retained separately from reception");
   s.reset();check(s.source("bcm",700).status.equals("unknown"),"reset clears source states");
   check(s.snapshot().wifiState==-1&&s.snapshot().hscan==-1&&s.snapshot().routeWatch==-1&&s.snapshot().clusterService==-1,"reset");

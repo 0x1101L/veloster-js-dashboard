@@ -87,8 +87,10 @@ public final class HscanFrameDecoderTest {
         byte[] fuelTrial=frame(0x22,new byte[6]);
         js.accept(fuelTrial,0,264,7);pd.accept(fuelTrial,0,264,7);decoder.accept(fuelTrial,0,264,7);
         check(jsCount[0]==16&&pdCount[0]==14&&count[0]==before,"six-byte trial is JS only");
+        js.accept(frame(0x01,new byte[8]),0,264,8);pd.accept(frame(0x01,new byte[8]),0,264,8);
+        check(jsCount[0]==17&&pdCount[0]==14,"body-light observation is JS diagnostic-only");
         js.accept(frame(0x21,new byte[8]),0,264,8);
-        check(jsCount[0]==16,"old JS eight-byte candidate rejected");
+        check(jsCount[0]==17,"old JS eight-byte candidate rejected");
         System.out.println("PASS " + checks + " synthetic HSCAN decoder checks");
     }
 }

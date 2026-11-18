@@ -502,5 +502,9 @@
   "덜 투명하게": "Less transparent",
   "더 투명하게": "More transparent",
   "매우 투명하게": "Very transparent",
-  "매우 높음": "Very high"
+  "매우 높음": "Very high",
+  "차체 · 조명 (실험)": "Body · lights (test)",
+  "원시 b3/b4": "Raw b3/b4",
+  "비트 후보": "Candidate bits",
+  "AUTO · Day/Night 의미 미확인": "AUTO · Day/Night meaning unknown"
 }
