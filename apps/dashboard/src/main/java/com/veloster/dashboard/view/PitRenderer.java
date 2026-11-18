@@ -2,6 +2,7 @@ package com.veloster.dashboard.view;
 
 import com.veloster.dashboard.vehicle.*;
 import com.veloster.dashboard.theme.ThemeSpec;
+import com.veloster.dashboard.theme.ThemeSurface;
 import com.veloster.dashboard.theme.ThemeResources;
 
 import com.veloster.dashboard.view.overview.OverviewLayout;
@@ -18,20 +19,18 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.Path;
-import android.graphics.LinearGradient;
-import android.graphics.Shader;
 import android.graphics.Bitmap;
 import java.util.Locale;
 
 /** Original N/PIT drawing geometry, with only received vehicle samples as values. */
 public final class PitRenderer {
+    private final ThemeSurface surface=new ThemeSurface();
     private final Paint paint=new Paint(3);
-    private final Path shape=new Path();
-    private final Shader background=new LinearGradient(0,0,800,480,0xff111315,0xff030405,Shader.TileMode.CLAMP);
+
     private static final int BG=0xff040506,PANEL=0xff101315,LINE=0xff303638,BLUE=0xffa4d9ef,WHITE=0xffe1edf2,MUTED=0xff91a5ae,RED=0xffff4059;
-    private final ClusterRenderer clusterRenderer=new ClusterRenderer(false);
+    private final ClusterRenderer clusterRenderer=new ClusterRenderer(false,surface);
     private Bitmap artwork;
-    private final OverviewRenderer overviewRenderer=new OverviewRenderer();
+    private final OverviewRenderer overviewRenderer=new OverviewRenderer(surface);
     private final GaugeRenderer gaugeRenderer=new GaugeRenderer();
     private final GraphRenderer graphRenderer=new GraphRenderer();
     private GraphLayout graphLayout;
@@ -41,8 +40,14 @@ public final class PitRenderer {
     private ThemeResources resources;
     private boolean performancePage;
     private boolean settingsPage;
-    private String settingsLanguage="System / 시스템",settingsTheme="Original";
-    private final SettingsPageRenderer settingsRenderer=new SettingsPageRenderer();
+    private final MenuIcons menuIcons=new MenuIcons();
+    private DashboardPage.Menu pageMenu=new DashboardPage.Menu();
+    public void setPageMenu(DashboardPage.Menu value){pageMenu=value;}
+    private int mediaBarPolicy=MediaBar.DEFAULT;
+    private boolean mediaNotices=true;
+    private final MediaBar mediaBar=new MediaBar(surface);
+    private String settingsLanguage="System / 시스템",settingsTheme="Original",settingsMenuPosition=SettingsPageRenderer.menuPositionLabel(ThemeSpec.MENU_THEME);
+    private final SettingsPageRenderer settingsRenderer=new SettingsPageRenderer(surface);
     private final PerformanceRenderer performanceRenderer=new PerformanceRenderer();
     private final java.text.SimpleDateFormat clockFormat=new java.text.SimpleDateFormat("HH:mm",Locale.US);
     private long clockMinute=Long.MIN_VALUE;
@@ -53,7 +58,10 @@ public final class PitRenderer {
         return clockText;
     }
     public void setPerformancePage(boolean value){performancePage=value;}
-    public void setSettingsPage(boolean value,String language,String themeName){settingsPage=value;settingsLanguage=language;settingsTheme=themeName;}
+    public void setMediaDisplay(int policy,boolean notices){mediaBarPolicy=MediaBar.normalize(policy);mediaNotices=notices;}
+    private SettingsPageRenderer.Editor settingsEditor;
+    public void setSettingsEditor(SettingsPageRenderer.Editor editor){settingsEditor=editor;}
+    public void setSettingsPage(boolean value,String language,String themeName,String menuPosition){settingsPage=value;settingsLanguage=language;settingsTheme=themeName;settingsMenuPosition=menuPosition;}
     public void setArtwork(Bitmap value){artwork=value;}
     public void setGaugeLayout(GaugeLayout value){gaugeLayout=value;}
     public void setGraphLayout(GraphLayout value){graphLayout=value;}
@@ -67,55 +75,93 @@ public final class PitRenderer {
         draw(c,width,height,cluster,model,now,target,false,null);
     }
     public void draw(Canvas c,int width,int height,boolean cluster,Telemetry model,long now,int target,boolean media,MediaState.Snapshot track){
-        boolean mediaPage=cluster&&media,pdProfile=model.pdProfile(),jsProfile=model.jsProfile();
+        draw(c,width,height,cluster,model,now,target,media,track,DashboardPage.regions(width,height,theme));
+    }
+    void draw(Canvas c,int width,int height,boolean cluster,Telemetry model,long now,int target,boolean media,MediaState.Snapshot track,DashboardPage.Regions regions){
+        boolean expanded=media&&!regions.mediaEnabled;
+        boolean pdProfile=model.pdProfile(),jsProfile=model.jsProfile();
         overviewLayout.pdProfile(pdProfile||jsProfile);performanceRenderer.profile(pdProfile,jsProfile,model.jsnProfile(),model.supportedProfile());
         Telemetry.Sample[] samples=model.snapshot(now);
-        clusterRenderer.prepare(model,samples,now,ShiftGuide.clamp(target,model.pdLayoutProfile()),mediaPage,track,artwork);
-        c.save();c.scale(width/800f,height/480f);c.drawColor(theme.background);
-        if(theme.isOriginal()){paint.setShader(background);c.drawRect(0,0,800,480,paint);paint.setShader(null);}
-        else if(resources!=null&&resources.background()!=null)c.drawBitmap(resources.background(),null,new android.graphics.RectF(0,0,800,480),paint);
-        for(int y=56;y<480;y+=8)stroke(c,0,y,800,y,theme.isOriginal()?0x063f4948:0x18314a50,1);
-        box(c,0,0,800,52,theme.isOriginal()?0xff090b0c:0xff0b1b22);box(c,18,51,782,52,theme.stroke);
-        button(c,UiText.t("퍼포먼스"),DashboardPage.left(DashboardPage.PERFORMANCE),8,DashboardPage.width(DashboardPage.PERFORMANCE),38,performancePage,theme.accent);
-        button(c,UiText.t("전체 조망"),144,8,100,38,!settingsPage&&!performancePage&&!cluster&&gaugeLayout==null&&graphLayout==null,theme.accent);
-        button(c,"F1",250,8,72,38,cluster&&gaugeLayout==null&&graphLayout==null,theme.accent);
-        button(c,UiText.t("게이지"),328,8,84,38,gaugeLayout!=null,theme.accent);
-        button(c,UiText.t("그래프"),418,8,110,38,graphLayout!=null,theme.accent);
-        button(c,UiText.t("설정"),534,8,68,38,settingsPage,theme.accent);
-        centered(c,clock(),633,33,20,theme.textPrimary,true);
-        button(c,UiText.t("돌아가기"),666,8,116,38,false,theme.accent);
-        if(settingsPage)settingsRenderer.draw(c,theme,resources,settingsLanguage,settingsTheme);
-        else if(performancePage)performanceRenderer.draw(c,model,now);
-        else if(graphLayout!=null)graphRenderer.draw(c,model,now,graphLayout);
-        else if(gaugeLayout!=null)gaugeRenderer.draw(c,model,now,gaugeLayout);
-        else if(mediaPage)clusterRenderer.drawCombined(c);else if(cluster)clusterRenderer.drawCluster(c);else {overviewRenderer.draw(c,samples,overviewLayout,pdProfile,jsProfile);drawOverviewPager(c);}
-        if(!settingsPage&&!performancePage&&graphLayout==null&&!mediaPage && track!=null && track.notice)clusterRenderer.drawMedia(c);
-        if(!settingsPage&&cluster&&gaugeLayout==null&&graphLayout==null)clusterRenderer.drawArtworkToggle(c);
+        clusterRenderer.prepare(model,samples,now,ShiftGuide.clamp(target,model.pdLayoutProfile()),false,track,artwork);
+        surface.backdrop(c,theme,resources,width,height);
+        if(!theme.shell().left()){
+            c.save();c.clipRect(regions.topMenu.x,regions.topMenu.y,regions.topMenu.x+regions.topMenu.width,regions.topMenu.y+regions.topMenu.height);
+            box(c,0,0,width,regions.headerHeight,theme.panel);box(c,0,regions.headerHeight-1,width,regions.headerHeight,theme.stroke);
+            c.scale(regions.scale,regions.scale);
+            float navWidth=regions.logicalDisplayWidth;
+            menuButton(c,UiText.t("퍼포먼스"),DashboardPage.PERFORMANCE,performancePage,navWidth);
+            menuButton(c,UiText.t("전체 조망"),DashboardPage.OVERVIEW,!settingsPage&&!performancePage&&!cluster&&gaugeLayout==null&&graphLayout==null,navWidth);
+            menuButton(c,"F1",DashboardPage.F1,cluster&&gaugeLayout==null&&graphLayout==null,navWidth);
+            menuButton(c,UiText.t("게이지"),DashboardPage.GAUGES,gaugeLayout!=null,navWidth);
+            menuButton(c,UiText.t("그래프"),DashboardPage.GRAPHS,graphLayout!=null,navWidth);
+            menuButton(c,UiText.t("설정"),DashboardPage.SETTINGS,settingsPage,navWidth);
+            DashboardPage.Bounds topClock=DashboardPage.navigationBounds(theme,pageMenu,DashboardPage.CLOCK,navWidth);
+            surface.navigationClock(c,theme,resources,paint,clock(),topClock.x,topClock.y,topClock.width,topClock.height);
+            menuButton(c,UiText.t("돌아가기"),DashboardPage.BACK,false,navWidth);
+            c.restore();
+        }
+        c.save();c.clipRect(regions.content.x,regions.content.y,regions.content.x+regions.content.width,regions.content.y+regions.content.height);
+        c.translate(regions.left,regions.top);c.scale(regions.scale,regions.scale);
+        surface.coordinates(regions.left,regions.top,regions.scale);
+        if(theme.shell().left()){
+            if(theme.shell().dock()){
+                DashboardPage.Bounds dock=DashboardPage.dockBounds(theme);
+                surface.drawWithLegacy(c,theme,ThemeSpec.SurfaceRole.NAVIGATION_DOCK,paint,
+                        dock.x,dock.y,dock.width,dock.height,theme.panel,theme.stroke);
+            }
+            menuButton(c,UiText.t("퍼포먼스"),DashboardPage.PERFORMANCE,performancePage);
+            menuButton(c,UiText.t("전체 조망"),DashboardPage.OVERVIEW,!settingsPage&&!performancePage&&!cluster&&gaugeLayout==null&&graphLayout==null);
+            menuButton(c,"F1",DashboardPage.F1,cluster&&gaugeLayout==null&&graphLayout==null);
+            menuButton(c,UiText.t("게이지"),DashboardPage.GAUGES,gaugeLayout!=null);
+            menuButton(c,UiText.t("그래프"),DashboardPage.GRAPHS,graphLayout!=null);
+            menuButton(c,UiText.t("설정"),DashboardPage.SETTINGS,settingsPage);
+            DashboardPage.Bounds sideClock=DashboardPage.navigationBounds(theme,pageMenu,DashboardPage.CLOCK);
+            surface.navigationClock(c,theme,resources,paint,clock(),sideClock.x,sideClock.y,sideClock.width,sideClock.height);
+            menuButton(c,UiText.t("돌아가기"),DashboardPage.BACK,false);
+        }
+        String page=settingsPage?"settings":performancePage?"performance":graphLayout!=null?"graphs":gaugeLayout!=null?"gauges":cluster?"f1":"overview";
+        boolean footer=MediaBar.footerVisible(regions,mediaBarPolicy,track);
+        DashboardPage.Content content=new DashboardPage.Content(theme,page,regions,footer);
+        overviewLayout.viewport(regions.logicalContentWidth,content.bodyViewportHeight,regions.mediaPanelVisible);
+        c.save();c.clipRect(content.x,content.y,content.x+content.width,content.y+content.height);
+        if(settingsPage){if(settingsEditor!=null)settingsRenderer.draw(c,theme,resources,settingsEditor,content);else settingsRenderer.draw(c,theme,resources,settingsLanguage,false,content);}
+        else if(performancePage)performanceRenderer.draw(c,model,now,content);
+        else if(graphLayout!=null){graphLayout.viewport(theme,content);graphRenderer.draw(c,model,now,graphLayout);}
+        else if(gaugeLayout!=null){gaugeLayout.viewport(theme,content);gaugeRenderer.draw(c,model,now,gaugeLayout);}
+        else if(cluster)clusterRenderer.drawAdaptive(c,content);
+        else {overviewRenderer.draw(c,samples,overviewLayout,pdProfile,jsProfile);drawOverviewPager(c);}
+        if(!expanded&&MediaBar.noticeVisible(regions,mediaBarPolicy,mediaNotices,track))clusterRenderer.drawMedia(c,content.notice(theme));
         c.restore();
+        if(footer)mediaBar.drawAdaptive(c,theme,resources,track,artwork,expanded,content);
+        c.restore();
+        if(regions.mediaPanelVisible){
+            surface.coordinates(0,0,1);
+            mediaBar.drawRegion(c,theme,resources,track,artwork,regions.media,regions.mediaEnabled);
+        }
+        surface.maskScreenCorners(c,theme,width,height,regions.scale);
     }
     private void box(Canvas c,float l,float t,float r,float b,int color){paint.setColor(color);c.drawRect(l,t,r,b,paint);}
-    private void drawOverviewPager(Canvas c){if(theme.isOriginal()||overviewLayout.pageCount()<2)return;centered(c,"‹",358,470,20,theme.accent,true);centered(c,(overviewLayout.page()+1)+" / "+overviewLayout.pageCount(),400,470,14,theme.textPrimary,true);centered(c,"›",442,470,20,theme.accent,true);}
-    private void panel(Canvas c,float x,float y,float w,float h,int fill,int edge){
-        if(!theme.cutPanels){paint.setColor(fill);c.drawRect(x,y,x+w,y+h,paint);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1);paint.setColor(edge);c.drawRect(x,y,x+w,y+h,paint);paint.setStyle(Paint.Style.FILL);return;}
-        shape.reset();shape.moveTo(x,y);shape.lineTo(x+w-12,y);shape.lineTo(x+w,y+12);
-        shape.lineTo(x+w,y+h);shape.lineTo(x+12,y+h);shape.lineTo(x,y+h-12);shape.close();
-        paint.setColor(fill);c.drawPath(shape,paint);
-        paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1);paint.setColor(edge);c.drawPath(shape,paint);paint.setStyle(Paint.Style.FILL);
-    }
-    private void stroke(Canvas c,float x,float y,float x2,float y2,int color,float width){
-        paint.setColor(color);paint.setStrokeWidth(width);c.drawLine(x,y,x2,y2,paint);
-    }
+    private void drawOverviewPager(Canvas c){if(!overviewLayout.hasPager())return;float x=overviewLayout.pagerX(),y=overviewLayout.pagerY();centered(c,"‹",x-42,y,20,theme.accent,true);centered(c,(overviewLayout.page()+1)+" / "+overviewLayout.pageCount(),x,y,14,theme.textPrimary,true);centered(c,"›",x+42,y,20,theme.accent,true);}
     private void text(Canvas c,String s,float x,float y,float size,int color,boolean bold){
+        rawText(c,s,x,y,theme.textSize(s,size,bold),color,bold);
+    }
+    private void rawText(Canvas c,String s,float x,float y,float size,int color,boolean bold){
         paint.setColor(color);paint.setTextSize(size);paint.setTypeface(resources==null?(bold?Typeface.DEFAULT_BOLD:Typeface.DEFAULT):resources.fontForText(s,bold));c.drawText(s,x,y,paint);
     }
-    private void button(Canvas c,String s,float x,float y,float w,float h,boolean on,int accent){
-        panel(c,x,y,w,h,on?(theme.isOriginal()?0xff233b46:theme.panelRaised):(theme.isOriginal()?0xff111415:theme.panel),on?accent:theme.stroke);
-        if(on)box(c,x+9,y+h-3,x+w-9,y+h-1,accent);
-        paint.setTypeface(resources==null?Typeface.DEFAULT_BOLD:resources.fontForText(s,true));paint.setTextSize(14);float measured=paint.measureText(s);
-        text(c,s,x+12,y+h/2+5,measured>w-24?14*(w-24)/measured:14,on?accent:theme.textSecondary,true);
+    private void menuButton(Canvas c,String label,int id,boolean on){
+        menuButton(c,label,id,on,800);
+    }
+    private void menuButton(Canvas c,String label,int id,boolean on,float layoutWidth){
+        if(!pageMenu.visible(id))return;
+        DashboardPage.Bounds bounds=DashboardPage.navigationBounds(theme,pageMenu,id,layoutWidth);
+        float x=bounds.x,y=bounds.y,w=bounds.width,h=bounds.height;
+        boolean icons=pageMenu.icons();
+        surface.navigationButton(c,theme,resources,paint,icons?null:label,x,y,w,h,on,theme.accent);
+        if(icons)menuIcons.draw(c,id,x+w/2,y+h/2,on?theme.accent:theme.textSecondary);
     }
     private void centered(Canvas c,String s,float x,float y,float size,int color,boolean bold){
+        size=theme.textSize(s,size,bold);
         paint.setTextSize(size);paint.setTypeface(resources==null?(bold?Typeface.DEFAULT_BOLD:Typeface.DEFAULT):resources.fontForText(s,bold));
-        text(c,s,x-paint.measureText(s)/2,y,size,color,bold);
+        rawText(c,s,x-paint.measureText(s)/2,y,size,color,bold);
     }
 }

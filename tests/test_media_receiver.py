@@ -34,7 +34,65 @@ public class MediaReceiverHarness {
   failed.onReceive(c,new Intent(MediaState.ACTIONS[1]));check(DashboardView.received==4,"failed detach callback rejected");c.failRemove=false;r.start(c);failed.onReceive(c,new Intent(MediaState.ACTIONS[1]));check(DashboardView.received==4,"failed detach stays stale after restart");r.stop();
  }
 }'''
+MAPPING_INTENT = '''package android.content;
+public class Intent {
+ String action;java.util.Map<String,Object> extras=new java.util.HashMap<String,Object>();
+ public Intent(String a){action=a;}public Intent put(String key,Object value){extras.put(key,value);return this;}
+ public String getAction(){return action;}public boolean hasExtra(String n){return extras.containsKey(n);}
+ public String getStringExtra(String n){return (String)extras.get(n);}
+ public long getLongExtra(String n,long d){return extras.containsKey(n)?((Number)extras.get(n)).longValue():d;}
+ public int getIntExtra(String n,int d){return extras.containsKey(n)?((Number)extras.get(n)).intValue():d;}
+ public boolean getBooleanExtra(String n,boolean d){return extras.containsKey(n)?(Boolean)extras.get(n):d;}
+ public byte[] getByteArrayExtra(String n){return (byte[])extras.get(n);}
+}'''
+MAPPING_HARNESS = '''package com.veloster.dashboard.vehicle;
+import android.content.*;
+public class MediaMappingHarness {
+ static void check(boolean condition,String message){if(!condition)throw new AssertionError(message);}
+ public static void main(String[] args){
+  String[] keys={"playstate","playing_state","playstate","playstate","state"};
+  int[] modes={0x31,0x36,0x34,0x73,0x74};
+  for(int source=0;source<5;source++){
+   Context context=new Context();MediaState state=new MediaState();state.mode(modes[source]);MediaReceiver receiver=new MediaReceiver(state);receiver.start(context);
+   context.current.onReceive(context,new Intent(MediaState.ACTIONS[source]).put("filename","Title alone"));
+   check(state.snapshot(1000).playState==-1,"title never implies playing: "+source);
+   for(int status:new int[]{1,0}){
+    Object raw=source==1?Boolean.valueOf(status==1):Integer.valueOf(source==4?status==1?2:1:status);
+    context.current.onReceive(context,new Intent(MediaState.ACTIONS[source]).put(keys[source],raw));
+    check(state.snapshot(1000).playState==status,"source playback mapping: "+source+"/"+status);
+    context.current.onReceive(context,new Intent(MediaState.ACTIONS[source]).put("artist","Partial"));
+    check(state.snapshot(1000).playState==status,"partial update retains explicit state: "+source);
+   }
+   if(source==4){
+    context.current.onReceive(context,new Intent(MediaState.ACTIONS[source]).put("state",0));check(state.snapshot(1000).playState==-1,"AA stopped is not playing");
+    context.current.onReceive(context,new Intent(MediaState.ACTIONS[source]).put("state",99));check(state.snapshot(1000).playState==-1,"AA unknown is not playing");
+   }else if(source!=1){
+    context.current.onReceive(context,new Intent(MediaState.ACTIONS[source]).put("playstate",-1));check(state.snapshot(1000).playState==0,"OEM omitted-state sentinel preserves pause");
+    context.current.onReceive(context,new Intent(MediaState.ACTIONS[source]).put("playstate",7));check(state.snapshot(1000).playState==-1,"invalid OEM state becomes unknown");
+   }
+   Object playing=source==1?Boolean.TRUE:Integer.valueOf(source==4?2:1);
+   context.current.onReceive(context,new Intent(MediaState.ACTIONS[source]).put("invisible",true).put(keys[source],playing));
+   check(state.snapshot(1000).playState==-1&&state.snapshot(1000).title.equals(""),"invisible clears even conflicting playback: "+source);
+   receiver.stop();
+  }
+ }
+}'''
+
 class MediaReceiverTests(unittest.TestCase):
+ def test_source_playback_mapping(self):
+  java,javac=java_tools()
+  with tempfile.TemporaryDirectory() as tmp:
+   root=Path(tmp);sources=[]
+   stubs=dict(STUBS);stubs['android/content/Intent.java']=MAPPING_INTENT
+   for name,body in stubs.items():
+    p=root/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(body);sources.append(p)
+   p=root/'MediaMappingHarness.java';p.write_text(MAPPING_HARNESS);sources.append(p)
+   sources += [ROOT/'apps/dashboard/src/main/java/com/veloster/dashboard/vehicle'/name for name in ('MediaReceiver.java','MediaState.java')]
+   result=subprocess.run([javac,'-d',str(root),*map(str,sources)],capture_output=True,text=True)
+   self.assertEqual(result.returncode,0,result.stderr)
+   result=subprocess.run([java,'-cp',str(root),'com.veloster.dashboard.vehicle.MediaMappingHarness'],capture_output=True,text=True)
+   self.assertEqual(result.returncode,0,result.stderr)
+
  def test_lifecycle(self):
   java,javac=java_tools()
   with tempfile.TemporaryDirectory() as tmp:

@@ -1,7 +1,10 @@
 package com.veloster.dashboard.view.f1;
 
 import com.veloster.dashboard.vehicle.*;
+import com.veloster.dashboard.view.MediaBar;
 import com.veloster.dashboard.theme.ThemeSpec;
+import com.veloster.dashboard.theme.ThemeSpec.SurfaceRole;
+import com.veloster.dashboard.theme.ThemeSurface;
 import com.veloster.dashboard.theme.ThemeResources;
 import com.veloster.dashboard.theme.ThemePalette;
 
@@ -15,25 +18,30 @@ import java.util.Locale;
 
 /** F1 and media pages for the three Dashboard profiles. */
 public final class ClusterRenderer {
+    private final ThemeSurface surface;
     private ThemeSpec theme=ThemeSpec.original();
     private ThemeResources resources;
+    private ThemeSpec.Rect activeF1;
     public void setTheme(ThemeSpec value,ThemeResources assets){theme=value==null?ThemeSpec.original():value;resources=assets;}
     private final boolean jsPresentation;
-    private boolean mediaPage,pdProfile,jsProfile,jsnProfile,profileSupported;
+    private boolean pdProfile,jsProfile,jsnProfile,profileSupported;
     private Telemetry.Sample[] samples;
     private ShiftGuide.Cue cue;
     private MediaState.Snapshot music;
     private Bitmap artwork;
     private int shiftTarget;
+    private boolean mediaBarVisible=true;
+    public void setMediaBarVisible(boolean value){mediaBarVisible=value;}
     private long frameTime;
 
-    public ClusterRenderer(boolean jsPresentation){this.jsPresentation=jsPresentation;}
+    public ClusterRenderer(boolean jsPresentation){this(jsPresentation,new ThemeSurface());}
+    public ClusterRenderer(boolean jsPresentation,ThemeSurface surface){this.jsPresentation=jsPresentation;this.surface=surface;}
 
     public void prepare(Telemetry model,Telemetry.Sample[] samples,long now,int target,boolean media,
                  MediaState.Snapshot track,Bitmap artwork){
         pdProfile=model.pdProfile();jsProfile=model.jsProfile();jsnProfile=model.jsnProfile();
         profileSupported=model.supportedProfile();this.samples=samples;frameTime=now;
-        shiftTarget=target;cue=ShiftGuide.evaluate(samples,target,model.pdLayoutProfile());mediaPage=media;
+        shiftTarget=target;cue=ShiftGuide.evaluate(samples,target,model.pdLayoutProfile());
         music=track;this.artwork=artwork;
     }
 
@@ -42,41 +50,44 @@ public final class ClusterRenderer {
         else text(c,value,x,y,22,ThemePalette.primary(theme,0xffe1edf2),true);
     }
     private final Paint paint=new Paint(3);
-    private final Path shape=new Path();
+
     private void box(Canvas c,float l,float t,float r,float b,int color){paint.setColor(color);c.drawRect(l,t,r,b,paint);}
     private void panel(Canvas c,float x,float y,float w,float h,int fill,int edge){
-        if(!theme.cutPanels){paint.setColor(fill);c.drawRect(x,y,x+w,y+h,paint);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1);paint.setColor(edge);c.drawRect(x,y,x+w,y+h,paint);paint.setStyle(Paint.Style.FILL);return;}
-        shape.reset();shape.moveTo(x,y);shape.lineTo(x+w-12,y);shape.lineTo(x+w,y+12);
-        shape.lineTo(x+w,y+h);shape.lineTo(x+12,y+h);shape.lineTo(x,y+h-12);shape.close();
-        paint.setColor(fill);c.drawPath(shape,paint);
-        paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1);paint.setColor(edge);c.drawPath(shape,paint);paint.setStyle(Paint.Style.FILL);
+        surface.panelWithLegacy(c,theme,paint,x,y,w,h,fill,edge);
     }
     private void text(Canvas c,String s,float x,float y,float size,int color,boolean bold){
-        paint.setColor(color);paint.setTextSize(size);paint.setTypeface(resources==null?(bold?Typeface.DEFAULT_BOLD:Typeface.DEFAULT):resources.fontForText(s,bold));c.drawText(s,x,y,paint);
+        rawText(c,s,x,y,nodeSize(s,size,bold),color,bold);
+    }
+    private void rawText(Canvas c,String s,float x,float y,float size,int color,boolean bold){
+        paint.setColor(nodeColor(color));paint.setTextSize(size);paint.setTypeface(nodeFace(s,bold));c.drawText(s,x,y,paint);
     }
     private void fitted(Canvas c,String s,float x,float y,float size,float width,int color){
-        paint.setTypeface(resources==null?Typeface.DEFAULT:resources.fontForText(s,false));paint.setTextSize(size);
+        size=nodeSize(s,size,false);
+        paint.setTypeface(nodeFace(s,false));paint.setTextSize(size);
         float measured=paint.measureText(s);
-        text(c,s,x,y,measured>width?size*width/measured:size,color,false);
+        rawText(c,s,x,y,measured>width?size*width/measured:size,color,false);
     }
     private void ellipsis(Canvas c,String s,float x,float y,float size,float width,int color){
-        paint.setTypeface(resources==null?Typeface.DEFAULT:resources.fontForText(s,false));paint.setTextSize(size);
+        size=nodeSize(s,size,false);
+        paint.setTypeface(nodeFace(s,false));paint.setTextSize(size);
         if(paint.measureText(s)>width){
             int end=s.length();while(end>0 && paint.measureText(s.substring(0,end)+"…")>width)end--;
             if(end>0 && Character.isHighSurrogate(s.charAt(end-1)))end--;
             s=s.substring(0,end)+"…";
         }
-        text(c,s,x,y,size,color,false);
-    }
-    private void button(Canvas c,String s,float x,float y,float w,float h,boolean on,int accent){
-        panel(c,x,y,w,h,on?0xff233b46:0xff111415,on?accent:ThemePalette.stroke(theme,0xff303638));
-        if(on)box(c,x+9,y+h-3,x+w-9,y+h-1,accent);
-        paint.setTypeface(resources==null?Typeface.DEFAULT_BOLD:resources.fontForText(s,true));paint.setTextSize(14);float measured=paint.measureText(s);
-        text(c,s,x+12,y+h/2+5,measured>w-24?14*(w-24)/measured:14,on?accent:ThemePalette.secondary(theme,0xff91a5ae),true);
+        paint.setColor(color);paint.setTextSize(size);c.drawText(s,x,y,paint);
     }
     private void centered(Canvas c,String s,float x,float y,float size,int color,boolean bold){
-        paint.setTextSize(size);paint.setTypeface(resources==null?(bold?Typeface.DEFAULT_BOLD:Typeface.DEFAULT):resources.fontForText(s,bold));
-        text(c,s,x-paint.measureText(s)/2,y,size,color,bold);
+        size=nodeSize(s,size,bold);
+        paint.setTextSize(size);paint.setTypeface(nodeFace(s,bold));
+        rawText(c,s,x-paint.measureText(s)/2,y,size,color,bold);
+    }
+    private void centeredFit(Canvas c,String s,float x,float y,float size,float width,int color,boolean bold){
+        if(theme.materialFor(SurfaceRole.DATA_CARD).legacy()&&theme.spacing.gearPadding==0){centered(c,s,x,y,size,color,bold);return;}
+        size=nodeSize(s,size,bold);
+        paint.setTypeface(nodeFace(s,bold));paint.setTextSize(size);
+        float measured=paint.measureText(s);if(measured>width){size*=width/measured;paint.setTextSize(size);}
+        rawText(c,s,x-paint.measureText(s)/2,y,size,color,bold);
     }
     private static final String[] PREFIX={"엔진 RPM","오일 온도","냉각수 온도","앞 왼쪽 휠","앞 오른쪽 휠","뒤 왼쪽 휠","뒤 오른쪽 휠","속도 km/h","현재 기어","스로틀 %","브레이크 압력 bar","횡가속","종가속","조향각","외기 온도","출력 (계산)","토크 (계산)","부스트 (계산)","앞 왼쪽 공기압","앞 오른쪽 공기압","뒤 왼쪽 공기압","뒤 오른쪽 공기압","TCS","ESC","ABS","배터리 SOC","배터리 전압","조향 속도","e-LSD 수치","흡기 온도","가속 페달 %","TCS 사용 상태","ESC 사용 상태","ABS 경고등"};
     private int index(String prefix){for(int i=0;i<PREFIX.length;i++)if(PREFIX[i].equals(prefix))return i;return -1;}
@@ -86,137 +97,269 @@ public final class ClusterRenderer {
         return String.format(Locale.US,i==0||i==7||(i>=Telemetry.TPMS_FL&&i<=Telemetry.BAT_SOC)||i==Telemetry.STEERING_SPEED?"%.0f":i==11||i==12?"%+.2f":i==13?"%+.1f":i==17||i==Telemetry.BAT_VOLTAGE&&!jsPresentation?"%.2f":"%.1f",Telemetry.displayValue(i,samples[i].value));}
     private float numeric(String prefix){int i=index(prefix);return i>=0&&i<samples.length&&samples[i].valid?Telemetry.displayValue(i,samples[i].value):0;}
     private String gearTitle(String title){return title;}
-    public void drawMedia(Canvas c){
-        long age=music==null?0:music.noticeAgeMs;
-        float phase=Math.min(1f,Math.min(age/250f,(5000-age)/250f));
-        phase=Math.max(0,phase);phase=1-(1-phase)*(1-phase);
-        float top=347+133*(1-phase);
-        panel(c,18,top,764,101,0xff12212a,ThemePalette.accent(theme,0xffa4d9ef));
-        cover(c,30,top+12,76);
-        String source=music==null||music.source.length()==0?"MEDIA":music.source;
-        text(c,source,120,top+18,11,ThemePalette.accent(theme,0xffa4d9ef),true);
-        String title=music==null||music.title.length()==0?"—":music.title;
-        ellipsis(c,title,120,top+43,21,644,ThemePalette.primary(theme,0xffe1edf2));
-        String artist=music==null||music.artist.length()==0?"—":music.artist;
-        ellipsis(c,artist,120,top+64,13,480,ThemePalette.secondary(theme,0xff91a5ae));
-        if(music!=null && music.hasProgress()){
-            String times=MediaState.time(music.positionMs)+" / "+MediaState.time(music.durationMs);
-            text(c,times,622,top+64,12,ThemePalette.primary(theme,0xffe1edf2),false);
-            box(c,120,top+79,764,top+83,ThemePalette.stroke(theme,0xff303638));
-            box(c,120,top+79,120+644*music.progress(),top+83,ThemePalette.accent(theme,0xffa4d9ef));
-        }
-    }
     private void cover(Canvas c,float x,float y,float size){
-        box(c,x,y,x+size,y+size,0xff1c303b);
+        float radius=Math.min(theme.material.radius,size/2);
+        paint.setColor(theme.material.legacy()?0xff1c303b:theme.panel);
+        surface.roundRect(c,theme,new RectF(x,y,x+size,y+size),radius,radius,paint);
         if(artwork!=null){
-            float scale=Math.min(size/artwork.getWidth(),size/artwork.getHeight());
-            float w=artwork.getWidth()*scale,h=artwork.getHeight()*scale;
-            c.drawBitmap(artwork,null,new RectF(x+(size-w)/2,y+(size-h)/2,x+(size+w)/2,y+(size+h)/2),paint);
+            MediaBar.drawArtwork(c,artwork,x,y,size,radius,theme,surface);
         }else{
             centered(c,"♪",x+size/2,y+size*.61f,size*.35f,ThemePalette.accent(theme,0xffa4d9ef),true);
             if(size>100)centered(c,"ALBUM ART",x+size/2,y+size*.84f,11,ThemePalette.secondary(theme,0xff91a5ae),false);
         }
     }
-    public void drawArtworkToggle(Canvas c){
-        panel(c,18,436,52,44,mediaPage?0xff233b46:ThemePalette.panel(theme,0xff101315),mediaPage?ThemePalette.accent(theme,0xffa4d9ef):ThemePalette.stroke(theme,0xff303638));
-        cover(c,24,438,40);
-        text(c,music==null||music.source.length()==0?UiText.t("음악"):music.source,80,451,11,ThemePalette.accent(theme,0xffa4d9ef),true);
-        ellipsis(c,music==null||music.title.length()==0?"♪":music.title,80,472,13,120,ThemePalette.secondary(theme,0xff91a5ae));
-    }
-    public void drawCombined(Canvas c){
-        panel(c,18,60,464,388,ThemePalette.panel(theme,0xff101315),ThemePalette.stroke(theme,0xff303638));
-        text(c,cue.shift?"SHIFT ↑":"SHIFT / LED",30,83,11,cue.shift?ThemePalette.critical(theme,0xffff4059):ThemePalette.secondary(theme,0xff91a5ae),true);
-        for(int i=0;i<15;i++){
-            boolean lit=cue.shift?(frameTime/250)%2==0:i<cue.leds;
-            paint.setColor(lit?(i<5?ThemePalette.accent(theme,0xffa4d9ef):i<10?ThemePalette.primary(theme,0xffe1edf2):ThemePalette.critical(theme,0xffff4059)):0xff252a2c);
-            c.drawCircle(36+i*30.5f,105,7,paint);
+    public void drawMedia(Canvas c,com.veloster.dashboard.view.DashboardPage.Bounds b){
+        float top=MediaBar.noticeBounds(b,music==null?0:music.noticeAgeMs).y;
+        float pad=theme.spacing.cardPadding;
+        panel(c,b.x,top,b.width,b.height,(theme.materialFor(SurfaceRole.PANEL).legacy()?0xff12212a:theme.panelRaised),theme.accent);
+        float art=Math.max(1,b.height-2*pad);
+        cover(c,b.x+pad,top+pad,art);
+        float left=b.x+2*pad+art,right=b.right()-pad,available=Math.max(1,right-left);
+        String source=music==null||music.source.length()==0?"MEDIA":music.source;
+        String title=music==null||music.title.length()==0?"—":music.title;
+        String artist=music==null||music.artist.length()==0?"—":music.artist;
+        text(c,source,left,top+b.height*.20f,11,theme.accent,true);
+        ellipsis(c,title,left,top+b.height*.45f,21,available,theme.textPrimary);
+        ellipsis(c,artist,left,top+b.height*.68f,13,available*.72f,theme.textSecondary);
+        if(music!=null&&music.hasProgress()){
+            String times=MediaState.time(music.positionMs)+" / "+MediaState.time(music.durationMs);
+            text(c,times,left+available*.75f,top+b.height*.68f,12,theme.textPrimary,false);
+            box(c,left,top+b.height*.82f,right,top+b.height*.86f,theme.stroke);
+            box(c,left,top+b.height*.82f,left+available*music.progress(),top+b.height*.86f,theme.accent);
         }
-        float rpm=Math.max(0,Math.min(8000,numeric("엔진 RPM")));
-        box(c,30,124,470,127,ThemePalette.stroke(theme,0xff303638));if(rpm>0)box(c,30,124,30+440*rpm/8000,127,ThemePalette.accent(theme,0xffa4d9ef));
-        box(c,180,143,316,340,ThemePalette.accent(theme,0xffa4d9ef));
-        centered(c,gearTitle(pdProfile||jsProfile?"GEAR":"EMS GEAR"),248,164,11,ThemePalette.background(theme,0xff040506),true);
-        centered(c,value("현재 기어"),248,290,130,ThemePalette.background(theme,0xff040506),true);
-        centered(c,vehicleName(),248,324,13,ThemePalette.background(theme,0xff040506),true);
-        centered(c,"SPEED",98,177,12,ThemePalette.secondary(theme,0xff91a5ae),true);
-        centered(c,value("속도 km/h"),98,253,57,ThemePalette.primary(theme,0xffe1edf2),true);
-        centered(c,"km/h",98,280,12,ThemePalette.secondary(theme,0xff91a5ae),false);
-        centered(c,"ENGINE",398,177,12,ThemePalette.secondary(theme,0xff91a5ae),true);
-        centered(c,value("엔진 RPM"),398,253,46,ThemePalette.primary(theme,0xffe1edf2),true);
-        centered(c,"rpm",398,280,12,ThemePalette.secondary(theme,0xff91a5ae),false);
-        text(c,"OIL",32,372,11,ThemePalette.secondary(theme,0xff91a5ae),true);temperature(c,value("오일 온도")+" °C",116,375,135);
-        text(c,"COOLANT",258,372,11,ThemePalette.secondary(theme,0xff91a5ae),true);temperature(c,value("냉각수 온도")+" °C",368,375,100);
-        compactPedal(c,UiText.t(pdProfile||jsProfile?"가속 페달 / PEDAL":"스로틀"),pdProfile||jsProfile?"가속 페달 %":"스로틀 %","%",32,208,ThemePalette.accent(theme,0xffa4d9ef),100);
-        compactPedal(c,UiText.t("브레이크"),"브레이크 압력 bar","bar",258,212,ThemePalette.critical(theme,0xffff4059),100);
-        panel(c,494,60,288,388,0xff12212a,ThemePalette.stroke(theme,0xff303638));
-        cover(c,518,72,240);
-        text(c,music==null||music.source.length()==0?"MEDIA":music.source,510,333,12,ThemePalette.accent(theme,0xffa4d9ef),true);
-        ellipsis(c,music==null||music.title.length()==0?"—":music.title,510,362,21,256,ThemePalette.primary(theme,0xffe1edf2));
-        ellipsis(c,music==null||music.artist.length()==0?"—":music.artist,510,386,14,256,ThemePalette.secondary(theme,0xff91a5ae));
-        if(music!=null && music.hasProgress()){
-            text(c,MediaState.time(music.positionMs)+" / "+MediaState.time(music.durationMs),510,413,13,ThemePalette.primary(theme,0xffe1edf2),false);
-            box(c,510,428,766,432,ThemePalette.stroke(theme,0xff303638));box(c,510,428,510+256*music.progress(),432,ThemePalette.accent(theme,0xffa4d9ef));
-        }
-        button(c,"−",210,452,42,27,false,ThemePalette.accent(theme,0xffa4d9ef));text(c,UiText.t("목표 ")+shiftTarget+" rpm",267,471,12,ThemePalette.accent(theme,0xffa4d9ef),true);
-        button(c,"+",440,452,42,27,false,ThemePalette.accent(theme,0xffa4d9ef));
-        button(c,UiText.t("이전"),494,452,86,27,false,ThemePalette.accent(theme,0xffa4d9ef));
-        button(c,music!=null&&music.playState==1?"Ⅱ":music!=null&&music.playState==0?"▶":"▶ / Ⅱ",588,452,98,27,false,ThemePalette.accent(theme,0xffa4d9ef));
-        button(c,UiText.t("다음"),694,452,88,27,false,ThemePalette.accent(theme,0xffa4d9ef));
     }
+    private int barStyle(String prefix){return "브레이크 압력 bar".equals(prefix)?theme.brakeBarStyle():theme.pedalBarStyle();}
     private void compactPedal(Canvas c,String label,String prefix,String unit,int x,int width,int color,float maximum){
         text(c,label,x,420,11,ThemePalette.secondary(theme,0xff91a5ae),true);
         fitted(c,value(prefix)+" "+unit,x+66,422,18,width-66,ThemePalette.primary(theme,0xffe1edf2));
-        box(c,x,432,x+width,438,ThemePalette.stroke(theme,0xff303638));
         float fraction=Math.max(0,Math.min(1,numeric(prefix)/maximum));
-        if(fraction>0)box(c,x,432,x+width*fraction,438,color);
+        surface.levelBar(c,paint,x,432,width,6,fraction,color,ThemePalette.stroke(theme,0xff303638),barStyle(prefix));
     }
     private void pedal(Canvas c,String label,String prefix,String unit,int x,int color,float maximum){
-        panel(c,x,377,376,57,0xff111516,ThemePalette.stroke(theme,0xff303638));
-        text(c,label,x+14,396,10,ThemePalette.secondary(theme,0xff91a5ae),true);
+        surface.drawWithLegacy(c,theme,SurfaceRole.DATA_CARD,paint,x,377,376,57,
+                theme.materialFor(SurfaceRole.DATA_CARD).legacy()?0xff111516:theme.panel,ThemePalette.stroke(theme,0xff303638));
+        text(c,label,x+theme.spacing.pedalPadding,396,10,ThemePalette.secondary(theme,0xff91a5ae),true);
         String v=value(prefix);
-        fitted(c,v,x+14,423,25,85,ThemePalette.primary(theme,0xffe1edf2));
-        text(c,unit,x+105,422,11,ThemePalette.secondary(theme,0xff91a5ae),false);
+        fitted(c,v,x+theme.spacing.pedalPadding,423,25,99-theme.spacing.pedalPadding,ThemePalette.primary(theme,0xffe1edf2));
+        text(c,unit,x+91+theme.spacing.pedalPadding,422,11,ThemePalette.secondary(theme,0xff91a5ae),false);
         float fraction=Math.max(0,Math.min(1,numeric(prefix)/maximum));
-        for(int i=0;i<20;i++)box(c,x+148+i*10.6f,403,x+155+i*10.6f,421,fraction>i/20f?color:ThemePalette.stroke(theme,0xff303638));
+        surface.levelBar(c,paint,x+148,403,208.4f,18,fraction,color,ThemePalette.stroke(theme,0xff303638),barStyle(prefix));
     }
     public void drawCluster(Canvas c){
+        if(!theme.materialFor(SurfaceRole.DATA_CARD).legacy()&&!theme.hasF1()){
+            surface.draw(c,theme,SurfaceRole.DATA_CARD,18,120,258,247,theme.panel,theme.stroke);
+            surface.draw(c,theme,SurfaceRole.DATA_CARD,524,120,258,247,theme.panel,theme.stroke);
+        }
+        if(theme.hasF1()&&!theme.materialFor(SurfaceRole.DATA_CARD).legacy()){
+            for(String id:new String[]{"speed","boost","rpm","temperatures"}){ThemeSpec.Rect r=theme.f1(id);surface.draw(c,theme,SurfaceRole.DATA_CARD,r.x,r.y,r.width,r.height,theme.panel,theme.stroke);}
+        }
         float rpm=Math.max(0,Math.min(8000,numeric("엔진 RPM")));
+        f1Start(c,"shift",18,60,764,48);
         text(c,cue.shift?"SHIFT ↑":"SHIFT / LED",20,83,11,cue.shift?ThemePalette.critical(theme,0xffff4059):ThemePalette.secondary(theme,0xff91a5ae),true);
         text(c,shiftTarget+" rpm",690,83,11,ThemePalette.secondary(theme,0xff91a5ae),true);
         for(int i=0;i<15;i++){
-            int color=i<5?ThemePalette.accent(theme,0xffa4d9ef):i<10?0xffd0ebf8:ThemePalette.critical(theme,0xffff4059);
+            int color=i<5?ThemePalette.accent(theme,0xffa4d9ef):i<10?(theme.material.legacy()?0xffd0ebf8:theme.accent):ThemePalette.critical(theme,0xffff4059);
             float x=155+i*35;
             boolean lit=cue.shift?(frameTime/250)%2==0:i<cue.leds;
-            paint.setColor(lit?color:0xff252a2c);c.drawCircle(x,79,10,paint);
+            paint.setColor(lit?color:(theme.material.legacy()?0xff252a2c:theme.stroke));c.drawCircle(x,79,10,paint);
             if(lit){paint.setColor(0x70ffffff);c.drawCircle(x-2,76,3,paint);}
         }
         box(c,18,105,782,108,ThemePalette.stroke(theme,0xff303638));
         if(rpm>0)box(c,18,105,18+764*rpm/8000,108,ThemePalette.accent(theme,0xffa4d9ef));
+        f1End(c);
+        f1Start(c,"gear",294,120,212,247);
         // Central gear is the primary cue, like a single-seat race display.
-        box(c,294,120,506,367,ThemePalette.accent(theme,0xffa4d9ef));
+        int gearFill=ThemePalette.accent(theme,0xffa4d9ef);
+        if(!surface.draw(c,theme,SurfaceRole.DATA_CARD,294,120,212,247,gearFill,theme.stroke))
+            box(c,294,120,506,367,gearFill);
         centered(c,gearTitle(pdProfile||jsProfile?"G E A R":"E M S  G E A R"),400,148,15,ThemePalette.background(theme,0xff040506),true);
         String gear=value("현재 기어");
-        centered(c,gear,400,321,184,ThemePalette.background(theme,0xff040506),true);
+        centeredFit(c,gear,400,321,theme.typography.gearSize,212-2*theme.spacing.gearPadding,ThemePalette.background(theme,0xff040506),true);
         centered(c,vehicleName(),400,350,14,ThemePalette.background(theme,0xff040506),true);
-        text(c,"SPEED",22,148,14,ThemePalette.secondary(theme,0xff91a5ae),true);
-        text(c,"km/h",229,148,12,ThemePalette.secondary(theme,0xff91a5ae),false);
+        f1End(c);
+        f1Start(c,"speed",18,120,258,158);
+        text(c,"SPEED",18+theme.spacing.f1SidePadding,148,14,ThemePalette.secondary(theme,0xff91a5ae),true);
+        text(c,"km/h",233-theme.spacing.f1SidePadding,148,12,ThemePalette.secondary(theme,0xff91a5ae),false);
         centered(c,value("속도 km/h"),150,253,88,ThemePalette.primary(theme,0xffe1edf2),true);
         box(c,18,276,276,278,ThemePalette.stroke(theme,0xff303638));
-        text(c,"OIL TEMP",22,307,11,ThemePalette.secondary(theme,0xff91a5ae),true);
+        f1End(c);
+        f1Start(c,"boost",18,278,258,89);
+        text(c,"OIL TEMP",18+theme.spacing.f1SidePadding,307,11,ThemePalette.secondary(theme,0xff91a5ae),true);
         temperature(c,value("오일 온도"),175,310,72);
-        text(c,"°C",250,310,11,ThemePalette.secondary(theme,0xff91a5ae),false);
-        text(c,"ENGINE",526,148,14,ThemePalette.secondary(theme,0xff91a5ae),true);
-        text(c,"rpm",749,148,12,ThemePalette.secondary(theme,0xff91a5ae),false);
+        text(c,"°C",254-theme.spacing.f1SidePadding,310,11,ThemePalette.secondary(theme,0xff91a5ae),false);
+        f1End(c);
+        f1Start(c,"rpm",522,120,260,158);
+        text(c,"ENGINE",522+theme.spacing.f1SidePadding,148,14,ThemePalette.secondary(theme,0xff91a5ae),true);
+        text(c,"rpm",753-theme.spacing.f1SidePadding,148,12,ThemePalette.secondary(theme,0xff91a5ae),false);
         centered(c,value("엔진 RPM"),653,247,69,ThemePalette.primary(theme,0xffe1edf2),true);
         box(c,524,276,782,278,ThemePalette.stroke(theme,0xff303638));
-        text(c,"COOLANT",528,307,11,ThemePalette.secondary(theme,0xff91a5ae),true);
+        f1End(c);
+        f1Start(c,"temperatures",524,278,258,89);
+        text(c,"COOLANT",524+theme.spacing.f1SidePadding,307,11,ThemePalette.secondary(theme,0xff91a5ae),true);
         temperature(c,value("냉각수 온도"),685,310,72);
-        text(c,"°C",760,310,11,ThemePalette.secondary(theme,0xff91a5ae),false);
+        text(c,"°C",764-theme.spacing.f1SidePadding,310,11,ThemePalette.secondary(theme,0xff91a5ae),false);
+        f1End(c);
+        c.save();if(!mediaBarVisible)c.translate(0,480-(theme.hasF1()?theme.f1("pedal").y+theme.f1("pedal").height:434));
+        f1Start(c,"pedal",18,377,376,57);
         pedal(c,pdProfile||jsProfile?"PEDAL":"THROTTLE",pdProfile||jsProfile?"가속 페달 %":"스로틀 %","%",18,ThemePalette.accent(theme,0xffa4d9ef),100);
+        f1End(c);
+        c.restore();
+        c.save();if(!mediaBarVisible)c.translate(0,480-(theme.hasF1()?theme.f1("brake").y+theme.f1("brake").height:434));
+        f1Start(c,"brake",406,377,376,57);
         pedal(c,"BRAKE PRESSURE", "브레이크 압력 bar", "bar",406,ThemePalette.critical(theme,0xffff4059),100);
-        button(c,"−",548,452,42,27,false,ThemePalette.accent(theme,0xffa4d9ef));
-        text(c,UiText.t("목표 ")+shiftTarget+" rpm",604,471,12,ThemePalette.accent(theme,0xffa4d9ef),true);
-        button(c,"+",740,452,42,27,false,ThemePalette.accent(theme,0xffa4d9ef));
+        f1End(c);
+        c.restore();
+
     }
+    /** Draw component contents in their resolved rectangles, without scaling the Canvas. */
+    public void drawAdaptive(Canvas c,com.veloster.dashboard.view.DashboardPage.Content content){
+        boolean grid=content.f1Grid!=null;
+        float sideSize=Float.MAX_VALUE;
+        for(int slot:new int[]{0,2}){
+            String id=com.veloster.dashboard.view.DashboardPage.f1OrderNode(theme.f1Order(),slot);
+            activeF1=theme.f1(id);
+            com.veloster.dashboard.view.DashboardPage.Bounds b=adaptiveBody(content,content.f1(theme,id),id,grid);
+            String reading=mainReading(id);
+            sideSize=Math.min(sideSize,adaptiveSize(reading,b,grid?0.78f:0.84f,
+                    Math.min(grid?82:88,b.height*(grid?0.64f:0.62f)),true,1));
+        }
+        activeF1=null;
+        for(String id:new String[]{"shift","gear","speed","boost","rpm","temperatures","pedal","brake"}){
+            ThemeSpec.Rect node=theme.f1(id);activeF1=node;
+            com.veloster.dashboard.view.DashboardPage.Bounds outer=content.f1(theme,id);
+            c.save();
+            boolean gear="gear".equals(id);
+            SurfaceRole role=gear?SurfaceRole.GEAR_CARD:SurfaceRole.DATA_CARD;
+            boolean legacy=theme.materialFor(role).legacy();
+            if(legacy)c.clipRect(outer.x,outer.y,outer.right(),outer.bottom());
+            int fill=gear?adaptiveGearColor():theme.panel;
+            if(!"shift".equals(id)){
+                if(grid)surface.card(c,theme,role,outer.x,outer.y,outer.width,outer.height,content.f1Grid.radius,fill);
+                else surface.drawWithLegacy(c,theme,role,paint,
+                        outer.x,outer.y,outer.width,outer.height,fill,theme.stroke);
+            }
+            if(!legacy)c.clipRect(outer.x,outer.y,outer.right(),outer.bottom());
+            com.veloster.dashboard.view.DashboardPage.Bounds b=adaptiveBody(content,outer,id,grid);
+            boolean middle=id.equals(com.veloster.dashboard.view.DashboardPage.f1OrderNode(theme.f1Order(),1));
+            int primary=theme.textPrimary,secondary=theme.textSecondary;
+            if("shift".equals(id)){
+                adaptiveText(c,cue.shift?"SHIFT ↑":"SHIFT / LED",b,0.22f,11,secondary,true,false,0.4f);
+                String target=shiftTarget+" rpm";
+                com.veloster.dashboard.view.DashboardPage.Bounds right=new com.veloster.dashboard.view.DashboardPage.Bounds(b.x+b.width*0.72f,b.y,b.width*0.28f,b.height);
+                adaptiveText(c,target,right,0.22f,11,secondary,false,true,1,grid);
+                float radius=Math.min(7,b.width/42);
+                for(int i=0;i<15;i++){
+                    boolean lit=cue.shift?(frameTime/250)%2==0:i<cue.leds;
+                    paint.setColor(lit?(i<5?theme.accent:i<10?theme.textPrimary:theme.critical):theme.stroke);
+                    c.drawCircle(b.x+radius+(b.width-2*radius)*i/14f,b.y+b.height*0.60f,radius,paint);
+                }
+                box(c,b.x,b.y+b.height-3,b.x+b.width,b.y+b.height,theme.stroke);
+                box(c,b.x,b.y+b.height-3,b.x+b.width*Math.min(1,Math.max(0,numeric("엔진 RPM"))/8000),b.y+b.height,theme.accent);
+            }else if("gear".equals(id)){
+                int ink=theme.background;
+                adaptiveText(c,pdProfile||jsProfile?"GEAR":"EMS GEAR",b,grid?0.13f:0.10f,14,ink,true,true,1);
+                if(middle)adaptiveText(c,mainReading(id),b,grid?0.72f:0.74f,Math.min(theme.typography.gearSize,b.height*0.64f),ink,true,true,1);
+                else adaptiveFixedText(c,mainReading(id),b,grid?0.78f:0.84f,sideSize,ink);
+                adaptiveText(c,vehicleName(),b,grid?0.94f:0.97f,13,ink,false,true,1);
+            }else if("speed".equals(id)||"rpm".equals(id)){
+                boolean speed="speed".equals(id);
+                adaptiveText(c,speed?"SPEED":"ENGINE",b,grid?0.17f:0.16f,14,secondary,true,false,0.65f);
+                com.veloster.dashboard.view.DashboardPage.Bounds unit=new com.veloster.dashboard.view.DashboardPage.Bounds(b.x+b.width*0.70f,b.y,b.width*0.30f,b.height);
+                adaptiveText(c,speed?"km/h":"rpm",unit,grid?0.17f:0.16f,12,secondary,false,true,1,grid);
+                if(middle)adaptiveText(c,mainReading(id),b,grid?0.72f:0.74f,Math.min(theme.typography.gearSize,b.height*0.64f),primary,true,true,1);
+                else adaptiveFixedText(c,mainReading(id),b,grid?0.78f:0.84f,sideSize,primary);
+            }else if("boost".equals(id)){
+                adaptiveText(c,jsPresentation?"BOOST":"OIL TEMP",b,grid?0.37f:0.26f,11,secondary,true,false,grid?0.50f:1);
+                String reading=value(jsPresentation?"부스트 (계산)":"오일 온도")+(jsPresentation?" bar":" °C");
+                if(grid)adaptiveText(c,reading,new com.veloster.dashboard.view.DashboardPage.Bounds(b.x+b.width*0.51f,b.y,b.width*0.49f,b.height),0.37f,19,primary,false,true,1,true);
+                else adaptiveText(c,reading,b,0.87f,24,primary,false,false,1);
+            }else if("temperatures".equals(id)){
+                adaptiveRow(c,b,"COOLANT",value("냉각수 온도")+" °C",grid?0.37f:0.35f,grid);
+                if(jsPresentation)adaptiveRow(c,b,"INTAKE",value("흡기 온도")+" °C",0.88f,grid);
+            }else{
+                boolean pedal="pedal".equals(id);String prefix=pedal?(pdProfile||jsProfile?"가속 페달 %":"스로틀 %"):"브레이크 압력 bar";
+                adaptiveText(c,pedal?(pdProfile||jsProfile?"PEDAL":"THROTTLE"):"BRAKE PRESSURE",b,grid?0.47f:0.26f,10,secondary,true,false,0.52f);
+                com.veloster.dashboard.view.DashboardPage.Bounds valueBox=new com.veloster.dashboard.view.DashboardPage.Bounds(b.x+b.width*0.55f,b.y,b.width*0.45f,b.height);
+                adaptiveText(c,value(prefix)+(pedal?" %":" bar"),valueBox,grid?0.47f:0.50f,grid?19:23,primary,false,true,1,grid);
+                float barY=grid?b.y+b.height-4:b.y+b.height*0.82f;
+                surface.levelBar(c,paint,b.x,barY,b.width,grid?4:5,numeric(prefix)/100,pedal?theme.accent:theme.critical,theme.stroke,barStyle(prefix));
+            }
+            c.restore();activeF1=null;
+        }
+    }
+    private String mainReading(String id){return value("gear".equals(id)?"현재 기어":"speed".equals(id)?"속도 km/h":"엔진 RPM");}
+    private com.veloster.dashboard.view.DashboardPage.Bounds adaptiveBody(com.veloster.dashboard.view.DashboardPage.Content content,
+            com.veloster.dashboard.view.DashboardPage.Bounds outer,String id,boolean grid){
+        ThemeSpec.Rect node=theme.f1(id);
+        float px=grid?content.f1Grid.padding:Math.min(theme.spacing.cardPadding,outer.width*0.08f);
+        float py=grid?Math.min(content.f1Grid.padding,outer.height*0.18f):Math.min(theme.spacing.cardPadding,outer.height*0.10f);
+        if(grid&&"shift".equals(id)){px=0;py=0;}
+        int left=node==null?0:node.left,top=node==null?0:node.top;
+        int right=node==null?0:node.right,bottom=node==null?0:node.bottom;
+        return new com.veloster.dashboard.view.DashboardPage.Bounds(outer.x+left+px,outer.y+top+py,
+                Math.max(1,outer.width-left-right-2*px),Math.max(1,outer.height-top-bottom-2*py));
+    }
+    private void adaptiveFixedText(Canvas c,String value,com.veloster.dashboard.view.DashboardPage.Bounds b,
+            float baseline,float size,int color){
+        paint.setTypeface(nodeFace(value,true));paint.setTextSize(size);
+        float factor=0.5f;
+        if(activeF1!=null&&!"stretch".equals(activeF1.alignment))factor="end".equals(activeF1.alignment)?1f:"center".equals(activeF1.alignment)?0.5f:0;
+        rawText(c,value,b.x+(b.width-paint.measureText(value))*factor,b.y+b.height*baseline,size,color,true);
+    }
+    private void adaptiveRow(Canvas c,com.veloster.dashboard.view.DashboardPage.Bounds b,String label,String value,float baseline,boolean grid){
+        adaptiveText(c,label,b,baseline,10,theme.textSecondary,true,false,0.48f);
+        com.veloster.dashboard.view.DashboardPage.Bounds right=new com.veloster.dashboard.view.DashboardPage.Bounds(b.x+b.width*0.50f,b.y,b.width*0.50f,b.height);
+        adaptiveText(c,value,right,baseline,19,theme.textPrimary,false,true,1,grid);
+    }
+    private void adaptiveText(Canvas c,String value,com.veloster.dashboard.view.DashboardPage.Bounds b,float baseline,float size,int color,boolean bold,boolean center,float portion){
+        adaptiveText(c,value,b,baseline,size,color,bold,center,portion,false);
+    }
+    private void adaptiveText(Canvas c,String value,com.veloster.dashboard.view.DashboardPage.Bounds b,float baseline,float size,int color,boolean bold,boolean center,float portion,boolean end){
+        size=adaptiveSize(value,b,baseline,size,bold,portion);
+        paint.setTypeface(nodeFace(value,bold));paint.setTextSize(size);
+        float width=Math.max(1,b.width*portion);
+        float factor=end?1:center?0.5f:0;
+        if(activeF1!=null&&!"stretch".equals(activeF1.alignment))factor="end".equals(activeF1.alignment)?1f:"center".equals(activeF1.alignment)?0.5f:0;
+        float x=b.x+(width-paint.measureText(value))*factor;
+        rawText(c,value,x,b.y+b.height*baseline,size,color,bold);
+    }
+    private float adaptiveSize(String value,com.veloster.dashboard.view.DashboardPage.Bounds b,float baseline,float size,boolean bold,float portion){
+        size=Math.min(nodeSize(value,size,bold),b.height*(baseline<0.3f?0.28f:0.75f));
+        paint.setTypeface(nodeFace(value,bold));paint.setTextSize(size);
+        if(theme.f1Grid()!=null){
+            Paint.FontMetrics metrics=paint.getFontMetrics();
+            float factor=Math.min(1,b.height*baseline/Math.max(1,-metrics.ascent));
+            factor=Math.min(factor,b.height*(1-baseline)/Math.max(1,metrics.descent));
+            // The body inset already leaves space for descenders on bottom-aligned rows.
+            if(baseline>=0.85f)factor=Math.min(1,b.height*baseline/Math.max(1,-metrics.ascent));
+            size*=factor;paint.setTextSize(size);
+        }
+        float width=Math.max(1,b.width*portion),measured=paint.measureText(value);
+        if(measured>width){size*=width/measured;paint.setTextSize(size);}
+        return size;
+    }
+    private int adaptiveGearColor(){return ThemePalette.accent(theme,0xffa4d9ef);}
+    private float nodeSize(String text,float size,boolean bold){return theme.textSize(activeF1==null?null:activeF1.fontRole,text,size,bold);}
+    private Typeface nodeFace(String text,boolean bold){
+        if(resources==null)return bold?Typeface.DEFAULT_BOLD:Typeface.DEFAULT;
+        return activeF1==null||activeF1.fontRole==null?resources.fontForText(text,bold):resources.font(activeF1.fontRole,bold);
+    }
+    private int nodeColor(int fallback){
+        String role=activeF1==null?null:activeF1.colorRole;
+        return role==null?fallback:"primary".equals(role)?theme.textPrimary:"secondary".equals(role)?theme.textSecondary:"accent".equals(role)?theme.accent:"warning".equals(role)?theme.warning:theme.critical;
+    }
+    private void f1Start(Canvas c,String id,float x,float y,float width,float height){
+        if(!theme.hasF1())return;
+        ThemeSpec.Rect r=theme.f1(id);activeF1=r;c.save();c.clipRect(r.x,r.y,r.x+r.width,r.y+r.height);
+        float availableW=r.width-r.left-r.right,availableH=r.height-r.top-r.bottom;
+        float sx=Math.min(availableW/width,availableH/height),sy=sx,ox=0,oy=0;
+        if(!"stretch".equals(r.alignment)){
+            sx=sy=Math.min(sx,sy);float factor="center".equals(r.alignment)?0.5f:"end".equals(r.alignment)?1f:0f;
+            ox=(availableW-width*sx)*factor;oy=(availableH-height*sy)*factor;
+        }
+        c.translate(r.x+r.left+ox,r.y+r.top+oy);c.scale(sx,sy);c.translate(-x,-y);
+    }
+    private void f1End(Canvas c){if(theme.hasF1()){c.restore();activeF1=null;}}
     private String vehicleName(){return pdProfile?"i30 N Line":jsProfile?"Veloster (WIP)":jsnProfile?"VELOSTER N":profileSupported?"Dashboard":"UNSUPPORTED";}
 
 }

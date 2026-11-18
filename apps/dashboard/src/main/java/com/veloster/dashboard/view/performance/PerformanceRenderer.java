@@ -1,7 +1,10 @@
 package com.veloster.dashboard.view.performance;
 
 import com.veloster.dashboard.vehicle.*;
+import com.veloster.dashboard.view.DashboardPage;
+import com.veloster.dashboard.view.DashboardPage.Bounds;
 import com.veloster.dashboard.theme.ThemeSpec;
+import com.veloster.dashboard.theme.ThemeSurface;
 import com.veloster.dashboard.theme.ThemeResources;
 import com.veloster.dashboard.theme.ThemePalette;
 
@@ -16,9 +19,19 @@ import java.util.Locale;
 
 /** Reference-inspired layout. Draws only existing received Telemetry samples; no new decoding. */
 public final class PerformanceRenderer {
+    private final ThemeSurface surface=new ThemeSurface();
     private ThemeSpec theme=ThemeSpec.original();
     private ThemeResources resources;
     public void setTheme(ThemeSpec value,ThemeResources assets){theme=value==null?ThemeSpec.original():value;resources=assets;}
+    private Bounds area;
+    // Anchors retain the relative position of each instrument in the original design.
+    private float x(float anchor){return area.atX((anchor-14)/772f);}
+    private float y(float anchor){return area.atY((anchor-60)/406f);}
+    private float w(float span){return area.width*span/772f;}
+    private float h(float span){return area.height*span/406f;}
+    private float uniform(float span){return Math.min(w(span),h(span));}
+    private RectF rect(float l,float t,float r,float b){return new RectF(x(l),y(t),x(r),y(b));}
+    private void circle(Canvas c,float cx,float cy,float radius){c.drawCircle(x(cx),y(cy),uniform(radius),p);}
     private final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
     private Telemetry.Sample[] samples;
     private boolean pd,js,jsn,supported;
@@ -29,24 +42,30 @@ public final class PerformanceRenderer {
     private String value(int i,String format){return valid(i)?String.format(Locale.US,format,number(i)):"—";}
     private float clamp(float v,float lo,float hi){return Math.max(lo,Math.min(hi,v));}
     private void text(Canvas c,String s,float x,float y,float size,int color,Paint.Align align,boolean bold){
-        p.setStyle(Paint.Style.FILL);p.setColor(color);p.setTextAlign(align);p.setTextSize(size);p.setTypeface(resources==null?(bold?Typeface.DEFAULT_BOLD:Typeface.DEFAULT):resources.fontForText(s,bold));c.drawText(s,x,y,p);
+        rawText(c,s,x,y,theme.textSize(s,size,bold),color,align,bold);
+    }
+    private void rawText(Canvas c,String s,float x,float y,float size,int color,Paint.Align align,boolean bold){
+        p.setStyle(Paint.Style.FILL);p.setColor(color);p.setTextAlign(align);p.setTextSize(size);p.setTypeface(resources==null?(bold?Typeface.DEFAULT_BOLD:Typeface.DEFAULT):resources.fontForText(s,bold));c.drawText(s,x(x),y(y),p);
     }
     private void fit(Canvas c,String s,float x,float y,float size,float width,int color,Paint.Align align){
-        p.setTypeface(resources==null?Typeface.DEFAULT:resources.fontForText(s,false));p.setTextSize(size);float measured=p.measureText(s);
-        text(c,s,x,y,measured>width?size*width/measured:size,color,align,false);
+        size=theme.textSize(s,size,false);
+        p.setTypeface(resources==null?Typeface.DEFAULT:resources.fontForText(s,false));p.setTextSize(size);float measured=p.measureText(s);width=w(width);
+        rawText(c,s,x,y,measured>width?size*width/measured:size,color,align,false);
     }
-    private void line(Canvas c,float x,float y,float x2,float y2,int color,float width){p.setColor(color);p.setStrokeWidth(width);c.drawLine(x,y,x2,y2,p);}
+    private void line(Canvas c,float x,float y,float x2,float y2,int color,float width){p.setColor(color);p.setStrokeWidth(width);c.drawLine(x(x),y(y),x(x2),y(y2),p);}
     private void box(Canvas c,float l,float t,float r,float b){
-        p.setStyle(Paint.Style.FILL);p.setColor(ThemePalette.panel(theme,0xff10212b));if(theme.cutPanels)c.drawRoundRect(new RectF(l,t,r,b),7,7,p);else c.drawRect(l,t,r,b,p);
-        p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1);p.setColor(ThemePalette.stroke(theme,0xff29424e));if(theme.cutPanels)c.drawRoundRect(new RectF(l,t,r,b),7,7,p);else c.drawRect(l,t,r,b,p);p.setStyle(Paint.Style.FILL);
+        l=x(l);t=y(t);r=x(r);b=y(b);
+        if(surface.panel(c,theme,l,t,r-l,b-t,ThemePalette.panel(theme,0xff10212b),ThemePalette.stroke(theme,0xff29424e)))return;
+        p.setStyle(Paint.Style.FILL);p.setColor(ThemePalette.panel(theme,0xff10212b));if(theme.cutPanels)surface.roundRect(c,theme,new RectF(l,t,r,b),7,7,p);else c.drawRect(l,t,r,b,p);
+        p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1);p.setColor(ThemePalette.stroke(theme,0xff29424e));if(theme.cutPanels)surface.roundRect(c,theme,new RectF(l,t,r,b),7,7,p);else c.drawRect(l,t,r,b,p);p.setStyle(Paint.Style.FILL);
     }
     private void arc(Canvas c,RectF bounds,float start,float sweep,int color,float width){
         p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(width);p.setColor(color);c.drawArc(bounds,start,sweep,false,p);p.setStyle(Paint.Style.FILL);
     }
     /** Called below the common header, on the already scaled canvas. */
-    public void draw(Canvas c,Telemetry model,long now){
+    public void draw(Canvas c,Telemetry model,long now,DashboardPage.Content content){
+        area=content.padded(theme);
         samples=model.snapshot(now);
-        p.setStyle(Paint.Style.FILL);p.setColor(theme.isOriginal()?0xff0c1820:theme.background);c.drawRect(0,52,800,480,p);
         text(c,pd?"PD":js?"JS":jsn?"N":"—",16,82,25,ThemePalette.accent(theme,0xffa4d9ec),Paint.Align.LEFT,true);
         text(c,"PERFORMANCE",42,80,19,ThemePalette.primary(theme,0xffe4f1f6),Paint.Align.LEFT,true);
         text(c,vehicleName(),233,79,13,ThemePalette.secondary(theme,0xff91aebb),Paint.Align.LEFT,false);
@@ -58,14 +77,14 @@ public final class PerformanceRenderer {
     private void engine(Canvas c){
         text(c,"ENGINE",20,114,14,ThemePalette.secondary(theme,0xff91aebb),Paint.Align.LEFT,false);
         text(c,"rpm",275,114,12,ThemePalette.secondary(theme,0xff91aebb),Paint.Align.RIGHT,false);
-        RectF gauge=new RectF(38,128,274,364);arc(c,gauge,180,180,ThemePalette.stroke(theme,0xff29424e),6);
+        float radius=uniform(118),cx=x(156),cy=y(246);RectF gauge=new RectF(cx-radius,cy-radius,cx+radius,cy+radius);arc(c,gauge,180,180,ThemePalette.stroke(theme,0xff29424e),6);
         if(valid(0))arc(c,gauge,180,180*clamp(number(0)/8000f,0,1),ThemePalette.accent(theme,0xffa4d9ec),6);
         fit(c,value(0,"%,.0f"),156,231,51,202,ThemePalette.primary(theme,0xffe4f1f6),Paint.Align.CENTER);
         text(c,"0",38,269,12,ThemePalette.secondary(theme,0xff91aebb),Paint.Align.LEFT,false);
         text(c,"8,000",274,269,12,ThemePalette.secondary(theme,0xff91aebb),Paint.Align.RIGHT,false);
         for(int i=0;i<20;i++){
             p.setColor(valid(0)&&number(0)/8000f*20>i?ThemePalette.accent(theme,0xffa4d9ec):ThemePalette.stroke(theme,0xff29424e));
-            c.drawRoundRect(new RectF(50+i*10.7f,280,56+i*10.7f,283),1,1,p);
+            surface.roundRect(c,theme,rect(50+i*10.7f,280,56+i*10.7f,283),1,1,p);
         }
     }
     private void headline(Canvas c){
@@ -94,19 +113,21 @@ public final class PerformanceRenderer {
             text(c,labels[n],x+10,386,14,ThemePalette.secondary(theme,0xff91aebb),Paint.Align.LEFT,false);
             text(c,value(ids[n],"%.1f"),x+92,423,29,ThemePalette.primary(theme,0xffe4f1f6),Paint.Align.RIGHT,false);
             text(c,n==0?"%":"bar",x+124,423,13,ThemePalette.secondary(theme,0xff91aebb),Paint.Align.RIGHT,false);
-            p.setColor(ThemePalette.stroke(theme,0xff29424e));c.drawRoundRect(new RectF(x+10,446,x+124,452),3,3,p);
-            if(valid(ids[n])){p.setColor(ThemePalette.accent(theme,0xffa4d9ec));float f=clamp(number(ids[n])/100f,0,1);if(f>0)c.drawRoundRect(new RectF(x+10,446,x+10+114*f,452),3,3,p);}
+            p.setColor(ThemePalette.stroke(theme,0xff29424e));surface.roundRect(c,theme,rect(x+10,446,x+124,452),3,3,p);
+            if(valid(ids[n])){p.setColor(ThemePalette.accent(theme,0xffa4d9ec));float f=clamp(number(ids[n])/100f,0,1);if(f>0)surface.roundRect(c,theme,rect(x+10,446,x+10+114*f,452),3,3,p);}
         }
     }
     private void forces(Canvas c){
         box(c,302,365,580,466);text(c,"G FORCE",314,385,14,ThemePalette.secondary(theme,0xff91aebb),Paint.Align.LEFT,false);
         float cx=345,cy=424;
         p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1);p.setColor(0xff557e91);
-        c.drawCircle(cx,cy,31,p);c.drawCircle(cx,cy,19,p);
-        line(c,cx-31,cy,cx+31,cy,ThemePalette.stroke(theme,0xff29424e),1);line(c,cx,cy-31,cx,cy+31,ThemePalette.stroke(theme,0xff29424e),1);
+        circle(c,cx,cy,31);circle(c,cx,cy,19);
+        p.setColor(ThemePalette.stroke(theme,0xff29424e));
+        c.drawLine(x(cx)-uniform(31),y(cy),x(cx)+uniform(31),y(cy),p);
+        c.drawLine(x(cx),y(cy)-uniform(31),x(cx),y(cy)+uniform(31),p);
         if(valid(11)&&valid(12)){
             p.setStyle(Paint.Style.FILL);p.setColor(ThemePalette.accent(theme,0xffa4d9ec));
-            c.drawCircle(cx+clamp(number(11),-1,1)*27,cy-clamp(number(12),-1,1)*27,4,p);
+            c.drawCircle(x(cx)+clamp(number(11),-1,1)*uniform(27),y(cy)-clamp(number(12),-1,1)*uniform(27),uniform(4),p);
         }
         text(c,UiText.t("종가속"),423,402,13,ThemePalette.secondary(theme,0xff91aebb),Paint.Align.CENTER,false);
         text(c,UiText.t("횡가속"),526,402,13,ThemePalette.secondary(theme,0xff91aebb),Paint.Align.CENTER,false);
@@ -120,19 +141,20 @@ public final class PerformanceRenderer {
         text(c,UiText.t("조향각"),689,140,12,ThemePalette.secondary(theme,0xff91aebb),Paint.Align.CENTER,false);
         fit(c,value(Telemetry.STEERING,"%+.1f")+" °",689,165,23,170,ThemePalette.primary(theme,0xffe4f1f6),Paint.Align.CENTER);
         float cx=689,cy=191;
-        p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(2);p.setColor(valid(Telemetry.STEERING)?ThemePalette.accent(theme,0xffa4d9ec):ThemePalette.stroke(theme,0xff29424e));c.drawCircle(cx,cy,12,p);
+        p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(2);p.setColor(valid(Telemetry.STEERING)?ThemePalette.accent(theme,0xffa4d9ec):ThemePalette.stroke(theme,0xff29424e));circle(c,cx,cy,12);
         if(valid(Telemetry.STEERING)){
-            double angle=Math.toRadians(number(Telemetry.STEERING));float dx=(float)Math.cos(angle)*10,dy=(float)Math.sin(angle)*10;
-            line(c,cx-dx,cy-dy,cx+dx,cy+dy,ThemePalette.accent(theme,0xffa4d9ec),2);line(c,cx,cy,cx-dy,cy+dx,ThemePalette.accent(theme,0xffa4d9ec),2);
+            double angle=Math.toRadians(number(Telemetry.STEERING));float dx=(float)Math.cos(angle)*uniform(10),dy=(float)Math.sin(angle)*uniform(10);
+            p.setColor(ThemePalette.accent(theme,0xffa4d9ec));
+            c.drawLine(x(cx)-dx,y(cy)-dy,x(cx)+dx,y(cy)+dy,p);c.drawLine(x(cx),y(cy),x(cx)-dy,y(cy)+dx,p);
         }
         line(c,606,210,772,210,ThemePalette.stroke(theme,0xff29424e),1);
         // Simple top-view silhouette, not a path prediction or an image asset.
-        p.setStyle(Paint.Style.FILL);p.setColor(0xff688592);c.drawRoundRect(new RectF(666,235,712,368),16,16,p);
-        p.setColor(0xffc6dce5);c.drawRoundRect(new RectF(671,239,707,362),13,13,p);
-        p.setColor(0xff24414e);c.drawRoundRect(new RectF(675,264,703,331),8,8,p);
-        p.setColor(0xff98b6c4);c.drawRect(677,281,701,316,p);
-        p.setColor(ThemePalette.background(theme,0xff0c1820));c.drawRoundRect(new RectF(660,253,666,275),2,2,p);c.drawRoundRect(new RectF(712,253,718,275),2,2,p);
-        c.drawRoundRect(new RectF(660,334,666,356),2,2,p);c.drawRoundRect(new RectF(712,334,718,356),2,2,p);
+        p.setStyle(Paint.Style.FILL);p.setColor(0xff688592);surface.roundRect(c,theme,rect(666,235,712,368),16,16,p);
+        p.setColor(0xffc6dce5);surface.roundRect(c,theme,rect(671,239,707,362),13,13,p);
+        p.setColor(0xff24414e);surface.roundRect(c,theme,rect(675,264,703,331),8,8,p);
+        p.setColor(0xff98b6c4);c.drawRect(x(677),y(281),x(701),y(316),p);
+        p.setColor(ThemePalette.background(theme,0xff0c1820));surface.roundRect(c,theme,rect(660,253,666,275),2,2,p);surface.roundRect(c,theme,rect(712,253,718,275),2,2,p);
+        surface.roundRect(c,theme,rect(660,334,666,356),2,2,p);surface.roundRect(c,theme,rect(712,334,718,356),2,2,p);
         String[] labels={UiText.t("앞 왼쪽"),UiText.t("앞 오른쪽"),UiText.t("뒤 왼쪽"),UiText.t("뒤 오른쪽")};
         for(int n=0;n<4;n++){
             float x=n%2==0?624:754,y=n<2?246:342;

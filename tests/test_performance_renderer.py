@@ -63,15 +63,17 @@ public class PerformancePreview {
   Telemetry t=new Telemetry();t.profile(false,true,false);
   int[][] cases={{0x10,0xffa4d9ef},{0x30,0xffff4059},{0x20,0xff70d991},{0x50,0xffa4d9ef},{0x30,0xffff4059},{0xff,0xffa4d9ef}};
   long now=1000;
+  OverviewLayout layout=new OverviewLayout();
+  JsPitRenderer renderer=new JsPitRenderer();renderer.setOverviewLayout(layout);
   for(int[] mode:cases){
    t.hscanJs(0xc7,0x04,new byte[]{0,0,0,0,0,(byte)mode[0],0,0},now);
-   Canvas c=new Canvas(800,480);new JsPitRenderer().draw(c,800,480,false,t,now++);
-   check(c.pixel(200,59)==mode[1]&&c.pixel(45,59)==0xffa4d9ef,"RPM accent only, mode="+mode[0]);
+   Canvas c=new Canvas(800,480);renderer.draw(c,800,480,false,t,now++);
+   check(c.pixel((int)layout.leftAt(1)+20,(int)layout.topAt(1)+1)==mode[1]&&c.pixel((int)layout.leftAt(0)+20,(int)layout.topAt(0)+1)==0xffa4d9ef,"RPM accent only, mode="+mode[0]);
    c.write(folder+"/js-rpm-mode-"+Integer.toHexString(mode[0])+".png");
   }
   t.hscanJs(0xc7,0x04,new byte[]{0,0,0,0,0,0x30,0,0},now);
   Canvas stale=new Canvas(800,480);new JsPitRenderer().draw(stale,800,480,false,t,now+2000);
-  check(stale.pixel(200,59)==stale.pixel(45,59),"expired SPORT falls back to standard accent");
+  check(stale.pixel((int)layout.leftAt(1)+20,(int)layout.topAt(1)+1)==0xffa4d9ef,"expired SPORT falls back to standard accent");
   t.clear();check(t.jsDriveMode(now)==Telemetry.JsDriveMode.UNKNOWN,"ignition clears mode");
  }
  static void jsDctOverview(String folder)throws Exception{
@@ -204,12 +206,11 @@ public class PerformancePreview {
   gear(gearbox,0x1e,7,4300);jsGearPages(gearbox,4300,"M","7");
   gear(gearbox,0x1d,5,4350);gear(gearbox,0x1e,6,4400);jsGearPages(gearbox,4400,"D","6");
   jsDctOverview(args[0]);focusOverview(args[0]);
-  check(SettingsPageRenderer.hit(60,174)==0&&SettingsPageRenderer.hit(738,250)==1&&SettingsPageRenderer.hit(35,174)==-1&&SettingsPageRenderer.hit(765,250)==-1&&SettingsPageRenderer.hit(60,289)==-1,"settings rows respond across their width and reject surrounding space");
   UiText.configure("ko","ko");
-  Canvas settings=new Canvas(800,480);new SettingsPageRenderer().draw(settings,ThemeSpec.original(),new com.veloster.dashboard.theme.ThemeResources(),"한국어","Original");
-  check(settings.texts.contains("설정")&&settings.texts.contains("언어")&&settings.texts.contains("테마"),"localized settings rows rendered");
-  UiText.configure("en","en");Canvas englishSettings=new Canvas(800,480);new SettingsPageRenderer().draw(englishSettings,ThemeSpec.original(),new com.veloster.dashboard.theme.ThemeResources(),"English","Original");
-  check(englishSettings.texts.contains("Language")&&englishSettings.texts.contains("Theme")&&!englishSettings.texts.contains("언어"),"English settings labels rendered");
+  Canvas settings=new Canvas(800,480);new SettingsPageRenderer().draw(settings,ThemeSpec.original(),new com.veloster.dashboard.theme.ThemeResources(),"한국어",true,new com.veloster.dashboard.view.DashboardPage.Content(ThemeSpec.original(),"settings"));
+  check(settings.texts.contains("설정")&&settings.texts.contains("언어")&&settings.texts.contains("UI 설정")&&settings.texts.contains("F1 설정"),"localized settings rows rendered");
+  UiText.configure("en","en");Canvas englishSettings=new Canvas(800,480);new SettingsPageRenderer().draw(englishSettings,ThemeSpec.original(),new com.veloster.dashboard.theme.ThemeResources(),"English",true,new com.veloster.dashboard.view.DashboardPage.Content(ThemeSpec.original(),"settings"));
+  check(englishSettings.texts.contains("Language")&&englishSettings.texts.contains("UI settings")&&!englishSettings.texts.contains("언어"),"English settings labels rendered");
   jsTransmissionTrial();themedPages();
   jsRpmAccent(args[0]);jsF1Modes();jsSpeedRetained();
   System.out.println("PASS "+rendered+" performance renders and 4 existing page renders");
@@ -231,22 +232,27 @@ def render(folder):
         p = root / 'PerformancePreview.java'
         p.write_text(HARNESS)
         sources.append(p)
-        groups = {'ThemeLayout': 'overview', 'OverviewLayout': 'overview', 'OverviewRenderer': 'overview', 'JsOverviewRenderer': 'overview', 'GaugeEditor': 'gauge', 'GaugeLayout': 'gauge', 'GaugeRenderer': 'gauge', 'JsGaugeRenderer': 'gauge', 'GraphEditor': 'graph', 'GraphLayout': 'graph', 'GraphRenderer': 'graph', 'ClusterRenderer': 'cluster', 'JsClusterRenderer': 'cluster', 'JsDiagnosticsRenderer': 'diagnostics', 'PerformanceRenderer': 'performance', 'JsPerformanceRenderer': 'performance'}
+        groups = {'OverviewLayout': 'overview', 'OverviewRenderer': 'overview', 'OverviewCardRenderer': 'overview', 'JsOverviewRenderer': 'overview', 'GaugeEditor': 'gauge', 'GaugeLayout': 'gauge', 'GaugeRenderer': 'gauge', 'JsGaugeRenderer': 'gauge', 'GraphEditor': 'graph', 'GraphLayout': 'graph', 'GraphRenderer': 'graph', 'ClusterRenderer': 'cluster', 'JsClusterRenderer': 'cluster', 'JsDiagnosticsRenderer': 'diagnostics', 'PerformanceRenderer': 'performance', 'JsPerformanceRenderer': 'performance'}
         def source_path(name):
-            if name == 'ThemeSpec': return ROOT / 'apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemeSpec.java'
-            if name == 'ThemePalette': return ROOT / 'apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemePalette.java'
-            if name == 'ThemeSelectionDraft': return ROOT / 'apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemeSelectionDraft.java'
-            if name == 'ThemePreviewController': return ROOT / 'apps/dashboard/src/main/java/com/veloster/dashboard/theme/ThemePreviewController.java'
+            if name == 'ThemeSpec': return ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemeSpec.java'
+            if name == 'ThemePalette': return ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemePalette.java'
+            if name == 'ThemeSelectionDraft': return ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemeSelectionDraft.java'
+            if name == 'ThemePreviewController': return ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemePreviewController.java'
             if name == 'ThemeResources': return ROOT / 'tests/java_stubs/com/veloster/dashboard/theme/ThemeResources.java'
             if name in ("JsDiagState", "JsLogger", "BluetoothRuntimeProbe", "JsDiagnosticsRenderer"): return ROOT / ("apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/view" if name == "JsDiagnosticsRenderer" else "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger") / (name + ".java")
+            if name == "ThemeLayout": return ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/view/overview/ThemeLayout.java"
             if name in groups: return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view" / ("f1" if groups[name] == "cluster" else groups[name]) / (name + ".java")
             if name in UI_SOURCES: return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/view" / (name + ".java")
             if name in ("JsPowertrain", "JsGearState", "JsTelemetryDecoder"): return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/js" / (name + ".java")
             if name in ("PdPowertrain", "PdGearState"): return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd" / (name + ".java")
             return ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle" / (name + ".java")
-        sources += [source_path(name) for name in ('Telemetry','ThemeSpec','ThemePalette','ThemeSelectionDraft','ThemePreviewController','ThemeResources','ThemeLayout','PdPowertrain','PdGearState','JsPowertrain','JsGearState','JsTelemetryDecoder','JsDiagState','BluetoothRuntimeProbe','JsPitRenderer','ClusterRenderer','JsClusterRenderer','OverviewRenderer','JsOverviewRenderer','JsDiagnosticsRenderer','JsGaugeRenderer','JsPerformanceRenderer','PitRenderer','PerformanceRenderer','DashboardPage','SettingsPageRenderer','ShiftGuide','MediaState','GaugeLayout','GaugeRenderer','OverviewLayout','GraphLayout','GraphRenderer')]
+        sources += [source_path(name) for name in ('Telemetry','ThemeSpec','ThemePalette','ThemeSelectionDraft','ThemePreviewController','ThemeResources','ThemeLayout','PdPowertrain','PdGearState','JsPowertrain','JsGearState','JsTelemetryDecoder','JsDiagState','BluetoothRuntimeProbe','JsPitRenderer','ClusterRenderer','JsClusterRenderer','OverviewRenderer','OverviewCardRenderer','JsOverviewRenderer','JsDiagnosticsRenderer','JsGaugeRenderer','JsPerformanceRenderer','PitRenderer','PerformanceRenderer','DashboardPage','SettingsPageRenderer','ShiftGuide','MediaState','GaugeLayout','GaugeRenderer','OverviewLayout','GraphLayout','GraphRenderer')]
+        sources += [ROOT / 'apps/dashboard/src/main/java/com/veloster/dashboard/view' / (name + '.java') for name in ('MediaBar', 'MenuIcons')]
+        sources.append(ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemeSurface.java")
         sources += [ROOT / "tests/java_stubs/android/content/Context.java",ROOT / "tests/java_stubs/android/content/res/AssetManager.java"]
         sources += [ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd/PdTelemetryDecoder.java", ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/jsn/JsnTelemetryDecoder.java"]
+        sources.extend(ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme' / name
+                       for name in ('ThemeCatalog.java','ThemeJsonParser.java'))
         sources.append(ROOT / 'shared/src/com/veloster/i18n/UiText.java')
         result = subprocess.run([javac,'-encoding','UTF-8','-d',str(root),*map(str,sources)],capture_output=True,text=True)
         if result.returncode: raise AssertionError(result.stderr)

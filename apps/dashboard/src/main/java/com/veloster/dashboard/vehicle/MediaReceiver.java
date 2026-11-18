@@ -60,11 +60,18 @@ public final class MediaReceiver {
             // Android Auto uses start_time/end_time; the other widget producers use audio_*.
             String position=source==4?"start_time":"audio_current_time";
             String duration=source==4?"end_time":"audio_total_time";
+            boolean invisible=intent.getBooleanExtra("invisible",false);
             state.update(source,intent.hasExtra("filename"),intent.getStringExtra("filename"),
                 intent.hasExtra("artist"),intent.getStringExtra("artist"),
                 intent.hasExtra(position),intent.getLongExtra(position,-1),
                 intent.hasExtra(duration),intent.getLongExtra(duration,-1),
-                intent.getBooleanExtra("invisible",false),SystemClock.elapsedRealtime());
+                invisible,SystemClock.elapsedRealtime());
+            // A source disappearing clears playback too; stale fields in that same update
+            // must not turn a playing-only footer back on.
+            if(invisible){
+                if(source==3)DashboardView.diagEvent("carplay.media.visibility","hidden");
+                DashboardView.diagEvent("binding.media."+source,"processed");return;
+            }
             state.artwork(source,intent.hasExtra("artwork_uri"),intent.getStringExtra("artwork_uri"),
                 intent.getByteArrayExtra("artwork_raw_image"),intent.getBooleanExtra("default",false));
             if(source==1&&intent.hasExtra("playing_state"))state.playback(source,intent.getBooleanExtra("playing_state",false)?1:0);
@@ -72,7 +79,8 @@ public final class MediaReceiver {
                 int status=intent.getIntExtra("state",0);state.playback(source,status==2?1:status==1?0:-1);
             }else if(source!=1&&source!=4&&intent.hasExtra("playstate")){
                 // OEM partial widget broadcasts use -1 for an omitted field.
-                int status=intent.getIntExtra("playstate",-1);if(status==0||status==1)state.playback(source,status);
+                int status=intent.getIntExtra("playstate",-1);
+                if(status!=-1)state.playback(source,status==0||status==1?status:-1);
             }
             if(source==3){
                 if(intent.hasExtra("invisible"))DashboardView.diagEvent("carplay.media.visibility",intent.getBooleanExtra("invisible",false)?"hidden":"visible");

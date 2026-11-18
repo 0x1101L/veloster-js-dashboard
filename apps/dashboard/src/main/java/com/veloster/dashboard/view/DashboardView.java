@@ -7,7 +7,6 @@ import com.veloster.dashboard.theme.ThemeRepository;
 import com.veloster.dashboard.theme.ThemeSettingsStore;
 import com.veloster.dashboard.theme.ThemeSpec;
 import com.veloster.dashboard.theme.ThemePreviewController;
-import com.veloster.dashboard.theme.ThemeSelectionDraft;
 import com.veloster.dashboard.vehicle.js.JsTransmissionSetting;
 import com.veloster.dashboard.debugger.JsDiagState;
 import com.veloster.dashboard.debugger.JsLogger;
@@ -23,19 +22,14 @@ import com.veloster.dashboard.view.graph.GraphLayout;
 import com.veloster.i18n.UiText;
 import com.veloster.i18n.LanguageSettings;
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Canvas;
 import android.os.SystemClock;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 import java.lang.ref.WeakReference;
 
@@ -62,17 +56,35 @@ public final class DashboardView extends View implements Runnable {
     private boolean settingsVisible;
     private final ThemeCatalog themeCatalog;
     private final ThemeSettingsStore themeStore;
-    private ThemeSpec activeTheme;
+    private ThemeSpec selectedTheme,activeTheme;
+    private int menuPosition,menuDock,pedalBarStyle,brakeBarStyle,f1Order;
+    private int previewThemeIndex;
+    private final SettingsPageRenderer.Editor settingsEditor=new SettingsPageRenderer.Editor();
+    private boolean settingsListTouch,settingsListDragging;
+    private int settingsListScreen;
+    private float settingsListLastY;
+    private boolean selectionEditor,selectionOriginSettings;
+    private int editingGaugeSlot=-1,editingGraphSlot=-1;
+    private int[] gaugeDraftSignals,gaugeDraftStyles;
+    private int graphDraftSignal,transmissionDraft;
     private com.veloster.dashboard.theme.ThemeResources activeThemeResources;
     private int overviewDown=-1;
     private boolean media, touching;
+    private int mediaRegionDown=MediaBar.NONE,mediaOverlayDown=MediaBar.NONE;
+    private boolean sideMediaTouch,mediaOverlayTouch;
     private final DashboardPage.State pageState=new DashboardPage.State();
     private float downX,downY;
+    private float shellDownX,shellDownY;
+    private int shellDown=-1;
     private long lastDiagnostic;
     private long lastPolicyCheck;
     private boolean resumed;
     private long entryRequestUntil;
     private int shiftTarget;
+    private DashboardPage.Menu pageMenu=new DashboardPage.Menu();
+    private static final String MEDIA_BAR_POLICY="f1_media_bar_policy",MEDIA_NOTICES="media_notices";
+    private int mediaBarPolicy=MediaBar.DEFAULT;
+    private boolean mediaNotices=true;
     private final java.util.concurrent.atomic.AtomicBoolean mediaPending=new java.util.concurrent.atomic.AtomicBoolean();
     private Button entry;
     private boolean blocked;
@@ -80,19 +92,24 @@ public final class DashboardView extends View implements Runnable {
     private final Runnable editHold=new Runnable(){public void run(){
         if(!settingsVisible&&(pageState.is(DashboardPage.GAUGES)||pageState.is(DashboardPage.GRAPHS))&&touching&&!blocked&&getVisibility()==VISIBLE){
             int slot=pageState.is(DashboardPage.GRAPHS)?graphLayout.hit(downX,downY):gaugeEditor.hit(downX,downY);
-            if(slot>=0){touching=false;if(pageState.is(DashboardPage.GRAPHS))graphEditor.edit(slot);else gaugeEditor.edit(slot);}
+            if(slot>=0){touching=false;if(pageState.is(DashboardPage.GRAPHS))beginSelectionEditor(SettingsPageRenderer.GRAPH_SIGNAL,slot);else beginSelectionEditor(SettingsPageRenderer.GAUGE_MENU,slot);}
         }
     }};
-    private DashboardView(Activity a) { super(a); activity=a; themeCatalog=ThemeCatalog.load(a);themeStore=new ThemeSettingsStore(a);activeTheme=new ThemeRepository(themeCatalog).load(themeStore.selectedId(),ThemeRepository.SUPPORTED_SCHEMA_VERSION);activeThemeResources=com.veloster.dashboard.theme.ThemeResources.load(a,activeTheme);overviewLayout.theme(activeTheme);renderer.setTheme(activeTheme,activeThemeResources);jsRenderer.setTheme(activeTheme,activeThemeResources); transmissionSetting=new JsTransmissionSetting(a);DATA.jsTransmissionSetting(transmissionSetting.get()); artwork=new ArtworkLoader(a,this);
+    private DashboardView(Activity a) { super(a); activity=a; themeCatalog=ThemeCatalog.load(a);themeStore=new ThemeSettingsStore(a);menuPosition=themeStore.menuPosition();menuDock=themeStore.menuDock();pedalBarStyle=themeStore.pedalBarStyle();brakeBarStyle=themeStore.brakeBarStyle();f1Order=themeStore.f1Order();applyTheme(new ThemeRepository(themeCatalog).load(themeStore.selectedId(),ThemeRepository.SUPPORTED_SCHEMA_VERSION)); transmissionSetting=new JsTransmissionSetting(a);DATA.jsTransmissionSetting(transmissionSetting.get()); artwork=new ArtworkLoader(a,this);
         gaugeEditor=new GaugeEditor(a,gaugeLayout,new Runnable(){public void run(){invalidate();}});
         graphEditor=new GraphEditor(a,graphLayout,new Runnable(){public void run(){invalidate();}});
         for(int i=0;i<Telemetry.LABELS.length;i++)try{
             overviewLayout.style(i,a.getSharedPreferences("pit_vehicle_ui",0).getInt("overview_style_"+i,2));
         }catch(IllegalArgumentException e){/* Retain default for an invalid saved style. */}
         catch(ClassCastException e){/* Retain default for incompatible preferences. */}
-        try{pageState.restore(a.getSharedPreferences("pit_vehicle_ui",0).getInt("dashboard_page",DashboardPage.OVERVIEW),DATA.jsProfile());}catch(ClassCastException ignored){pageState.restore(DashboardPage.OVERVIEW,DATA.jsProfile());}
+        try{pageState.restore(a.getSharedPreferences("pit_vehicle_ui",0).getInt("dashboard_page",DashboardPage.OVERVIEW));}catch(ClassCastException ignored){pageState.restore(DashboardPage.OVERVIEW);}
         try{overviewLayout.page(a.getSharedPreferences("pit_vehicle_ui",0).getInt("overview_theme_page",0));}catch(ClassCastException ignored){}
-        shiftTarget=ShiftGuide.clamp(a.getSharedPreferences("pit_vehicle_ui",0).getInt("shift_target",ShiftGuide.DEFAULT),DATA.pdLayoutProfile()); setVisibility(GONE); }
+        try{shiftTarget=ShiftGuide.clamp(a.getSharedPreferences("pit_vehicle_ui",0).getInt("shift_target",ShiftGuide.DEFAULT),DATA.pdLayoutProfile());}catch(ClassCastException ignored){shiftTarget=ShiftGuide.DEFAULT;}
+        try{mediaBarPolicy=MediaBar.normalize(a.getSharedPreferences("pit_vehicle_ui",0).getInt(MEDIA_BAR_POLICY,MediaBar.DEFAULT));}catch(ClassCastException ignored){}
+        try{mediaNotices=a.getSharedPreferences("pit_vehicle_ui",0).getInt(MEDIA_NOTICES,1)!=0;}catch(ClassCastException ignored){}
+        try{pageMenu=new DashboardPage.Menu(a.getSharedPreferences("pit_vehicle_ui",0).getInt("page_menu_visible_mask",DashboardPage.Menu.ALL));}catch(ClassCastException ignored){}
+        pageMenu.icons(themeStore.menuIcons());
+        settingsRoot();setVisibility(GONE); }
     public static void attach(Activity a) {
         try {
             FrameLayout parent=(FrameLayout)a.findViewById(android.R.id.content);
@@ -129,7 +146,7 @@ public final class DashboardView extends View implements Runnable {
     }
     public static void stopStandaloneMedia(Activity a){DashboardView d=current.get();if(d!=null&&d.activity==a)d.mediaReceiver.stop();}
     private void showDashboard(){setVisibility(VISIBLE);if(entry!=null)entry.setVisibility(GONE);bringToFront();}
-    private void close() { entryRequestUntil=0;removeCallbacks(editHold);touching=false;settingsVisible=false;gaugeEditor.dismiss();graphEditor.dismiss();setVisibility(GONE); if(entry!=null) entry.setVisibility(blocked?GONE:VISIBLE); }
+    private void close() { entryRequestUntil=0;removeCallbacks(editHold);touching=false;media=false;settingsVisible=false;selectionEditor=false;gaugeEditor.dismiss();graphEditor.dismiss();setVisibility(GONE); if(entry!=null) entry.setVisibility(blocked?GONE:VISIBLE); }
     public static void consumeEntryIntent(Activity a){entryIntent(a,a.getIntent());}
     /** Explicit opt-in only; consume once and require a live unrestricted OEM response. */
     public static void entryIntent(Activity a,android.content.Intent intent){
@@ -211,8 +228,8 @@ public final class DashboardView extends View implements Runnable {
         tryRequestedEntry();
         if(getVisibility()==VISIBLE) {
             invalidate();long now=SystemClock.elapsedRealtime();
-            if(pageState.is(DashboardPage.GRAPHS))delay=250;
-            else if(!pageState.is(DashboardPage.PERFORMANCE)&&!(pageState.is(DashboardPage.F1)&&media&&!pageState.is(DashboardPage.GAUGES)) && mediaState.snapshot(now).notice)delay=16;
+            if(!media&&MediaBar.noticeVisible(displayRegions(),mediaBarPolicy,mediaNotices,mediaState.snapshot(now)))delay=16;
+            else if(!settingsVisible&&pageState.is(DashboardPage.GRAPHS))delay=250;
             if(now-lastDiagnostic>=5000) { lastDiagnostic=now;android.util.Log.i("VehicleDash",DATA.diagnostics(now));if(DATA.jsProfile())JsLogger.emit(now,DATA,DIAG.snapshot(now)); }
         }
         postDelayed(this,delay);
@@ -220,23 +237,33 @@ public final class DashboardView extends View implements Runnable {
     protected void onDraw(Canvas c) {
         long now=SystemClock.elapsedRealtime();
         MediaState.Snapshot track=mediaState.snapshot(now);artwork.request(track);
+        DashboardPage.Regions display=displayRegions();
+        syncUiSettings(display);
+        if(settingsVisible&&settingsEditor.screen==SettingsPageRenderer.WALLPAPER)
+            loadWallpaperThumbnails(display,track);
         if(DATA.jsProfile()){
+        jsRenderer.setSettingsEditor(settingsEditor);
+        jsRenderer.setPageMenu(pageMenu);
+        jsRenderer.setMediaDisplay(mediaBarPolicy,mediaNotices);
         jsRenderer.setPerformancePage(!settingsVisible&&pageState.is(DashboardPage.PERFORMANCE));
-        jsRenderer.setSettingsPage(settingsVisible,languageLabel(),activeTheme.displayName);
-        jsRenderer.setDiagnosticPage(!settingsVisible&&pageState.is(DashboardPage.DIAG),DIAG.snapshot(now));
+        jsRenderer.setSettingsPage(settingsVisible&&!diagnosticsOpen(),languageLabel(),activeTheme.displayName,menuPositionLabel());
+        jsRenderer.setDiagnosticPage(diagnosticsOpen(),DIAG.snapshot(now));
         jsRenderer.setArtwork(artwork.bitmap());
         jsRenderer.setGaugeLayout(!settingsVisible&&pageState.is(DashboardPage.GAUGES)?gaugeLayout:null);
         jsRenderer.setGraphLayout(!settingsVisible&&pageState.is(DashboardPage.GRAPHS)?graphLayout:null);
         jsRenderer.setOverviewLayout(overviewLayout);
-        jsRenderer.draw(c,getWidth(),getHeight(),!settingsVisible&&pageState.is(DashboardPage.F1),DATA,now,shiftTarget,media,track);
+        jsRenderer.draw(c,getWidth(),getHeight(),!settingsVisible&&pageState.is(DashboardPage.F1),DATA,now,shiftTarget,media,track,display);
         }else{
+        renderer.setSettingsEditor(settingsEditor);
+        renderer.setPageMenu(pageMenu);
+        renderer.setMediaDisplay(mediaBarPolicy,mediaNotices);
         renderer.setPerformancePage(!settingsVisible&&pageState.is(DashboardPage.PERFORMANCE));
-        renderer.setSettingsPage(settingsVisible,languageLabel(),activeTheme.displayName);
+        renderer.setSettingsPage(settingsVisible,languageLabel(),activeTheme.displayName,menuPositionLabel());
         renderer.setArtwork(artwork.bitmap());
         renderer.setGaugeLayout(!settingsVisible&&pageState.is(DashboardPage.GAUGES)?gaugeLayout:null);
         renderer.setGraphLayout(!settingsVisible&&pageState.is(DashboardPage.GRAPHS)?graphLayout:null);
         renderer.setOverviewLayout(overviewLayout);
-        renderer.draw(c,getWidth(),getHeight(),!settingsVisible&&pageState.is(DashboardPage.F1),DATA,now,shiftTarget,media,track);
+        renderer.draw(c,getWidth(),getHeight(),!settingsVisible&&pageState.is(DashboardPage.F1),DATA,now,shiftTarget,media,track,display);
         }
     }
     private void requestMedia(final int command){
@@ -254,56 +281,427 @@ public final class DashboardView extends View implements Runnable {
             }});
         }},"NMode-track-control").start();
     }
-    private boolean overviewCovered(float y){return y>=347&&mediaState.snapshot(SystemClock.elapsedRealtime()).notice;}
-    private void applyTheme(ThemeSpec theme){activeTheme=theme==null?ThemeSpec.original():theme;activeThemeResources=com.veloster.dashboard.theme.ThemeResources.load(activity,activeTheme);overviewLayout.theme(activeTheme);renderer.setTheme(activeTheme,activeThemeResources);jsRenderer.setTheme(activeTheme,activeThemeResources);invalidate();}
-    private String languageLabel(){String selected=LanguageSettings.selection(activity);return "auto".equals(selected)?UiText.t("시스템 설정 따름"):"ko".equals(selected)?"한국어":"English";}
-    private void showThemePicker(){
-        final ThemeSpec previous=activeTheme;
-        final int previousPage=overviewLayout.page();
-        final ThemeSelectionDraft selection=new ThemeSelectionDraft(previous);
-        final ThemeSpec[] choices=themeCatalog.all().values().toArray(new ThemeSpec[0]);
-        final boolean pd=DATA.pdProfile(),js=DATA.jsProfile(),jsn=DATA.jsnProfile();
-        final ThemePreviewController preview=new ThemePreviewController(activity,pd,js,jsn);preview.setDraft(selection.selected());
-        final ThemePreviewSurface surface=new ThemePreviewSurface(activity,preview);
-        LinearLayout previewPanel=new LinearLayout(activity);previewPanel.setOrientation(LinearLayout.VERTICAL);
-        TextView sampleLabel=new TextView(activity);sampleLabel.setText("Preview · sample data / 미리보기 · 예시 데이터");sampleLabel.setGravity(Gravity.CENTER_VERTICAL);sampleLabel.setPadding(12,4,12,4);
-        previewPanel.addView(sampleLabel,new LinearLayout.LayoutParams(-1,-2));
-        previewPanel.addView(surface,new LinearLayout.LayoutParams(-1,-2));
-        final View content=themePickerContent(choices,preview,selection,previewPanel,surface,previous,previousPage);
-        final AlertDialog picker=new AlertDialog.Builder(activity).setTitle("Theme / 테마").setView(content).create();content.setTag(picker);
-        picker.setOnCancelListener(new DialogInterface.OnCancelListener(){public void onCancel(DialogInterface dialog){restoreTheme(previous,previousPage);}});
-        picker.show();
+    private DashboardPage.Regions displayRegions(){return DashboardPage.regions(getWidth(),getHeight(),activeTheme,media);}
+    private DashboardPage.Content pageContent(DashboardPage.Regions display,boolean footer){
+        return new DashboardPage.Content(activeTheme,viewportPage(),display,footer);
     }
-    private void restoreTheme(ThemeSpec theme,int page){applyTheme(theme);overviewLayout.page(page);invalidate();}
-    private View themePickerContent(final ThemeSpec[] choices,final ThemePreviewController preview,final ThemeSelectionDraft selection,
-            final View previewPanel,final ThemePreviewSurface surface,final ThemeSpec previous,final int previousPage){
-        LinearLayout root=new LinearLayout(activity);root.setOrientation(LinearLayout.VERTICAL);
-        LinearLayout options=new LinearLayout(activity);options.setOrientation(LinearLayout.HORIZONTAL);
-        for(final ThemeSpec choice:choices){Button button=new Button(activity);button.setText(choice.displayName);button.setOnClickListener(new OnClickListener(){public void onClick(View view){selection.choose(choice);preview.setDraft(selection.selected());preview.page(0);surface.invalidate();}});options.addView(button,new LinearLayout.LayoutParams(0,-2,1));}
-        root.addView(options,new LinearLayout.LayoutParams(-1,-2));
-        root.addView(previewPanel,new LinearLayout.LayoutParams(-1,-2));
-        LinearLayout actions=new LinearLayout(activity);actions.setOrientation(LinearLayout.HORIZONTAL);
-        Button cancel=new Button(activity);cancel.setTag(root);cancel.setText("Cancel / 취소");cancel.setOnClickListener(new OnClickListener(){public void onClick(View view){ThemeSpec selected=selection.cancel();restoreTheme(selected,previousPage);View parent=(View)view.getTag();((AlertDialog)parent.getTag()).dismiss();}});
-        Button apply=new Button(activity);apply.setTag(root);apply.setText("Apply / 적용");apply.setOnClickListener(new OnClickListener(){public void onClick(View view){ThemeSpec selected=selection.apply();themeStore.save(selected.id);applyTheme(selected);View parent=(View)view.getTag();((AlertDialog)parent.getTag()).dismiss();}});
-        actions.addView(cancel,new LinearLayout.LayoutParams(0,-2,1));actions.addView(apply,new LinearLayout.LayoutParams(0,-2,1));
-        root.addView(actions,new LinearLayout.LayoutParams(-1,-2));
-        return root;
+    private int uiSettingsRowCount(DashboardPage.Regions display){
+        return 5+(activeTheme.shell().left()?1:0)+(display.mediaEnabled?0:2);
     }
-    private static final class ThemePreviewSurface extends View {
-        private final ThemePreviewController controller;
-        ThemePreviewSurface(Activity context,ThemePreviewController controller){super(context);this.controller=controller;}
-        protected void onMeasure(int widthSpec,int heightSpec){int widthMode=MeasureSpec.getMode(widthSpec),widthSize=MeasureSpec.getSize(widthSpec);int width=widthMode==MeasureSpec.EXACTLY?widthSize:widthMode==MeasureSpec.AT_MOST?Math.min(800,widthSize):800;int desired=width*3/5;int heightMode=MeasureSpec.getMode(heightSpec),heightSize=MeasureSpec.getSize(heightSpec);int height=heightMode==MeasureSpec.UNSPECIFIED?desired:Math.min(desired,heightSize);setMeasuredDimension(width,height);}
-        protected void onDraw(Canvas canvas){controller.draw(canvas,getWidth(),getHeight());}
-        public boolean onTouchEvent(MotionEvent event){
-            if(event.getAction()==MotionEvent.ACTION_UP){float x=event.getX()*800/getWidth(),y=event.getY()*480/getHeight();int target=controller.layout().pageControlTarget(x,y);if(target>=0){controller.page(target);invalidate();return true;}}
-            return true;
+    private void syncUiSettings(DashboardPage.Regions display){
+        if(display.mediaEnabled)media=false;
+        if(!settingsVisible)return;
+        int screen=settingsEditor.screen;
+        boolean mediaEditor=screen==SettingsPageRenderer.MEDIA_BAR||screen==SettingsPageRenderer.MEDIA_NOTICES;
+        boolean changedGroup=screen==SettingsPageRenderer.UI_GROUP&&settingsEditor.actions.length!=uiSettingsRowCount(display);
+        if(changedGroup||display.mediaEnabled&&mediaEditor){
+            openSettingsPage(SettingsPageRenderer.UI_GROUP);
         }
     }
+    private static String noticeLabel(boolean enabled){return UiText.t(enabled?"사용함":"사용 안 함");}
+    private void applyTheme(ThemeSpec theme){
+        selectedTheme=theme==null?ThemeSpec.original():theme;
+        activeTheme=ThemeCatalog.withMenuPosition(selectedTheme,menuPosition).withMenuDock(menuDock)
+                .withDisplayOptions(pedalBarStyle,brakeBarStyle,f1Order);
+        ThemeSpec.Wallpaper selected=null;
+        String selectedId=themeStore.selectedWallpaperId();
+        if(selectedId.length()>0){
+            selected=themeCatalog.findWallpaper(selectedId);
+            if(selected==null)themeStore.saveWallpaperId("");
+        }
+        activeThemeResources=com.veloster.dashboard.theme.ThemeResources.load(activity,activeTheme,selected);
+        overviewLayout.theme(activeTheme);renderer.setTheme(activeTheme,activeThemeResources);jsRenderer.setTheme(activeTheme,activeThemeResources);invalidate();
+    }
+    private String languageLabel(){String selected=LanguageSettings.selection(activity);return "auto".equals(selected)?UiText.t("시스템 설정 따름"):"ko".equals(selected)?"한국어":"English";}
+    private static String[] tr(String... values){String[] result=values.clone();for(int i=0;i<result.length;i++)result[i]=UiText.t(result[i]);return result;}
+    private String barLabel(int style){return UiText.t(style==1?"분할 막대":"연속 막대");}
+    private String orderLabel(int value){
+        String label="";for(int i=0;i<3;i++){String id=DashboardPage.f1OrderNode(value,i);if(i>0)label+=" · ";label+=UiText.t("speed".equals(id)?"속도":"gear".equals(id)?"기어":"RPM");}return label;
+    }
+    private void settingsRoot(){settingsEditor.root(languageLabel(),DATA.jsProfile());}
+    private boolean diagnosticsOpen(){return settingsVisible&&DATA.jsProfile()&&settingsEditor.screen==SettingsPageRenderer.DIAGNOSTICS;}
+    private void openSettingsPage(int screen){
+        int ui=SettingsPageRenderer.UI_GROUP,f1=SettingsPageRenderer.F1_GROUP;
+        String title="";String[] labels=new String[0],values=new String[0];int[] actions=new int[0];int selected=0,parent=ui;
+        switch(screen){
+        case SettingsPageRenderer.DIAGNOSTICS:
+            if(!DATA.jsProfile())return;
+            title=UiText.t("진단");parent=-1;break;
+        case SettingsPageRenderer.UI_GROUP:{
+            title=UiText.t("UI 설정");
+            DashboardPage.Regions display=displayRegions();
+            int count=uiSettingsRowCount(display);
+            labels=java.util.Arrays.copyOf(tr("테마","배경화면","메뉴 위치"),count);
+            values=java.util.Arrays.copyOf(new String[]{activeTheme.displayName,
+                UiText.t(themeStore.selectedWallpaperId().length()==0?"테마 기본값":"사용자 선택"),
+                menuPositionLabel()},count);
+            actions=java.util.Arrays.copyOf(new int[]{SettingsPageRenderer.THEME,SettingsPageRenderer.WALLPAPER,SettingsPageRenderer.MENU_POSITION},count);
+            int row=3;
+            if(activeTheme.shell().left()){
+                labels[row]=UiText.t("왼쪽 메뉴 독");values[row]=menuDockLabel();actions[row++]=SettingsPageRenderer.MENU_DOCK;
+            }
+            labels[row]=UiText.t("페이지 메뉴");values[row]=pageMenu.count()+" / 5";actions[row++]=SettingsPageRenderer.PAGE_MENU;
+            labels[row]=UiText.t("메뉴 표시 방식");values[row]=UiText.t(pageMenu.icons()?"아이콘":"이름");actions[row++]=SettingsPageRenderer.MENU_STYLE;
+            if(!display.mediaEnabled){
+                labels[row]=UiText.t("하단 미디어 바");values[row]=MediaBar.label(mediaBarPolicy);actions[row++]=SettingsPageRenderer.MEDIA_BAR;
+                labels[row]=UiText.t("미디어 알림");values[row]=noticeLabel(mediaNotices);actions[row++]=SettingsPageRenderer.MEDIA_NOTICES;
+            }
+            parent=-1;break;
+        }
+        case SettingsPageRenderer.F1_GROUP:
+            title=UiText.t("F1 설정");labels=tr("가속 페달 바","브레이크 바","속도 · RPM · 기어 위치","F1 목표 RPM");
+            values=new String[]{barLabel(pedalBarStyle),barLabel(brakeBarStyle),orderLabel(f1Order),shiftTarget+" rpm"};
+            actions=new int[]{SettingsPageRenderer.PEDAL_BAR,SettingsPageRenderer.BRAKE_BAR,SettingsPageRenderer.F1_ORDER,SettingsPageRenderer.SHIFT_TARGET};parent=-1;break;
+        case SettingsPageRenderer.LANGUAGE:
+            title=UiText.t("언어");labels=new String[]{UiText.t("시스템 설정 따름"),"한국어","English"};
+            String lang=LanguageSettings.selection(activity);selected="ko".equals(lang)?1:"en".equals(lang)?2:0;parent=-1;break;
+        case SettingsPageRenderer.THEME:
+            title=UiText.t("테마");ThemeSpec[] themes=themeCatalog.all().values().toArray(new ThemeSpec[0]);labels=new String[themes.length];
+            for(int i=0;i<themes.length;i++){labels[i]=themes[i].displayName;if(themes[i].id.equals(selectedTheme.id))selected=i;}break;
+        case SettingsPageRenderer.MENU_POSITION:
+            title=UiText.t("메뉴 위치");labels=tr("테마 기본값","상단","왼쪽");selected=menuPosition;break;
+        case SettingsPageRenderer.MENU_DOCK:
+            if(!activeTheme.shell().left())return;
+            title=UiText.t("왼쪽 메뉴 독");labels=tr("테마 기본값","사용함","사용 안 함");selected=menuDock;break;
+        case SettingsPageRenderer.WALLPAPER:{
+            java.util.List<ThemeSpec.Wallpaper> wallpapers=themeCatalog.wallpapers();
+            selected=-1;
+            String selectedId=themeStore.selectedWallpaperId();
+            if(selectedId.length()==0)selectedId=selectedTheme.defaultWallpaperId();
+            ThemeSpec.Wallpaper[] items=wallpapers.toArray(new ThemeSpec.Wallpaper[0]);
+            for(int i=0;i<items.length;i++)if(items[i].id.equals(selectedId)){selected=i;break;}
+            settingsEditor.wallpaperPage(items,selected);
+            loadWallpaperThumbnails(displayRegions(),mediaState.snapshot(SystemClock.elapsedRealtime()));
+            invalidate();return;
+        }
+        case SettingsPageRenderer.MENU_STYLE:
+            title=UiText.t("메뉴 표시 방식");labels=tr("이름","아이콘");selected=pageMenu.icons()?1:0;break;
+        case SettingsPageRenderer.PAGE_MENU:
+            title=UiText.t("페이지 메뉴");labels=new String[]{UiText.t("퍼포먼스"),UiText.t("전체 조망"),"F1",UiText.t("게이지"),UiText.t("그래프")};break;
+        case SettingsPageRenderer.PEDAL_BAR:case SettingsPageRenderer.BRAKE_BAR:
+            title=UiText.t(screen==SettingsPageRenderer.PEDAL_BAR?"가속 페달 바":"브레이크 바");labels=tr("연속 막대","분할 막대");
+            selected=screen==SettingsPageRenderer.PEDAL_BAR?pedalBarStyle:brakeBarStyle;parent=f1;break;
+        case SettingsPageRenderer.F1_ORDER:
+            title=UiText.t("속도 · RPM · 기어 위치");labels=new String[6];for(int i=0;i<6;i++)labels[i]=orderLabel(i);selected=f1Order;parent=f1;break;
+        case SettingsPageRenderer.MEDIA_BAR:
+            title=UiText.t("하단 미디어 바");labels=new String[]{MediaBar.label(0),MediaBar.label(1),MediaBar.label(2)};selected=mediaBarPolicy;break;
+        case SettingsPageRenderer.MEDIA_NOTICES:
+            title=UiText.t("미디어 알림");labels=new String[]{noticeLabel(true),noticeLabel(false)};selected=mediaNotices?0:1;break;
+        case SettingsPageRenderer.SHIFT_TARGET:
+            title=UiText.t("F1 목표 RPM");int min=ShiftGuide.clamp(0,DATA.pdLayoutProfile()),max=ShiftGuide.clamp(Integer.MAX_VALUE,DATA.pdLayoutProfile());
+            labels=new String[(max-min)/100+1];for(int i=0;i<labels.length;i++)labels[i]=(min+i*100)+" rpm";selected=(shiftTarget-min)/100;parent=f1;break;
+        }
+        settingsEditor.page(screen,parent,title,labels,values,actions);settingsEditor.selected=selected;
+        if(screen==SettingsPageRenderer.PAGE_MENU){settingsEditor.checked=new boolean[5];for(int i=0;i<5;i++)settingsEditor.checked[i]=pageMenu.visible(DashboardPage.menuPageAt(i));}
+        invalidate();
+    }
+    private void settingsBack(){
+        if(selectionEditor){
+            int parent=settingsEditor.parent;
+            if(settingsEditor.screen==SettingsPageRenderer.GAUGE_MENU||settingsEditor.screen==SettingsPageRenderer.GRAPH_SIGNAL||settingsEditor.screen==SettingsPageRenderer.TRANSMISSION){cancelSelectionEditor();return;}
+            if(parent>=SettingsPageRenderer.GAUGE_MENU&&parent<=SettingsPageRenderer.TRANSMISSION){openSelectionPage(parent);return;}
+        }
+        int screen=settingsEditor.screen,parent=settingsEditor.parent;if(parent<0)settingsRoot();else openSettingsPage(parent);if(screen==11)settingsEditor.selected=previewThemeIndex;invalidate();
+    }
+    private void beginSelectionEditor(int screen,int slot){
+        selectionOriginSettings=settingsVisible;selectionEditor=true;settingsVisible=true;editingGaugeSlot=screen==SettingsPageRenderer.GAUGE_MENU?slot:-1;editingGraphSlot=screen==SettingsPageRenderer.GRAPH_SIGNAL?slot:-1;
+        if(screen==SettingsPageRenderer.GAUGE_MENU){gaugeDraftSignals=new int[GaugeLayout.SLOTS];gaugeDraftStyles=new int[GaugeLayout.SLOTS];for(int i=0;i<GaugeLayout.SLOTS;i++){gaugeDraftSignals[i]=gaugeLayout.signal(i);gaugeDraftStyles[i]=gaugeLayout.style(i);}}
+        if(screen==SettingsPageRenderer.GRAPH_SIGNAL)graphDraftSignal=graphLayout.signal(slot);
+        if(screen==SettingsPageRenderer.TRANSMISSION)transmissionDraft=transmissionSetting.get();
+        openSelectionPage(screen);invalidate();
+    }
+    private void openSelectionPage(int screen){
+        String title="";String[] labels=new String[0],values=new String[0];int[] actions=new int[0];int selected=0,parent=-1;
+        switch(screen){
+        case SettingsPageRenderer.GAUGE_MENU:
+            title=UiText.t("게이지 ")+(editingGaugeSlot+1);labels=tr("표시 항목","게이지 모양","다른 칸과 위치 바꾸기","전체 기본 배치로 복원");
+            values=new String[]{UiText.t(Telemetry.LABELS[gaugeDraftSignals[editingGaugeSlot]]),tr("원형","막대","숫자")[gaugeDraftStyles[editingGaugeSlot]],"", ""};
+            actions=new int[]{SettingsPageRenderer.GAUGE_SIGNAL,SettingsPageRenderer.GAUGE_STYLE,SettingsPageRenderer.GAUGE_SWAP,SettingsPageRenderer.GAUGE_RESET};break;
+        case SettingsPageRenderer.GAUGE_SIGNAL:
+            title=UiText.t("표시 항목");labels=UiText.list(Telemetry.LABELS);selected=gaugeDraftSignals[editingGaugeSlot];parent=SettingsPageRenderer.GAUGE_MENU;break;
+        case SettingsPageRenderer.GAUGE_STYLE:
+            title=UiText.t("게이지 모양");labels=tr("원형","막대","숫자");selected=gaugeDraftStyles[editingGaugeSlot];parent=SettingsPageRenderer.GAUGE_MENU;break;
+        case SettingsPageRenderer.GAUGE_SWAP:
+            title=UiText.t("위치를 바꿀 칸");labels=new String[gaugeLayout.count()];for(int i=0;i<labels.length;i++)labels[i]=(i+1)+UiText.t("번 · ")+UiText.t(Telemetry.LABELS[gaugeDraftSignals[i]]);selected=editingGaugeSlot;parent=SettingsPageRenderer.GAUGE_MENU;break;
+        case SettingsPageRenderer.GAUGE_RESET:
+            title=UiText.t("기본 배치로 복원");labels=new String[]{UiText.t("모든 게이지의 항목과 모양을 초기화합니다.")};parent=SettingsPageRenderer.GAUGE_MENU;break;
+        case SettingsPageRenderer.GRAPH_SIGNAL:
+            title=UiText.t("그래프 ")+(editingGraphSlot+1)+UiText.t(" · 표시 항목");labels=UiText.list(Telemetry.LABELS);selected=graphDraftSignal;break;
+        case SettingsPageRenderer.TRANSMISSION:
+            title=UiText.t("변속기 선택");labels=tr("DCT","수동");selected=transmissionDraft-1;break;
+        }
+        settingsEditor.page(screen,parent,title,labels,values,actions);settingsEditor.selected=Math.max(0,selected);
+    }
+    private void cancelSelectionEditor(){
+        boolean transmission=settingsEditor.screen==SettingsPageRenderer.TRANSMISSION;
+        selectionEditor=false;settingsVisible=selectionOriginSettings;
+        if(settingsVisible){
+            if(transmission)openSettingsPage(SettingsPageRenderer.DIAGNOSTICS);
+            else settingsRoot();
+        }
+        invalidate();
+    }
+    private void commitSelectionEditor(){
+        int screen=settingsEditor.screen,selected=settingsEditor.selected;
+        if(screen==SettingsPageRenderer.GAUGE_SIGNAL)gaugeDraftSignals[editingGaugeSlot]=selected;
+        else if(screen==SettingsPageRenderer.GAUGE_STYLE)gaugeDraftStyles[editingGaugeSlot]=selected;
+        else if(screen==SettingsPageRenderer.GAUGE_SWAP){int n=gaugeDraftSignals[editingGaugeSlot];gaugeDraftSignals[editingGaugeSlot]=gaugeDraftSignals[selected];gaugeDraftSignals[selected]=n;n=gaugeDraftStyles[editingGaugeSlot];gaugeDraftStyles[editingGaugeSlot]=gaugeDraftStyles[selected];gaugeDraftStyles[selected]=n;}
+        else if(screen==SettingsPageRenderer.GAUGE_RESET){gaugeLayout.reset();gaugeEditor.save();cancelSelectionEditor();return;}
+        else if(screen==SettingsPageRenderer.GRAPH_SIGNAL){graphLayout.signal(editingGraphSlot,selected);graphEditor.save();cancelSelectionEditor();return;}
+        else if(screen==SettingsPageRenderer.TRANSMISSION){transmissionDraft=selected+1;transmissionSetting.save(transmissionDraft);DATA.jsTransmissionSetting(transmissionDraft);cancelSelectionEditor();return;}
+        else if(screen==SettingsPageRenderer.GAUGE_MENU){for(int i=0;i<GaugeLayout.SLOTS;i++)gaugeLayout.set(i,gaugeDraftSignals[i],gaugeDraftStyles[i]);gaugeEditor.save();cancelSelectionEditor();return;}
+        if(screen==SettingsPageRenderer.GAUGE_SIGNAL||screen==SettingsPageRenderer.GAUGE_STYLE||screen==SettingsPageRenderer.GAUGE_SWAP){
+            for(int i=0;i<GaugeLayout.SLOTS;i++)gaugeLayout.set(i,gaugeDraftSignals[i],gaugeDraftStyles[i]);
+            gaugeEditor.save();cancelSelectionEditor();return;
+        }
+        openSelectionPage(settingsEditor.parent);invalidate();
+    }
+    private void loadWallpaperThumbnails(DashboardPage.Regions display,MediaState.Snapshot track){
+        DashboardPage.Content content=pageContent(display,MediaBar.footerVisible(display,mediaBarPolicy,track));
+        SettingsPageRenderer.Layout layout=new SettingsPageRenderer.Layout(activeTheme,content,settingsEditor);
+        ThemeSpec.Wallpaper[] items=settingsEditor.wallpapers;
+        int first=layout.offset,end=first+layout.count;
+        for(int i=0;i<items.length;i++){
+            if(i>=first&&i<end){
+                if(items[i].color==null&&!settingsEditor.wallpaperThumbnailTried[i]){
+                    settingsEditor.wallpaperThumbnailTried[i]=true;
+                    settingsEditor.wallpaperThumbnails[i]=com.veloster.dashboard.theme.ThemeResources.loadThumbnail(activity,items[i]);
+                }
+            }else if(settingsEditor.wallpaperThumbnails[i]!=null){
+                settingsEditor.wallpaperThumbnails[i]=null;settingsEditor.wallpaperThumbnailTried[i]=false;
+            }
+        }
+    }
+    private void settingsTap(int item,float x,float y,SettingsPageRenderer.Layout layout){
+        if(item==-2){if(selectionEditor)cancelSelectionEditor();else if(settingsEditor.screen<0)settingsVisible=false;else settingsBack();invalidate();return;}
+        if(item==-7){layout.tapPreview(settingsEditor,x,y);invalidate();return;}
+        if(settingsEditor.screen==SettingsPageRenderer.WALLPAPER){
+            if(item==-8){
+                themeStore.saveWallpaperId("");
+                applyTheme(selectedTheme);
+                openSettingsPage(SettingsPageRenderer.WALLPAPER);
+            }else if(item>=0&&item<settingsEditor.wallpapers.length){
+                themeStore.saveWallpaperId(settingsEditor.wallpapers[item].id);
+                applyTheme(selectedTheme);
+                settingsEditor.selected=item;
+                settingsEditor.scrollY=layout.scrollY;
+            }
+            return;
+        }
+        if(item==-6){
+            previewThemeIndex=settingsEditor.selected;
+            ThemeSpec choice=themeCatalog.all().values().toArray(new ThemeSpec[0])[previewThemeIndex];
+            final ThemePreviewController preview=new ThemePreviewController(activity,DATA.pdProfile(),DATA.jsProfile(),DATA.jsnProfile(),menuPosition,menuDock);
+            preview.setDraft(choice.withDisplayOptions(pedalBarStyle,brakeBarStyle,f1Order));
+            preview.setMediaBarPolicy(mediaBarPolicy);
+            settingsEditor.page(11,SettingsPageRenderer.THEME,UiText.t("테마 미리보기"),new String[0],new String[0],new int[0]);
+            settingsEditor.preview=new SettingsPageRenderer.Editor.Preview(){
+                public void draw(Canvas canvas,int width,int height){preview.draw(canvas,width,height);}
+                public void tap(float x,float y,int width,int height){
+                    DashboardPage.Regions r=DashboardPage.regions(width,height,preview.draft());
+                    if(!r.content.contains(x,y))return;
+                    x/=r.scale;y/=r.scale;
+                    int target=preview.layout().pageControlTarget(x,y);if(target>=0)preview.page(target);
+                }
+            };
+            invalidate();return;
+        }
+        if(item==-3){if(selectionEditor)commitSelectionEditor();else applySettingsPage();return;}
+        if(item<0)return;
+        if(settingsEditor.actions.length>item){if(selectionEditor)openSelectionPage(settingsEditor.actions[item]);else openSettingsPage(settingsEditor.actions[item]);return;}
+        if(selectionEditor&&settingsEditor.actions.length>item){openSelectionPage(settingsEditor.actions[item]);return;}
+        if(settingsEditor.checked!=null)settingsEditor.checked[item]=!settingsEditor.checked[item];else settingsEditor.selected=item;
+        invalidate();
+    }
+    private void applySettingsPage(){
+        int selected=settingsEditor.selected;
+        switch(settingsEditor.screen){
+        case SettingsPageRenderer.LANGUAGE:
+            if(!LanguageSettings.save(activity,new String[]{"auto","ko","en"}[selected])){settingsEditor.message=UiText.t("언어 설정을 저장하지 못했습니다.");invalidate();return;}break;
+        case SettingsPageRenderer.THEME:
+            ThemeSpec choice=themeCatalog.all().values().toArray(new ThemeSpec[0])[selected];themeStore.save(choice.id);applyTheme(choice);break;
+        case SettingsPageRenderer.MENU_POSITION:
+            if(selected!=ThemeSpec.MENU_THEME&&ThemeCatalog.withMenuPosition(selectedTheme,selected).shell().left()!=(selected==ThemeSpec.MENU_LEFT)){
+                settingsEditor.message=UiText.t("현재 테마에서 지원 안 함");invalidate();return;}
+            menuPosition=selected;themeStore.saveMenuPosition(selected);applyTheme(selectedTheme);break;
+        case SettingsPageRenderer.MENU_DOCK:
+            menuDock=selected;themeStore.saveMenuDock(selected);applyTheme(selectedTheme);break;
+        case SettingsPageRenderer.PAGE_MENU:
+            for(int i=0;i<5;i++)pageMenu.visible(DashboardPage.menuPageAt(i),settingsEditor.checked[i]);
+            activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("page_menu_visible_mask",pageMenu.mask()).apply();break;
+        case SettingsPageRenderer.MENU_STYLE:
+            pageMenu.icons(selected==1);themeStore.saveMenuIcons(pageMenu.icons());break;
+        case SettingsPageRenderer.PEDAL_BAR:pedalBarStyle=selected;saveDisplayOptions();break;
+        case SettingsPageRenderer.BRAKE_BAR:brakeBarStyle=selected;saveDisplayOptions();break;
+        case SettingsPageRenderer.F1_ORDER:f1Order=selected;saveDisplayOptions();break;
+        case SettingsPageRenderer.MEDIA_BAR:
+            mediaBarPolicy=selected;activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt(MEDIA_BAR_POLICY,selected).apply();break;
+        case SettingsPageRenderer.MEDIA_NOTICES:
+            mediaNotices=selected==0;activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt(MEDIA_NOTICES,mediaNotices?1:0).apply();break;
+        case SettingsPageRenderer.SHIFT_TARGET:
+            shiftTarget=ShiftGuide.clamp(0,DATA.pdLayoutProfile())+selected*100;
+            activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("shift_target",shiftTarget).apply();break;
+        }
+        settingsBack();
+    }
+    private void saveDisplayOptions(){themeStore.saveDisplayOptions(pedalBarStyle,brakeBarStyle,f1Order);applyTheme(selectedTheme);}
+    private void showShiftTargetPicker(){openSettingsPage(SettingsPageRenderer.SHIFT_TARGET);}
+    private void showPageMenuPicker(){openSettingsPage(SettingsPageRenderer.PAGE_MENU);}
+    private void showMenuPositionPicker(){openSettingsPage(SettingsPageRenderer.MENU_POSITION);}
+    private void showThemePicker(){settingsVisible=true;openSettingsPage(SettingsPageRenderer.THEME);}
+    private String menuPositionLabel(){
+        int actual=activeTheme.shell().left()?ThemeSpec.MENU_LEFT:ThemeSpec.MENU_TOP;
+        return menuPosition==actual?SettingsPageRenderer.menuPositionLabel(menuPosition):
+            SettingsPageRenderer.menuPositionLabel(ThemeSpec.MENU_THEME)+" ("+SettingsPageRenderer.menuPositionLabel(actual)+")";
+    }
+    private String menuDockLabel(){
+        String actual=noticeLabel(activeTheme.shell().dock());
+        return menuDock==ThemeSpec.DOCK_THEME?UiText.t("테마 기본값")+" ("+actual+")":actual;
+    }
+    private String viewportPage(){return diagnosticsOpen()?"diagnostics":settingsVisible?"settings":pageState.is(DashboardPage.PERFORMANCE)?"performance":pageState.is(DashboardPage.GRAPHS)?"graphs":pageState.is(DashboardPage.GAUGES)?"gauges":pageState.is(DashboardPage.F1)?"f1":"overview";}
+    private void selectMenuTarget(int target){
+        media=false;
+        gaugeEditor.dismiss();graphEditor.dismiss();
+        if(target==DashboardPage.BACK){if(standalone)activity.finish();else close();}
+        else if(target==DashboardPage.SETTINGS){
+            if(!settingsVisible||diagnosticsOpen()||settingsEditor.screen==SettingsPageRenderer.TRANSMISSION){
+                settingsVisible=true;settingsRoot();
+            }else settingsVisible=false;
+            selectionEditor=false;
+            invalidate();
+        }else{
+            settingsVisible=false;selectionEditor=false;
+            int page=pageState.restore(target);
+            activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("dashboard_page",page).apply();invalidate();
+        }
+    }
+    private void handleSettingsListTouch(MotionEvent event,DashboardPage.Regions display) {
+        int action=event.getAction();
+        if(blocked||!settingsVisible||settingsEditor.screen!=settingsListScreen
+                ||(action!=MotionEvent.ACTION_MOVE&&action!=MotionEvent.ACTION_UP)){
+            settingsListTouch=touching=false;return;
+        }
+        float x=(event.getX()-display.left)/display.scale,y=(event.getY()-display.top)/display.scale;
+        float dx=Math.abs(x-downX),dy=Math.abs(y-downY);
+        if(action==MotionEvent.ACTION_MOVE){
+            if(dx>=16||dy>=16)touching=false;
+            if(dy>=16&&dy>=dx)settingsListDragging=true;
+        }
+        MediaState.Snapshot track=mediaState.snapshot(SystemClock.elapsedRealtime());
+        DashboardPage.Content content=pageContent(display,MediaBar.footerVisible(display,mediaBarPolicy,track));
+        SettingsPageRenderer.Layout layout=new SettingsPageRenderer.Layout(activeTheme,content,settingsEditor);
+        if(settingsListDragging){
+            if(layout.scrollBy(settingsEditor,settingsListLastY-y))invalidate();
+            settingsListLastY=y;
+        }else if(action==MotionEvent.ACTION_UP&&touching&&dx<16&&dy<16){
+            int row=layout.hit(settingsEditor,x,y);
+            if(row>=0&&row==layout.hit(settingsEditor,downX,downY))settingsTap(row,x,y,layout);
+        }
+        if(action==MotionEvent.ACTION_UP)settingsListTouch=touching=false;
+    }
+    @Override public boolean onGenericMotionEvent(MotionEvent event){
+        if(event.getAction()==MotionEvent.ACTION_SCROLL&&settingsVisible&&!blocked&&!diagnosticsOpen()&&settingsEditor.preview==null){
+            DashboardPage.Regions display=displayRegions();
+            syncUiSettings(display);
+            if(media)return true;
+            MediaState.Snapshot track=mediaState.snapshot(SystemClock.elapsedRealtime());
+            DashboardPage.Content content=pageContent(display,MediaBar.footerVisible(display,mediaBarPolicy,track));
+            SettingsPageRenderer.Layout layout=new SettingsPageRenderer.Layout(activeTheme,content,settingsEditor);
+            float x=(event.getX()-display.left)/display.scale,y=(event.getY()-display.top)/display.scale;
+            if(layout.maxScroll>0&&layout.list.contains(x,y)){
+                if(layout.scrollBy(settingsEditor,-event.getAxisValue(MotionEvent.AXIS_VSCROLL)*44))invalidate();
+                return true;
+            }
+        }
+        return super.onGenericMotionEvent(event);
+    }
     public boolean onTouchEvent(MotionEvent event) {
-        float x=event.getX()*800/getWidth(), y=event.getY()*480/getHeight();
+        DashboardPage.Regions display=displayRegions();
+        syncUiSettings(display);
+        int action=event.getAction();
+        if(action==MotionEvent.ACTION_DOWN)settingsListTouch=false;
+        else if(settingsListTouch){handleSettingsListTouch(event,display);return true;}
+        float px=event.getX(),py=event.getY();
+        boolean inSide=display.mediaPanelVisible&&display.media.contains(px,py);
+        if(action==MotionEvent.ACTION_DOWN){
+            sideMediaTouch=inSide;
+            mediaRegionDown=inSide?MediaBar.regionHit(activeTheme,display.media,px,py,display.mediaEnabled):MediaBar.NONE;
+            if(inSide){
+                downX=px;downY=py;touching=false;shellDown=-1;
+                mediaOverlayTouch=false;mediaOverlayDown=MediaBar.NONE;
+                removeCallbacks(editHold);return true;
+            }
+        }else if(sideMediaTouch){
+            float slop=16*display.scale;
+            boolean near=Math.abs(px-downX)<slop&&Math.abs(py-downY)<slop;
+            if(action==MotionEvent.ACTION_MOVE&&!near)mediaRegionDown=MediaBar.NONE;
+            if(action==MotionEvent.ACTION_UP||action==MotionEvent.ACTION_CANCEL){
+                int pressed=mediaRegionDown;
+                sideMediaTouch=false;mediaRegionDown=MediaBar.NONE;
+                if(action==MotionEvent.ACTION_UP&&near&&inSide&&!blocked&&pressed!=MediaBar.NONE
+                        &&pressed==MediaBar.regionHit(activeTheme,display.media,px,py,display.mediaEnabled))requestMedia(pressed);
+            }
+            return true;
+        }
+        float x=(event.getX()-display.left)/display.scale,y=(event.getY()-display.top)/display.scale;
+        MediaState.Snapshot track=mediaState.snapshot(SystemClock.elapsedRealtime());
+        boolean footer=MediaBar.footerVisible(display,mediaBarPolicy,track);
+        DashboardPage.Content content=pageContent(display,footer);
+        boolean inFooter=footer&&content.footer(MediaBar.NONE).contains(x,y);
+        boolean inNotice=!media&&MediaBar.noticeVisible(display,mediaBarPolicy,mediaNotices,track)&&content.contains(x,y)
+                &&MediaBar.noticeBounds(content.notice(activeTheme),track.noticeAgeMs).contains(x,y);
+        int mediaAction=inFooter?MediaBar.hit(content,x,y):MediaBar.NONE;
+        if(action==MotionEvent.ACTION_DOWN){
+            mediaOverlayTouch=inFooter||inNotice;
+            mediaOverlayDown=mediaAction;
+            if(mediaOverlayTouch){
+                downX=x;downY=y;touching=false;shellDown=-1;removeCallbacks(editHold);return true;
+            }
+        }else if(mediaOverlayTouch){
+            if(action==MotionEvent.ACTION_MOVE&&(Math.abs(x-downX)>=16||Math.abs(y-downY)>=16))mediaOverlayDown=MediaBar.NONE;
+            if(action==MotionEvent.ACTION_UP||action==MotionEvent.ACTION_CANCEL){
+                int pressed=mediaOverlayDown;
+                mediaOverlayTouch=false;mediaOverlayDown=MediaBar.NONE;
+                if(action==MotionEvent.ACTION_UP&&!blocked&&pressed!=MediaBar.NONE&&pressed==mediaAction
+                        &&Math.abs(x-downX)<16&&Math.abs(y-downY)<16){
+                    if(pressed==MediaBar.TOGGLE){
+                        media=pressed==MediaBar.TOGGLE&&!media;mediaState.dismissNotice();invalidate();
+                    }
+                    else requestMedia(pressed);
+                }
+            }
+            return true;
+        }else if(action==MotionEvent.ACTION_UP&&(inFooter||inNotice||inSide)){
+            touching=false;shellDown=-1;removeCallbacks(editHold);return true;
+        }
+        if(activeTheme.shell().left()){
+            if(event.getAction()==MotionEvent.ACTION_DOWN){shellDownX=x;shellDownY=y;shellDown=DashboardPage.shellHit(activeTheme,pageMenu,x,y);}
+            if(event.getAction()==MotionEvent.ACTION_UP&&shellDown>=0){
+                int target=DashboardPage.shellHit(activeTheme,pageMenu,x,y);
+                boolean shellTap=touching&&target==shellDown&&Math.abs(x-shellDownX)<16&&Math.abs(y-shellDownY)<16;
+                shellDown=-1;touching=false;removeCallbacks(editHold);
+                if(shellTap&&!blocked)selectMenuTarget(target);
+                return true;
+            }
+        }
+        boolean inPage=content.contains(x,y);
+        boolean diagnostics=diagnosticsOpen();
+        if(!settingsVisible&&pageState.is(DashboardPage.GAUGES))gaugeLayout.viewport(activeTheme,content);
+        if(!settingsVisible&&pageState.is(DashboardPage.GRAPHS))graphLayout.viewport(activeTheme,content);
+        if(diagnostics)jsRenderer.diagnosticsViewport(content);
+        overviewLayout.viewport(display.logicalContentWidth,content.bodyViewportHeight,display.mediaPanelVisible);
         if(event.getAction()==MotionEvent.ACTION_DOWN) {
             removeCallbacks(editHold);touching=true;downX=x;downY=y;
-            overviewDown=!settingsVisible&&!pageState.is(DashboardPage.DIAG)&&!pageState.is(DashboardPage.PERFORMANCE)&&!pageState.is(DashboardPage.F1)&&!pageState.is(DashboardPage.GAUGES)&&!pageState.is(DashboardPage.GRAPHS)&&!blocked&&!overviewCovered(y)?overviewLayout.hit(x,y):-1;
+            if(settingsVisible&&!blocked&&!diagnostics&&settingsEditor.preview==null){
+                SettingsPageRenderer.Layout layout=new SettingsPageRenderer.Layout(activeTheme,content,settingsEditor);
+                if(layout.maxScroll>0&&layout.list.contains(x,y)){
+                    settingsListTouch=true;settingsListDragging=false;settingsListLastY=y;
+                    settingsListScreen=settingsEditor.screen;
+                    settingsEditor.scrollY=layout.scrollY;
+                    return true;
+                }
+            }
+            overviewDown=!settingsVisible&&pageState.is(DashboardPage.OVERVIEW)&&!blocked&&inPage?overviewLayout.hit(x,y):-1;
             if(!settingsVisible&&!blocked&&((pageState.is(DashboardPage.GAUGES)&&gaugeEditor.hit(x,y)>=0)||(pageState.is(DashboardPage.GRAPHS)&&graphLayout.hit(x,y)>=0)))postDelayed(editHold,600);
             return true;
         }
@@ -313,68 +711,46 @@ public final class DashboardView extends View implements Runnable {
         removeCallbacks(editHold);
         boolean tap=touching && Math.abs(x-downX)<16 && Math.abs(y-downY)<16;
         touching=false;
-        if(settingsVisible){
+        if(settingsVisible&&!diagnostics){
             if(!tap)return true;
-            if(!blocked&&y>=52){int item=SettingsPageRenderer.hit(x,y);if(item==SettingsPageRenderer.hit(downX,downY)){if(item==0)LanguageSettings.show(activity,new Runnable(){public void run(){invalidate();}});else if(item==1)showThemePicker();}}
-            if(y>=52)return true;
+            if(!blocked&&inPage){
+                SettingsPageRenderer.Layout layout=new SettingsPageRenderer.Layout(activeTheme,content,settingsEditor);
+                int item=layout.hit(settingsEditor,x,y);
+                if(item==layout.hit(settingsEditor,downX,downY))settingsTap(item,x,y,layout);
+            }
+            if(activeTheme.shell().left()||event.getY()>=display.headerHeight)return true;
         }
-        if(tap&&!blocked&&!pageState.is(DashboardPage.DIAG)&&!pageState.is(DashboardPage.PERFORMANCE)&&!pageState.is(DashboardPage.F1)&&!pageState.is(DashboardPage.GAUGES)&&!pageState.is(DashboardPage.GRAPHS)&&!overviewCovered(y)&&downY>=448&&y>=448){int next=overviewLayout.pageControlTarget(x,y);if(next>=0){overviewLayout.page(next);activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("overview_theme_page",next).apply();invalidate();return true;}}
-        if(standalone&&tap&&x>=666&&x<=782&&downX>=666&&downX<=782&&y>=8&&y<=46&&downY>=8&&downY<=46){activity.finish();return true;}
-        if(tap&&!blocked&&pageState.is(DashboardPage.DIAG)&&jsRenderer.selectDiagnosticTab(downX,downY,x,y)){invalidate();return true;}
-        if(tap&&!blocked&&DATA.jsProfile()&&pageState.is(DashboardPage.DIAG)&&jsRenderer.carPlayImportHit(downX,downY)&&jsRenderer.carPlayImportHit(x,y)){
+        if(tap&&!blocked&&!settingsVisible&&pageState.is(DashboardPage.OVERVIEW)&&inPage){int next=overviewLayout.pageControlTarget(x,y);if(next>=0){overviewLayout.page(next);activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("overview_theme_page",next).apply();invalidate();return true;}}
+        if(tap&&!blocked&&diagnostics&&inPage&&jsRenderer.selectDiagnosticTab(downX,downY,x,y)){invalidate();return true;}
+        if(tap&&!blocked&&diagnostics&&inPage&&jsRenderer.carPlayImportHit(downX,downY)&&jsRenderer.carPlayImportHit(x,y)){
             try{Intent intent=new Intent(Intent.ACTION_GET_CONTENT);intent.setType("application/octet-stream");activity.startActivityForResult(Intent.createChooser(intent,UiText.t("CarPlay 캡처 선택")),DashboardActivity.REQUEST_CARPLAY_CAPTURE);}
             catch(RuntimeException e){Toast.makeText(activity,UiText.t("파일 선택기를 열 수 없습니다"),Toast.LENGTH_SHORT).show();}
             return true;
         }
-        if(tap&&!blocked&&DATA.jsProfile()&&pageState.is(DashboardPage.DIAG)&&jsRenderer.transmissionHit(downX,downY)&&jsRenderer.transmissionHit(x,y)){
-            transmissionSetting.show(new Runnable(){public void run(){DATA.jsTransmissionSetting(transmissionSetting.get());invalidate();}});return true;
+        if(tap&&!blocked&&diagnostics&&inPage&&jsRenderer.transmissionHit(downX,downY)&&jsRenderer.transmissionHit(x,y)){
+            beginSelectionEditor(SettingsPageRenderer.TRANSMISSION,-1);return true;
         }
-        if(tap&&!blocked&&DATA.jsProfile()&&pageState.is(DashboardPage.DIAG)&&jsRenderer.wifiSettingsHit(downX,downY)&&jsRenderer.wifiSettingsHit(x,y)){
+        if(tap&&!blocked&&diagnostics&&inPage&&jsRenderer.wifiSettingsHit(downX,downY)&&jsRenderer.wifiSettingsHit(x,y)){
             try{activity.startActivity(new Intent("android.settings.WIFI_SETTINGS"));}
             catch(RuntimeException e){Toast.makeText(activity,UiText.t("Wi-Fi 설정을 열 수 없습니다"),Toast.LENGTH_SHORT).show();}
             return true;
         }
-        if(tap&&!blocked&&!pageState.is(DashboardPage.DIAG)&&!pageState.is(DashboardPage.PERFORMANCE)&&!pageState.is(DashboardPage.F1)&&!pageState.is(DashboardPage.GAUGES)&&!pageState.is(DashboardPage.GRAPHS)&&overviewDown>=0&&overviewLayout.hit(x,y)==overviewDown&&!overviewCovered(y)){
+        if(tap&&!blocked&&!settingsVisible&&pageState.is(DashboardPage.OVERVIEW)&&overviewDown>=0&&overviewLayout.hit(x,y)==overviewDown&&inPage){
             if(OverviewLayout.dctCard(overviewDown,DATA.jsProfile()))return true;
             overviewLayout.cycle(overviewDown);
             activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("overview_style_"+overviewDown,overviewLayout.style(overviewDown)).apply();
             invalidate();return true;
         }
-        if(tap&&!blocked&&pageState.is(DashboardPage.GAUGES)&&x>=650&&x<=788&&downX>=650&&downX<=788&&y>=54&&y<=78&&downY>=54&&downY<=78){gaugeEditor.toggleGrid();return true;}
-        if(tap&&!blocked&&pageState.is(DashboardPage.GRAPHS)&&y>=54&&y<=79&&downY>=54&&downY<=79){
-            if(x>=628&&x<=702&&downX>=628&&downX<=702)graphEditor.window(60000);
-            else if(x>=708&&x<=782&&downX>=708&&downX<=782)graphEditor.window(300000);
-            return true;
+        if(tap&&!blocked&&!settingsVisible&&pageState.is(DashboardPage.GAUGES)&&gaugeLayout.toggle().contains(x,y)&&gaugeLayout.toggle().contains(downX,downY)){gaugeEditor.toggleGrid();return true;}
+        if(tap&&!blocked&&!settingsVisible&&pageState.is(DashboardPage.GRAPHS)){
+            for(int i=0;i<2;i++)if(graphLayout.timeButton(i).contains(x,y)&&graphLayout.timeButton(i).contains(downX,downY)){
+                graphEditor.window(i==0?60000:300000);return true;
+            }
         }
-        if(tap&&!blocked&&pageState.is(DashboardPage.F1)&&!pageState.is(DashboardPage.GAUGES)){
-            boolean small=x>=18&&x<=70&&downX>=18&&downX<=70&&y>=436&&y<=480&&downY>=436&&downY<=480;
-            boolean large=media&&x>=518&&x<=758&&downX>=518&&downX<=758&&y>=72&&y<=312&&downY>=72&&downY<=312;
-            if(small||large){media=!media;mediaState.dismissNotice();invalidate();return true;}
+        if(tap&&!blocked&&!activeTheme.shell().left()){
+            int selected=DashboardPage.tap(activeTheme,pageMenu,downX,downY,x,y,display.logicalDisplayWidth);
+            if(selected>=0)selectMenuTarget(selected);
         }
-        if(tap && !blocked && pageState.is(DashboardPage.F1) && y>=452 && y<=480 && downY>=452 && downY<=480) {
-            if(media && x>=494 && x<=580 && downX>=494 && downX<=580){requestMedia(-1);return true;}
-            if(media && x>=588 && x<=686 && downX>=588 && downX<=686){requestMedia(0);return true;}
-            if(media && x>=694 && x<=782 && downX>=694 && downX<=782){requestMedia(1);return true;}
-            int next=shiftTarget;
-            float minus=media?210:548,plus=media?440:740;
-            if(x>=minus && x<=minus+42 && downX>=minus && downX<=minus+42)next-=100;
-            if(x>=plus && x<=plus+42 && downX>=plus && downX<=plus+42)next+=100;
-            shiftTarget=ShiftGuide.clamp(next,DATA.pdLayoutProfile());
-            activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("shift_target",shiftTarget).apply();
-            invalidate();return true;
-        }
-        if(!tap || blocked || y<8 || y>46 || downY<8 || downY>46)return true;
-        gaugeEditor.dismiss();graphEditor.dismiss();
-        int selected=DashboardPage.tap(downX,downY,x,y);
-        if(selected>=0){
-            boolean fromSettings=settingsVisible;
-            settingsVisible=false;
-            int page=fromSettings?pageState.restore(selected,DATA.jsProfile()):pageState.selectPage(selected,DATA.jsProfile());
-            activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("dashboard_page",page).apply();
-            invalidate();
-        }
-        else if(x>=534 && x<=602 && downX>=534 && downX<=602){settingsVisible=!settingsVisible;invalidate();}
-        else if(x>=666 && x<=782 && downX>=666 && downX<=782)close();
         return true;
     }
 }
