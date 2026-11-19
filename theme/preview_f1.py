@@ -135,8 +135,7 @@ CHECK = '''
   if(glass)for(android.graphics.Canvas.TextDraw command:before.commands)
     check(Math.abs(command.scaleX-command.scaleY)<0.001,"glyph aspect ratio: "+command.text);
   if(glass){draftNavigation(view,0);com.veloster.dashboard.view.overview.OverviewLayout layout=(com.veloster.dashboard.view.overview.OverviewLayout)field(view,"overviewLayout");
-    check(layout.count()==7&&layout.widthAt(0)>layout.widthAt(1),"custom overview cards and span");draw(view).write(folder+"/f1_2_overview.png");
-    tap(view,layout.pagerX()+42,layout.pagerY());check(layout.page()==1,"custom overview page navigation");}
+    check(layout.count()==7&&layout.widthAt(0)>layout.widthAt(1),"custom overview cards and span stay on the fixed 5x4 screen");draw(view).write(folder+"/f1_2_overview.png");}
   draftNavigation(view,4);check(draw(view).texts.contains("PERFORMANCE"),"performance navigation");
   fixture("waiting","js");Activity waiting=new Activity();LanguageSettings.save(waiting,"ko");DashboardView empty=create(waiting);
   android.graphics.Canvas missing=draw(empty);check(!missing.texts.contains("124")&&!missing.texts.contains("D4"),"missing data is not fabricated");

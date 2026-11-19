@@ -389,23 +389,24 @@ public final class ThemeCatalog {
     private static ThemeSpec.Overview parseOverview(Map<String,Object> value){
         exactKeys(value,new String[]{"columns","rows","padding","gapX","gapY","cards"});
         int columns=range(value,"columns",1,6),rows=range(value,"rows",1,4);
+        if(columns!=5||rows!=4)throw new IllegalArgumentException("overview must use the fixed 5x4 grid");
         int gx=range(value,"gapX",0,30),gy=range(value,"gapY",0,30);
         Map<String,Object> p=object(value.get("padding"),"overview padding");exactKeys(p,new String[]{"top","right","bottom","left"});
         int top=range(p,"top",0,60),right=range(p,"right",0,60),bottom=range(p,"bottom",0,60),left=range(p,"left",0,60);
         if((764-left-right-(columns-1)*gx)/columns<100||(390-top-bottom-(rows-1)*gy)/rows<95)throw new IllegalArgumentException("overview grid cells too small");
         List<Object> list=array(value.get("cards"),"cards");
-        if(list.size()>100)throw new IllegalArgumentException("too many cards");
-        ThemeSpec.Card[] cards=new ThemeSpec.Card[list.size()];Set<String> ids=new HashSet<String>(),occupied=new HashSet<String>();int pages=1;
+        if(list.size()>20)throw new IllegalArgumentException("overview exceeds the 20 fixed slots");
+        ThemeSpec.Card[] cards=new ThemeSpec.Card[list.size()];Set<String> ids=new HashSet<String>(),occupied=new HashSet<String>();
         for(int i=0;i<cards.length;i++){
-            Map<String,Object> item=object(list.get(i),"card");exactKeys(item,new String[]{"id","source","page","column","row","columnSpan","rowSpan"});
+            Map<String,Object> item=object(list.get(i),"card");exactKeys(item,new String[]{"id","source","column","row","columnSpan","rowSpan"});
             String id=string(item,"id");if(!id.matches("[a-z][a-z0-9_]{0,47}")||!ids.add(id))throw new IllegalArgumentException("invalid or duplicate card ID");
-            int source=range(item,"source",0,35),page=range(item,"page",0,9),column=range(item,"column",0,columns-1),row=range(item,"row",0,rows-1);
+            int source=range(item,"source",0,35),column=range(item,"column",0,columns-1),row=range(item,"row",0,rows-1);
             int cs=range(item,"columnSpan",1,columns),rs=range(item,"rowSpan",1,rows);
             if(column+cs>columns||row+rs>rows)throw new IllegalArgumentException("card exceeds overview grid");
-            for(int y=row;y<row+rs;y++)for(int x=column;x<column+cs;x++)if(!occupied.add(page+":"+x+":"+y))throw new IllegalArgumentException("overlapping cards");
-            cards[i]=new ThemeSpec.Card(id,source,page,column,row,cs,rs);pages=Math.max(pages,page+1);
+            for(int y=row;y<row+rs;y++)for(int x=column;x<column+cs;x++)if(!occupied.add(x+":"+y))throw new IllegalArgumentException("overlapping cards");
+            cards[i]=new ThemeSpec.Card(id,source,column,row,cs,rs);
         }
-        return new ThemeSpec.Overview(columns,rows,top,right,bottom,left,gx,gy,pages,cards);
+        return new ThemeSpec.Overview(columns,rows,top,right,bottom,left,gx,gy,cards);
     }
     private static Map<String,ThemeSpec.Rect> parseF1(Map<String,Object> value){
         String[] ids={"shift","gear","speed","boost","rpm","temperatures","pedal","brake"};exactKeys(value,ids);
@@ -450,7 +451,7 @@ public final class ThemeCatalog {
                 if(occupied[r][k])throw new IllegalArgumentException("overlapping F1 cells");
                 occupied[r][k]=true;
             }
-            result.put(id,new ThemeSpec.Card(id,0,0,x,y,w,h));
+            result.put(id,new ThemeSpec.Card(id,0,x,y,w,h));
         }
         return new ThemeSpec.F1Grid(columns,weights,inset,gap,padding,radius,result);
     }
@@ -532,7 +533,7 @@ public final class ThemeCatalog {
         exactKeys(tokens,new String[]{"background","panel","panelRaised","stroke","textPrimary","textSecondary","accent","warning","critical","unavailable","cutPanels"});
         Map<String,Object> layout=object(root.get("layout"),"layout");exactKeys(layout,new String[]{"columns","rows"});
         int columns=integer(layout,"columns"),rows=integer(layout,"rows");
-        if(!((columns==5&&rows==4)||(columns==4&&rows==3)))throw new IllegalArgumentException("unsupported theme grid");
+        if(columns!=5||rows!=4)throw new IllegalArgumentException("theme overview must use the fixed 5x4 grid");
         Map<String,Object> fonts=object(root.get("fonts"),"fonts");exactKeys(fonts,new String[]{"body","numeric","display"});
         String body=fontPath(string(fonts,"body")),numeric=fontPath(string(fonts,"numeric")),displayFont=fontPath(string(fonts,"display"));
         Map<String,Object> assets=object(root.get("assets"),"assets");exactKeys(assets,new String[]{"background"});

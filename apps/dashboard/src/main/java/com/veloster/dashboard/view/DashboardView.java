@@ -103,7 +103,6 @@ public final class DashboardView extends View implements Runnable {
         }catch(IllegalArgumentException e){/* Retain default for an invalid saved style. */}
         catch(ClassCastException e){/* Retain default for incompatible preferences. */}
         try{pageState.restore(a.getSharedPreferences("pit_vehicle_ui",0).getInt("dashboard_page",DashboardPage.OVERVIEW));}catch(ClassCastException ignored){pageState.restore(DashboardPage.OVERVIEW);}
-        try{overviewLayout.page(a.getSharedPreferences("pit_vehicle_ui",0).getInt("overview_theme_page",0));}catch(ClassCastException ignored){}
         try{shiftTarget=ShiftGuide.clamp(a.getSharedPreferences("pit_vehicle_ui",0).getInt("shift_target",ShiftGuide.DEFAULT),DATA.pdLayoutProfile());}catch(ClassCastException ignored){shiftTarget=ShiftGuide.DEFAULT;}
         try{mediaBarPolicy=MediaBar.normalize(a.getSharedPreferences("pit_vehicle_ui",0).getInt(MEDIA_BAR_POLICY,MediaBar.DEFAULT));}catch(ClassCastException ignored){}
         try{mediaNotices=a.getSharedPreferences("pit_vehicle_ui",0).getInt(MEDIA_NOTICES,1)!=0;}catch(ClassCastException ignored){}
@@ -756,7 +755,6 @@ public final class DashboardView extends View implements Runnable {
             }
             if(activeTheme.shell().left()||event.getY()>=display.headerHeight)return true;
         }
-        if(tap&&!blocked&&!settingsVisible&&pageState.is(DashboardPage.OVERVIEW)&&inPage){int next=overviewLayout.pageControlTarget(x,y);if(next>=0){overviewLayout.page(next);activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("overview_theme_page",next).apply();invalidate();return true;}}
         if(tap&&!blocked&&diagnostics&&inPage&&jsRenderer.selectDiagnosticTab(downX,downY,x,y)){invalidate();return true;}
         if(tap&&!blocked&&diagnostics&&inPage&&jsRenderer.carPlayImportHit(downX,downY)&&jsRenderer.carPlayImportHit(x,y)){
             try{Intent intent=new Intent(Intent.ACTION_GET_CONTENT);intent.setType("application/octet-stream");activity.startActivityForResult(Intent.createChooser(intent,UiText.t("CarPlay 캡처 선택")),DashboardActivity.REQUEST_CARPLAY_CAPTURE);}

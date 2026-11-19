@@ -39,6 +39,27 @@ public final class ThemeSpec {
     public final Spacing spacing;
     public final Material material;
     public final Backdrop backdrop;
+    /** Semantic names for the canonical v3 color tokens; values remain stored once on this spec. */
+    public enum ColorRole {
+        BACKGROUND, SURFACE, SURFACE_RAISED, ON_SURFACE, ON_SURFACE_VARIANT,
+        PRIMARY, OUTLINE, WARNING, CRITICAL, UNAVAILABLE
+    }
+    public int color(ColorRole role){
+        if(role==null)throw new IllegalArgumentException("color role required");
+        switch(role){
+            case BACKGROUND:return background;
+            case SURFACE:return panel;
+            case SURFACE_RAISED:return panelRaised;
+            case ON_SURFACE:return textPrimary;
+            case ON_SURFACE_VARIANT:return textSecondary;
+            case PRIMARY:return accent;
+            case OUTLINE:return stroke;
+            case WARNING:return warning;
+            case CRITICAL:return critical;
+            case UNAVAILABLE:return unavailable;
+            default:throw new IllegalArgumentException("unsupported color role");
+        }
+    }
     public enum Palette { THEME, COMPONENT_DEFAULTS }
     public enum Underline { AUTO, ON, OFF }
     private Palette palette=Palette.THEME;
@@ -128,9 +149,12 @@ public final class ThemeSpec {
         if(!shell.left()||(mode!=DOCK_ON&&mode!=DOCK_OFF)||shell.dock()==(mode==DOCK_ON))return this;
         return withShell(shell.withDock(mode==DOCK_ON));
     }
-    ThemeSpec withShell(Shell value){
+    ThemeSpec withShell(Shell value){return withShellAndAccent(value,accent);}
+    /** Creates a render-only copy with a user-selected primary color. */
+    public ThemeSpec withAccent(int value){return withShellAndAccent(shell,value);}
+    private ThemeSpec withShellAndAccent(Shell value,int accentValue){
         ThemeSpec copy=new ThemeSpec(id,displayName,background,panel,panelRaised,stroke,textPrimary,textSecondary,
-            accent,warning,critical,unavailable,columns,rows,cutPanels,bodyFont,numericFont,displayFont,backgroundAsset,
+            accentValue,warning,critical,unavailable,columns,rows,cutPanels,bodyFont,numericFont,displayFont,backgroundAsset,
             typography,spacing,material,backdrop);
         copy.surfaceMaterials=surfaceMaterials;copy.shell=value;copy.overview=overview;copy.f1=f1;copy.f1Bottom=f1Bottom;copy.f1Grid=f1Grid;
         copy.overviewCardStyles=overviewCardStyles;
@@ -229,16 +253,16 @@ public final class ThemeSpec {
 
     public static final class Card {
         public final String id;
-        public final int source,page,column,row,columnSpan,rowSpan;
-        Card(String id,int source,int page,int column,int row,int columnSpan,int rowSpan){
-            this.id=id;this.source=source;this.page=page;this.column=column;this.row=row;this.columnSpan=columnSpan;this.rowSpan=rowSpan;
+        public final int source,column,row,columnSpan,rowSpan;
+        Card(String id,int source,int column,int row,int columnSpan,int rowSpan){
+            this.id=id;this.source=source;this.column=column;this.row=row;this.columnSpan=columnSpan;this.rowSpan=rowSpan;
         }
     }
     public static final class Overview {
-        public final int columns,rows,top,right,bottom,left,gapX,gapY,pages;
+        public final int columns,rows,top,right,bottom,left,gapX,gapY;
         private final Card[] cards;
-        Overview(int columns,int rows,int top,int right,int bottom,int left,int gapX,int gapY,int pages,Card[] cards){
-            this.columns=columns;this.rows=rows;this.top=top;this.right=right;this.bottom=bottom;this.left=left;this.gapX=gapX;this.gapY=gapY;this.pages=pages;this.cards=cards.clone();
+        Overview(int columns,int rows,int top,int right,int bottom,int left,int gapX,int gapY,Card[] cards){
+            this.columns=columns;this.rows=rows;this.top=top;this.right=right;this.bottom=bottom;this.left=left;this.gapX=gapX;this.gapY=gapY;this.cards=cards.clone();
         }
         public int count(){return cards.length;}
         public Card card(int index){return cards[index];}
@@ -324,7 +348,7 @@ public final class ThemeSpec {
     }
 
     public static Typography defaultTypography(){return new Typography(100,100,100,184,130);}
-    public static Spacing defaultSpacing(int columns){return new Spacing(12,10,24,14,4,0,columns==4?10:8,columns==4?12:6);}
+    public static Spacing defaultSpacing(){return new Spacing(12,10,24,14,4,0,8,6);}
     public static Material defaultMaterial(){return new Material("legacy",0,255,255,0xd9ffffff,0x0f2859a0);}
 
     /** Same role rule as ThemeResources.fontForText; measurement and drawing share this scale. */
@@ -353,7 +377,6 @@ public final class ThemeSpec {
     public final int unavailable;
     public final int columns;
     public final int rows;
-    public final int pageSize;
     public final boolean cutPanels;
     public final String bodyFont;
     public final String numericFont;
@@ -389,7 +412,7 @@ public final class ThemeSpec {
               int critical, int unavailable, int columns, int rows, boolean cutPanels,
               String bodyFont, String numericFont, String displayFont, String backgroundAsset,
               Typography typography,Spacing spacing,Material material,Backdrop backdrop) {
-        if (id == null || displayName == null || columns < 1 || rows < 1) {
+        if (id == null || displayName == null || columns != 5 || rows != 4) {
             throw new IllegalArgumentException("invalid theme definition");
         }
         this.typography=typography;this.spacing=spacing;this.material=material;this.backdrop=backdrop;
@@ -407,7 +430,6 @@ public final class ThemeSpec {
         this.unavailable = unavailable;
         this.columns = columns;
         this.rows = rows;
-        this.pageSize = columns * rows;
         this.cutPanels = cutPanels;
         this.bodyFont=bodyFont;
         this.numericFont=numericFont;
@@ -421,7 +443,7 @@ public final class ThemeSpec {
     }
 
     static ThemeSpec originalV2() {
-        return original(defaultSpacing(5));
+        return original(defaultSpacing());
     }
 
     private static ThemeSpec original(Spacing spacing) {
@@ -438,7 +460,7 @@ public final class ThemeSpec {
         return new ThemeSpec("aurora_focus", "Aurora Focus", 0xff071118,
                 0xff10232c, 0xff173641, 0xff28505a, 0xffedf8fa, 0xff9bb9c0,
                 0xff65e0d0, 0xffffc45c, 0xffff6679, 0xff8299a0, 5, 4, false,
-                "", "", "", "backgrounds/dashboard.png",defaultTypography(),defaultSpacing(5),defaultMaterial(),Backdrop.LEGACY);
+                "", "", "", "backgrounds/dashboard.png",defaultTypography(),defaultSpacing(),defaultMaterial(),Backdrop.LEGACY);
     }
 
     static ThemeSpec fromManifest(String id,String displayName,int background,int panel,int panelRaised,

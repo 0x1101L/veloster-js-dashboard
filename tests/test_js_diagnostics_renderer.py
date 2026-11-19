@@ -184,6 +184,7 @@ def render(folder):
         sources += [source_path(name) for name in names]
         sources += [ROOT / 'apps/dashboard/src/main/java/com/veloster/dashboard/view' / (name + '.java') for name in ('MediaBar', 'MenuIcons')]
         sources.append(ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemeSurface.java")
+        sources.append(ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/LiquidGlassEngine.java")
         sources += [ROOT / "tests/java_stubs/android/content/Context.java", ROOT / "tests/java_stubs/android/content/res/AssetManager.java"]
         sources += [ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd/PdTelemetryDecoder.java", ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/jsn/JsnTelemetryDecoder.java"]
         sources.append(ROOT / "shared/src/com/veloster/i18n/UiText.java")

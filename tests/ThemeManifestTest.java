@@ -45,7 +45,7 @@ public final class ThemeManifestTest {
             for(OverviewLayout overview:new OverviewLayout[]{originalOverview,f12Overview}){
                 overview.jsProfile("js".equals(profile));overview.pdProfile("pd".equals(profile));
             }
-            check(f12Overview.pageCount()==1&&f12Overview.count()==20,"F1-2 keeps all overview cards on one page");
+            check(f12Overview.count()==20,"F1-2 keeps all overview cards in the fixed 5x4 overview");
             for(int slot=0;slot<originalOverview.count();slot++)
                 check(f12Overview.signalAt(slot)==originalOverview.signalAt(slot)
                       &&f12Overview.hit(f12Overview.leftAt(slot)+f12Overview.widthAt(slot)/2,
@@ -128,11 +128,6 @@ public final class ThemeManifestTest {
         ThemeSpec originalLeft=ThemeCatalog.withMenuPosition(bundled.find("original"),ThemeSpec.MENU_LEFT);
         check(originalLeft.shell().width==96&&originalLeft.shell().left==0&&originalLeft.shell().right==0,
               "Original left navigation occupies 96px");
-        Map<String,String> paged=new LinkedHashMap<String,String>(manifests);
-        paged.put("aurora_focus",paged.get("aurora_focus").replace("\"columns\": 5, \"rows\": 4","\"columns\": 4, \"rows\": 3"));
-        ThemeSpec pagedTheme=load(catalogJson,paged).find("aurora_focus");
-        OverviewLayout pagedLayout=new OverviewLayout();pagedLayout.theme(pagedTheme);
-        check(pagedTheme.columns==4&&pagedTheme.rows==3&&pagedLayout.pageCount()==2&&pagedLayout.page(1),"Supported 4x3 themes retain overview pagination");
         check("original".equals(load("{\"schemaVersion\":2,\"themeIds\":[\"original\",\"aurora_focus\",\"aurora_focus\"]}",manifests).resolve("aurora_focus").id),"duplicate catalog ID falls back to Original only");
         check("original".equals(load(catalogJson,new LinkedHashMap<String,String>()).resolve("aurora_focus").id),"missing manifests fall back safely");
         check("original".equals(load(catalogJson.replace("\"schemaVersion\": 2","\"schemaVersion\": 99"),manifests).resolve("aurora_focus").id),"unsupported catalog version falls back");
@@ -179,7 +174,7 @@ public final class ThemeManifestTest {
         v3.put("child","{\"schemaVersion\":3,\"id\":\"child\",\"displayName\":\"Child\",\"extends\":\"parent\",\"files\":{\"fonts\":\"fonts.json\",\"shell\":\"layouts/shell.json\",\"overview\":\"layouts/overview.json\"}}");
         v3.put("child/fonts.json","{\"typography\":{\"numericScale\":120}}");
         v3.put("child/layouts/shell.json","{\"shell\":{\"position\":\"left\",\"alignment\":\"center\",\"width\":160,\"padding\":{\"top\":10,\"right\":12,\"bottom\":20,\"left\":8},\"gap\":5,\"buttonHeight\":40}}");
-        v3.put("child/layouts/overview.json","{\"overview\":{\"columns\":3,\"rows\":3,\"padding\":{\"top\":4,\"right\":8,\"bottom\":6,\"left\":10},\"gapX\":8,\"gapY\":6,\"cards\":[{\"id\":\"speed_wide\",\"source\":7,\"page\":0,\"column\":0,\"row\":0,\"columnSpan\":2,\"rowSpan\":1},{\"id\":\"speed_again\",\"source\":7,\"page\":0,\"column\":2,\"row\":0,\"columnSpan\":1,\"rowSpan\":1},{\"id\":\"rpm\",\"source\":0,\"page\":1,\"column\":0,\"row\":1,\"columnSpan\":1,\"rowSpan\":1}]}}");
+        v3.put("child/layouts/overview.json","{\"overview\":{\"columns\":5,\"rows\":4,\"padding\":{\"top\":4,\"right\":8,\"bottom\":6,\"left\":10},\"gapX\":8,\"gapY\":0,\"cards\":[{\"id\":\"speed_wide\",\"source\":7,\"column\":0,\"row\":0,\"columnSpan\":2,\"rowSpan\":1},{\"id\":\"speed_again\",\"source\":7,\"column\":2,\"row\":0,\"columnSpan\":1,\"rowSpan\":1},{\"id\":\"rpm\",\"source\":0,\"column\":0,\"row\":1,\"columnSpan\":1,\"rowSpan\":1}]}}");
         ThemeCatalog inherited=load(v3catalog,v3);
         check(inherited.size()==3&&inherited.find("child").accent==0xff123456&&inherited.find("child").typography.numericScale==120&&"fonts/parent.otf".equals(inherited.find("child").bodyFont),"v3 files inherit and merge individual properties");
         check(inherited.find("original").accent==0xffa4d9ef&&inherited.find("parent").typography.numericScale==100,"child merge leaves ancestors unchanged");
@@ -187,9 +182,8 @@ public final class ThemeManifestTest {
         check(child.shell().left()&&child.shell().width==160&&child.shell().left==8&&child.shell().right==12,"shell settings load with four-sided padding");
         check(com.veloster.dashboard.view.DashboardPage.shellHit(child,78,com.veloster.dashboard.view.DashboardPage.shellTop(child,1)+10)==1,"left navigation uses calculated bounds");
         OverviewLayout customLayout=new OverviewLayout();customLayout.theme(child);
-        check(customLayout.pageCount()==2&&customLayout.count()==2&&customLayout.signalAt(0)==7&&customLayout.signalAt(1)==7,"custom cards preserve order and allow repeated sources");
+        check(customLayout.count()==3&&customLayout.signalAt(0)==7&&customLayout.signalAt(1)==7&&customLayout.signalAt(2)==0,"custom cards preserve order and allow repeated sources on one screen");
         check(customLayout.widthAt(0)>customLayout.widthAt(1)*1.9f&&customLayout.hit(customLayout.leftAt(1)+5,customLayout.topAt(1)+5)==7,"spans and repeated card hit geometry");
-        check(customLayout.page(1)&&customLayout.count()==1&&customLayout.signalAt(0)==0,"custom overview pagination");
         Map<String,String> topShell=new LinkedHashMap<String,String>(v3);
         topShell.put("child/layouts/shell.json",topShell.get("child/layouts/shell.json").replace("\"position\":\"left\"","\"position\":\"top\""));
         ThemeSpec topTheme=load(v3catalog,topShell).find("child");
@@ -210,8 +204,10 @@ public final class ThemeManifestTest {
         check(load(v3catalog,broken).size()==1,"unknown nested property is rejected");
         broken=new LinkedHashMap<String,String>(v3);broken.put("child/layouts/overview.json",broken.get("child/layouts/overview.json").replace("\"column\":2","\"column\":1"));
         check(load(v3catalog,broken).size()==1,"overlapping overview cards are rejected");
-        broken=new LinkedHashMap<String,String>(v3);broken.put("child/layouts/overview.json",broken.get("child/layouts/overview.json").replace("\"columns\":3","\"columns\":6"));
+        broken=new LinkedHashMap<String,String>(v3);broken.put("child/layouts/overview.json",broken.get("child/layouts/overview.json").replace("\"columns\":5","\"columns\":6"));
         check(load(v3catalog,broken).size()==1,"grid must fit actual shell content, not just the old 800px page");
+        broken=new LinkedHashMap<String,String>(v3);broken.put("child/layouts/overview.json",broken.get("child/layouts/overview.json").replace("\"source\":7","\"source\":7,\"page\":1"));
+        check(load(v3catalog,broken).find("child")==null,"overview card schema has no page property");
         Map<String,String> grandchild=new LinkedHashMap<String,String>(v3);
         grandchild.put("variant","{\"schemaVersion\":3,\"id\":\"variant\",\"displayName\":\"Variant\",\"extends\":\"child\",\"files\":{\"overview\":\"layouts/overview.json\"}}");
         grandchild.put("variant/layouts/overview.json","{\"overview\":{\"cards\":[]}}");

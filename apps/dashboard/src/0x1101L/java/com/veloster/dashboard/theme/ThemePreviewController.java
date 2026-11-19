@@ -59,7 +59,6 @@ public final class ThemePreviewController {
     public void setMediaBarPolicy(int policy){pit.setMediaDisplay(policy,false);jsPit.setMediaDisplay(policy,false);}
     public ThemeSpec draft(){return draft;}
     public OverviewLayout layout(){return layout;}
-    public boolean page(int value){return layout.page(value);}
     public void draw(Canvas canvas,int width,int height){
         long now=2000;
         if(js){jsPit.setOverviewLayout(layout);jsPit.draw(canvas,width,height,false,fixture,now,ShiftGuide.DEFAULT,false,null);}

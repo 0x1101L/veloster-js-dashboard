@@ -91,40 +91,16 @@
       }
     },
     "layout": {
-      "oneOf": [
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "columns",
-            "rows"
-          ],
-          "properties": {
-            "columns": {
-              "const": 5
-            },
-            "rows": {
-              "const": 4
-            }
-          }
-        },
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "columns",
-            "rows"
-          ],
-          "properties": {
-            "columns": {
-              "const": 4
-            },
-            "rows": {
-              "const": 3
-            }
-          }
-        }
-      ]
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "columns",
+        "rows"
+      ],
+      "properties": {
+        "columns": { "const": 5 },
+        "rows": { "const": 4 }
+      }
     },
     "fonts": {
       "type": "object",

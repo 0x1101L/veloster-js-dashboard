@@ -13,7 +13,7 @@ import test_js_diagnostics_renderer as renderer
 PAGES = ('전체 조망', 'HUD·내비', 'CarPlay', '차량', '연결', 'Bindings', '퍼포먼스', 'F1', '게이지', '그래프', '설정')
 STATES = ('waiting', 'received', 'invalid', 'held', 'expired')
 LANGUAGES = ('ko', 'en')
-THEMES = ('original', 'aurora_focus')
+THEMES = ('original', 'aurora_focus', 'material_auto_cowork')
 VEHICLES = {
     'js': {'name': 'Veloster', 'resolution': (800, 480)},
     'js_n': {'name': 'Veloster N', 'resolution': (800, 480)},
@@ -67,7 +67,9 @@ class Renderer:
   java.io.BufferedReader input=new java.io.BufferedReader(new java.io.InputStreamReader(System.in,"UTF-8"));
   for(String line;(line=input.readLine())!=null;){try{
    String[] v=line.split("\\t");int page=Integer.parseInt(v[0]);String state=v[1];String themeId=v[3];String vehicle=v[4];int outWidth=Integer.parseInt(v[5]);int outHeight=Integer.parseInt(v[6]);
-   ThemeSpec theme="aurora_focus".equals(themeId)?ThemeSpec.auroraFocus():ThemeSpec.original();
+   final java.nio.file.Path assets=java.nio.file.Paths.get(v[8]);
+   ThemeSpec theme=com.veloster.dashboard.theme.ThemeCatalog.load(new android.content.Context(){public android.content.res.AssetManager getAssets(){return new android.content.res.AssetManager(){public java.io.InputStream open(String path)throws java.io.IOException{return java.nio.file.Files.newInputStream(assets.resolve(path));}};}}).find(themeId);
+   if(theme==null)throw new IllegalArgumentException("unknown theme: "+themeId);
    UiText.configure(v[2],v[2]);Telemetry t=fixture(state,vehicle);JsDiagState d=observations(state);
    long now=state.equals("expired")?62000:2000;
    OverviewLayout overview=new OverviewLayout();overview.theme(theme);
@@ -84,6 +86,8 @@ class Renderer:
     if(page==6)r.setPerformancePage(true);if(page==8)r.setGaugeLayout(new GaugeLayout());if(page==9)r.setGraphLayout(new GraphLayout());
     r.draw(c,outWidth,outHeight,page==7,t,now,ShiftGuide.DEFAULT,false,media.snapshot(now));
    }
+   android.graphics.Paint badge=new android.graphics.Paint(3);badge.setColor(0xffb7c0cb);badge.setTextSize(10);
+   c.drawText("합성 데이터 · 미리보기",outWidth-116,58,badge);
    c.write(v[7]);System.out.println("OK");
   }catch(Throwable e){e.printStackTrace(System.err);System.out.println("ERROR: "+e.toString());}}
  }
@@ -111,6 +115,8 @@ class Renderer:
                         ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/JsDiagState.java',
                         ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/view/JsDiagnosticsRenderer.java',
                         ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemeSpec.java',
+                        ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemeCatalog.java',
+                        ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemeJsonParser.java',
                         ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemePalette.java',
                         ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/LiquidGlassEngine.java',
                         ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemeSurface.java',
@@ -140,7 +146,8 @@ class Renderer:
                 for lang in languages:
                     for theme_id in themes:
                         output = Path(folder).resolve() / f'{vehicle}-{page}-{state}-{lang}-{theme_id}.png'
-                        self.process.stdin.write(f'{page}\t{state}\t{lang}\t{theme_id}\t{fixture}\t{width}\t{height}\t{output}\n')
+                        assets = ROOT / 'apps/dashboard/src/0x1101L/assets'
+                        self.process.stdin.write(f'{page}\t{state}\t{lang}\t{theme_id}\t{fixture}\t{width}\t{height}\t{output}\t{assets}\n')
                         self.process.stdin.flush()
                         reply = self.process.stdout.readline().strip()
                         if reply != 'OK':

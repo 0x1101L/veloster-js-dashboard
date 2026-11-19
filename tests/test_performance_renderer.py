@@ -38,7 +38,7 @@ public class PerformancePreview {
    t.hscanJs(0xc7,0x04,new byte[]{0,0,0,0,0,(byte)mode[0],0,0},now);
    for(boolean media:new boolean[]{false,true}){
     Canvas c=new Canvas(800,480);new JsPitRenderer().draw(c,800,480,true,t,now,6000,media,null);
-    check(c.pixel(media?185:299,media?150:125)==mode[1],"F1 mode color "+mode[0]+" media="+media);
+    check(c.pixel(media?185:299,media?150:125)==mode[1],"F1 mode color "+mode[0]+" media="+media+" actual="+Integer.toHexString(c.pixel(media?185:299,media?150:125)));
     check(c.texts.contains("BOOST")&&c.texts.contains("INTAKE")&&!c.texts.contains("OIL TEMP"),"F1 replacement labels");
    }
    now+=10;
@@ -109,7 +109,7 @@ public class PerformancePreview {
     if(profile==2){JsPitRenderer r=new JsPitRenderer();r.setTheme(ThemeSpec.auroraFocus());r.setOverviewLayout(layout);r.draw(c,800,480,false,t,1000);}
     else {PitRenderer r=new PitRenderer();r.setTheme(ThemeSpec.auroraFocus());r.setOverviewLayout(layout);r.draw(c,800,480,false,t,1000);}
     check(c.pixel(799,479)==0xff071118,"Focus background applied");
-   check(!c.texts.contains(" / 2"),"5x4 Focus overview has no unnecessary pager");
+   check(!c.texts.contains(" / 2"),"5x4 Focus overview has no pager");
     check(c.texts.size()>=20,"overview renderer draws the active profile page");
     c.write(folder+"/focus-profile-"+profile+"-page-"+page+".png");
    }
@@ -117,7 +117,7 @@ public class PerformancePreview {
   for(int profile=0;profile<3;profile++){
    ThemePreviewController preview=new ThemePreviewController(profile==1,profile==2,profile==0);
    ThemeSelectionDraft draft=new ThemeSelectionDraft(ThemeSpec.original());draft.choose(ThemeSpec.auroraFocus());preview.setDraft(draft.selected());
-   check(preview.layout().pageCount()==1&&preview.layout().count()==20,"preview controller uses the existing 5x4 layout");
+   check(preview.layout().count()==20&&preview.layout().theme().columns==5&&preview.layout().theme().rows==4,"preview controller uses the fixed 5x4 layout");
    Canvas c=new Canvas(800,480);preview.draw(c,800,480);
    check(!c.texts.contains(" / 2")&&c.texts.size()>=20,"preview uses renderer and fixed data without a redundant pager");
    c.write(folder+"/controller-profile-"+profile+"-page-0.png");
@@ -249,6 +249,7 @@ def render(folder):
         sources += [source_path(name) for name in ('Telemetry','ThemeSpec','ThemePalette','ThemeSelectionDraft','ThemePreviewController','ThemeResources','ThemeLayout','PdPowertrain','PdGearState','JsPowertrain','JsGearState','JsTelemetryDecoder','JsDiagState','BluetoothRuntimeProbe','JsPitRenderer','ClusterRenderer','JsClusterRenderer','OverviewRenderer','OverviewCardRenderer','JsOverviewRenderer','JsDiagnosticsRenderer','JsGaugeRenderer','JsPerformanceRenderer','PitRenderer','PerformanceRenderer','DashboardPage','SettingsPageRenderer','ShiftGuide','MediaState','GaugeLayout','GaugeRenderer','OverviewLayout','GraphLayout','GraphRenderer')]
         sources += [ROOT / 'apps/dashboard/src/main/java/com/veloster/dashboard/view' / (name + '.java') for name in ('MediaBar', 'MenuIcons')]
         sources.append(ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/ThemeSurface.java")
+        sources.append(ROOT / "apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme/LiquidGlassEngine.java")
         sources += [ROOT / "tests/java_stubs/android/content/Context.java",ROOT / "tests/java_stubs/android/content/res/AssetManager.java"]
         sources += [ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/pd/PdTelemetryDecoder.java", ROOT / "apps/dashboard/src/main/java/com/veloster/dashboard/vehicle/jsn/JsnTelemetryDecoder.java"]
         sources.extend(ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/theme' / name

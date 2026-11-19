@@ -7,18 +7,8 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "columns": {
-          "enum": [
-            4,
-            5
-          ]
-        },
-        "rows": {
-          "enum": [
-            3,
-            4
-          ]
-        }
+        "columns": { "const": 5 },
+        "rows": { "const": 4 }
       }
     },
     "overview": {
@@ -26,14 +16,10 @@
       "additionalProperties": false,
       "properties": {
         "columns": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 6
+          "const": 5
         },
         "rows": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 4
+          "const": 4
         },
         "padding": {
           "type": "object",
@@ -73,7 +59,7 @@
         },
         "cards": {
           "type": "array",
-          "maxItems": 100,
+          "maxItems": 20,
           "items": {
             "type": "object",
             "additionalProperties": false,
@@ -87,15 +73,10 @@
                 "minimum": 0,
                 "maximum": 35
               },
-              "page": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9
-              },
               "column": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 5
+                "maximum": 4
               },
               "row": {
                 "type": "integer",
@@ -105,7 +86,7 @@
               "columnSpan": {
                 "type": "integer",
                 "minimum": 1,
-                "maximum": 6
+                "maximum": 5
               },
               "rowSpan": {
                 "type": "integer",
@@ -116,7 +97,6 @@
             "required": [
               "id",
               "source",
-              "page",
               "column",
               "row",
               "columnSpan",

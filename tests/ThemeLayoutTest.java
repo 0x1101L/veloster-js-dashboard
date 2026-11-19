@@ -13,7 +13,7 @@ public final class ThemeLayoutTest {
         if(js)order[18]=Telemetry.CLUSTER_FUEL;
         if(pd||js){order[3]=Telemetry.ACCEL_PEDAL;order[10]=9;order[16]=Telemetry.PD_TCS_ENABLED;}
         boolean[] seen=new boolean[Telemetry.LABELS.length];
-        check(value.pageCount()==1&&value.count()==20,"every profile uses the single 5x4 page");
+        check(value.count()==20&&value.theme().columns==5&&value.theme().rows==4,"every profile uses the fixed 5x4 overview grid");
         for(int i=0;i<value.count();i++){
             int signal=value.signalAt(i);seen[signal]=true;
             check(signal==order[i],"profile slot mapping retained at "+i);
@@ -21,7 +21,6 @@ public final class ThemeLayoutTest {
             check(value.hit(x+value.width(signal)/2,y+value.height(signal)/2)==signal,"profile hit test uses active page");
         }
         for(int signal:order)check(seen[signal],"profile signal remains reachable: "+signal);
-        check(value.pageControlTarget(440,460)==-1,"single-page overview has no pager action");
     }
     public static void main(String[] args){
         ThemeCatalog catalog=new ThemeCatalog();
@@ -35,7 +34,7 @@ public final class ThemeLayoutTest {
         ThemeSelectionDraft applied=new ThemeSelectionDraft(ThemeSpec.original());applied.choose(ThemeSpec.auroraFocus());
         check("aurora_focus".equals(applied.apply().id)&&applied.closed(),"apply returns the selected ID for persistence");
         OverviewLayout layout=new OverviewLayout();
-        check(layout.count()==20&&layout.pageCount()==1,"Original preserves all overview slots");
+        check(layout.count()==20&&layout.theme().columns==5&&layout.theme().rows==4,"Original preserves all 20 overview slots");
         check(layout.left(layout.signalAt(0))==10&&layout.top(layout.signalAt(0))==62,"Original uses theme padding");
         check(layout.width(layout.signalAt(0))==143.2f&&layout.height(layout.signalAt(0))==93f,"Original uses available width and height");
         for(int i=0;i<20;i++){
@@ -43,7 +42,7 @@ public final class ThemeLayoutTest {
             check(layout.hit(x+layout.width(signal)/2,y+layout.height(signal)/2)==signal,"Original hit mapping");
         }
         layout.theme(ThemeSpec.auroraFocus());
-        check(layout.count()==20&&layout.pageCount()==1,"Focus preserves the single 5x4 page");
+        check(layout.count()==20&&layout.theme().columns==5&&layout.theme().rows==4,"Focus uses the fixed 5x4 grid");
         boolean[] seen=new boolean[Telemetry.LABELS.length];
         for(int i=0;i<layout.count();i++){
             int signal=layout.signalAt(i);seen[signal]=true;
@@ -62,7 +61,6 @@ public final class ThemeLayoutTest {
         check(layout.signalAt(18)==Telemetry.CLUSTER_FUEL,"JS cluster fuel retains its original signal slot");
         layout.pdProfile(true);check(layout.signalAt(3)==Telemetry.ACCEL_PEDAL,"PD accelerator profile override remains in its existing slot");
         check(layout.signalAt(16)==Telemetry.PD_TCS_ENABLED,"PD status group remains in its existing slot");
-        check(!layout.page(1)&&layout.page()==0,"Second overview page is unavailable");
         verifyProfile(false,false);verifyProfile(false,true);verifyProfile(true,false);
         System.out.println("PASS ThemeLayoutTest");
     }
