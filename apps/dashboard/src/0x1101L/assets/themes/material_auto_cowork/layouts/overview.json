@@ -1,0 +1,43 @@
+{
+  "layout": {
+    "columns": 5,
+    "rows": 4
+  },
+  "cardDefaults": {
+    "padding": {
+      "top": 10,
+      "right": 12,
+      "bottom": 10,
+      "left": 12
+    },
+    "titleSize": 11,
+    "valueSize": 28,
+    "unitSize": 10,
+    "unitPosition": "valueRight",
+    "titleValueGap": 5,
+    "titleUnitGap": 4,
+    "valueUnitGap": 5,
+    "valueGaugeGap": 6,
+    "barHeight": 8,
+    "dialSize": 38
+  },
+  "cardTypes": {
+    "tirePressure": {
+      "rowGap": 5,
+      "columnGap": 8,
+      "valueSize": 22
+    },
+    "dctTemperature": {
+      "rowGap": 4,
+      "gaugeWidth": 28
+    },
+    "fuelEconomy": {
+      "rowGap": 4,
+      "labelValueGap": 5
+    },
+    "stability": {
+      "rowGap": 5,
+      "labelValueGap": 5
+    }
+  }
+}

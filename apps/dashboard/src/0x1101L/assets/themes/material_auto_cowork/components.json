@@ -1,0 +1,48 @@
+{
+  "spacing": {
+    "buttonPadding": 14,
+    "cardPadding": 12,
+    "settingsPadding": 28,
+    "pedalPadding": 18,
+    "f1SidePadding": 8,
+    "gearPadding": 4,
+    "gridGapX": 12,
+    "gridGapY": 10
+  },
+  "material": {
+    "style": "flat",
+    "radius": 12,
+    "topAlpha": 255,
+    "bottomAlpha": 255,
+    "highlight": "#FFD8EBFF",
+    "shadow": "#40101B2A"
+  },
+  "assets": {
+    "background": ""
+  },
+  "mediaControls": "container",
+  "mediaFooter": {
+    "buttonBackground": false,
+    "containerVisible": true
+  },
+  "surfaceStyles": {
+    "navigationButton": "flat",
+    "controlButton": "flat",
+    "mediaButton": "flat",
+    "mediaContainer": "flat",
+    "navigationDock": "flat",
+    "dataCard": "flat",
+    "gearCard": "flat",
+    "panel": "flat",
+    "settingsGroup": "flat"
+  },
+  "fills": {
+    "navigation": "#FF191F26",
+    "navigationSelected": "#FF29435B",
+    "gaugeToggle": "#FF252D36"
+  },
+  "decorations": {
+    "overviewCardTopLine": false,
+    "navigationUnderline": "off"
+  }
+}

@@ -246,6 +246,7 @@ public final class UiText {
         EN.put("변속기 정보","Transmission information");
         EN.put("변속기 종류","Transmission type");
         EN.put("보관값","Held");
+        EN.put("보라","Purple");
         EN.put("복구","Restore");
         EN.put("복구 후 AP 꺼짐 상태 재확인 실패. 백업 보존.","Could not reconfirm AP off after restoration. Backup retained.");
         EN.put("복구할 시험 백업이 없습니다. 변경하지 않았습니다.","No test backup to restore. No changes were made.");
@@ -391,12 +392,14 @@ public final class UiText {
         EN.put("이전","Previous");
         EN.put("이전 시험 백업이 남아 있습니다. 먼저 원상복구하세요.","A previous test backup remains. Restore the original settings first.");
         EN.put("이전 확인","Previously confirmed");
+        EN.put("인디고","Indigo");
         EN.put("일반 블루투스(Classic)를 사용합니다. BLE 검색과 GPS 데이터 수신 기능은 포함하지 않습니다.","Uses Classic Bluetooth. BLE discovery and GPS data reception are not included.");
         EN.put("일반 설정","General");
         EN.put("일반 설치 앱은 자동 표시됩니다. 목록에서 숨겨도 앱은 삭제되지 않습니다.","Ordinary installed apps appear automatically. Hiding an app does not uninstall it.");
         EN.put("일부 maps 접근 제한 · 미확인","Some maps restricted · Unknown");
         EN.put("작동","Active");
         EN.put("잘못된 방송 횟수","Invalid broadcasts");
+        EN.put("장미색","Rose");
         EN.put("재생 시간","Playback time");
         EN.put("재시작","Restart");
         EN.put("재시작 요청 실패: ","Restart request failed: ");
@@ -425,6 +428,7 @@ public final class UiText {
         EN.put("주변 기기를 검색합니다.","Searching for nearby devices.");
         EN.put("주행가능","Range");
         EN.put("주행가능거리","Driving range");
+        EN.put("주황","Orange");
         EN.put("줄임","Reduced");
         EN.put("지금","Now");
         EN.put("진단","Diagnostics");
@@ -441,10 +445,12 @@ public final class UiText {
         EN.put("처리 실패: ","Operation failed: ");
         EN.put("처리 중입니다. 완료될 때까지 기다려 주세요.","Working. Please wait until this finishes.");
         EN.put("처음 설치했다면 실행 바로가기를 설정하세요. 순정 홈에는 앱이 자동으로 추가되지 않습니다.","After first installation, set up Quick entry. The factory home screen does not add this app automatically.");
+        EN.put("청록","Teal");
         EN.put("초기 sticky","Initial sticky");
         EN.put("초기화 결과","Initialization result");
         EN.put("초기화 기록 불완전","Incomplete initialization record");
         EN.put("초기화 상태","Init state");
+        EN.put("초록","Green");
         EN.put("최근 HAL 초기화 기록입니다. Bluetooth 재시작 이후 현재 장착/활성 칩 상태를 보증하지 않습니다.","This is the latest HAL initialization record; it does not confirm the chip currently present or active after Bluetooth restarted.");
         EN.put("최근 bt_vendor 초기화 기록입니다. 현재 활성 칩을 보증하지 않습니다.","Recent bt_vendor initialization record; the currently active chip is unconfirmed.");
         EN.put("출력 (계산)","Power (calc.)");
@@ -471,6 +477,7 @@ public final class UiText {
         EN.put("토크 (계산)","Torque (calc.)");
         EN.put("투명도","Transparency");
         EN.put("투명도 감소","Reduce transparency");
+        EN.put("파랑","Blue");
         EN.put("파일 선택기를 열 수 없습니다","Could not open the file picker");
         EN.put("파일 없음","File not found");
         EN.put("파일 읽기 불가","File unreadable");
@@ -487,11 +494,13 @@ public final class UiText {
         EN.put("페어링됨","Paired");
         EN.put("페어링을 요청했습니다. PIN 확인 창이 나타나면 차량 화면에서 확인하세요.","Pairing requested. Confirm the PIN on the head-unit screen if prompted.");
         EN.put("페이지 메뉴","Page menu");
+        EN.put("포인트 컬러","Accent color");
         EN.put("표시 항목","Signal");
         EN.put("표시할 설치 앱이 없습니다. 앱 설치 뒤 다시 열거나 목록 편집에서 선택하세요.","No installed apps to show. Reopen after installing an app or select one in Edit app list.");
         EN.put("표준","Standard");
         EN.put("프로세스 로드","Process mapping");
         EN.put("프로세스 목록 접근 제한 · 미확인","Process list restricted · Unknown");
+        EN.put("핑크","Pink");
         EN.put("하단 미디어 바","Bottom media bar");
         EN.put("하이라이트","Highlight");
         EN.put("핫스팟 끄기 확인 실패. 백업을 보존했습니다. 다시 복구하세요.","Could not confirm hotspot shutdown. Backup retained; retry restoration.");
@@ -508,6 +517,7 @@ public final class UiText {
         EN.put("현재 테마에서 지원 안 함","Unavailable for this theme");
         EN.put("현재 활성 상태","Currently active");
         EN.put("형식 오류","Invalid format");
+        EN.put("호박색","Amber");
         EN.put("홀수단","Odd");
         EN.put("화면 잠금 상태를 추적할 수 없어 알림만 표시합니다.","Screen lock state cannot be tracked. Only the notification is shown.");
         EN.put("확인","OK");

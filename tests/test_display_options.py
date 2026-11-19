@@ -130,7 +130,7 @@ CHECK=r'''
   check(settingsScreen(view)==14,"settings opens the wallpaper grid");
   Object editor=field(view,"settingsEditor");
   String[] labels=(String[])field(editor,"labels");
-  check(labels.length==6&&java.util.Arrays.asList(labels).containsAll(java.util.Arrays.asList("Original","Aurora Focus","Blue","Red","Green","Mono")),
+  check(labels.length==7&&java.util.Arrays.asList(labels).containsAll(java.util.Arrays.asList("Original","Aurora Focus","Material Auto","Blue","Red","Green","Mono")),
     "the gallery includes color and image wallpapers from the remaining themes");
   int auroraIndex=java.util.Arrays.asList(labels).indexOf("Aurora Focus");
   android.graphics.Bitmap thumb=((android.graphics.Bitmap[])field(editor,"wallpaperThumbnails"))[auroraIndex];
@@ -327,7 +327,38 @@ class DisplayTests(unittest.TestCase):
   with tempfile.TemporaryDirectory(prefix='display-options-') as tmp:
    tmp=Path(tmp);java,classes=runtime.compile_runtime(tmp);_,javac=java_tools()
    source='import com.veloster.dashboard.view.DashboardPage;\n'+runtime.STUBS['DashboardDesktop.java'];start=source.index(' static void selfCheck()throws Exception{');end=source.index(' public static void main(',start)
-   probe=tmp/'DashboardDesktop.java';probe.write_text(source[:start]+CHECK+' static void selfCheck()throws Exception{displayCheck();}\n'+source[end:])
+   probe=tmp/'DashboardDesktop.java';probe.write_text(source[:start]+CHECK+''' static void accentPaletteCheck()throws Exception{
+  fixture("received","js");Activity a=new Activity();LanguageSettings.save(a,"ko");
+  DashboardView v=create(a);openPage(v,9);
+  check(!java.util.Arrays.asList((String[])field(field(v,"settingsEditor"),"labels")).contains("포인트 컬러"),"Original does not expose accent palettes");
+  a.getSharedPreferences("dashboard_theme",0).edit().putString("theme_id","material_auto_cowork").apply();v=create(a);
+  openPage(v,9);Object editor=field(v,"settingsEditor");String[] labels=(String[])field(editor,"labels");int[] actions=(int[])field(editor,"actions");
+  int paletteRow=java.util.Arrays.asList(labels).indexOf("포인트 컬러");
+  check(paletteRow>=0&&actions[paletteRow]==28,"Material Auto exposes the accent palette in UI settings");
+  openPage(v,28);editor=field(v,"settingsEditor");
+  check(((int[])field(editor,"swatches")).length==7,"Material palette renders seven named color swatches");
+  tapEditorIndex(v,2);settingTap(v,700,88);
+  com.veloster.dashboard.theme.ThemeSpec active=(com.veloster.dashboard.theme.ThemeSpec)field(v,"activeTheme");
+  check(active.accent==0xff48c9b0,"Apply updates the live accent color");
+  v=create(a);active=(com.veloster.dashboard.theme.ThemeSpec)field(v,"activeTheme");
+  check(active.accent==0xff48c9b0,"selected accent restores after recreation");
+  openPage(v,28);tapEditorIndex(v,4);settingTap(v,70,88);
+  active=(com.veloster.dashboard.theme.ThemeSpec)field(v,"activeTheme");
+  check(active.accent==0xff48c9b0,"back discards the unsaved palette choice");
+  Activity glassActivity=new Activity();glassActivity.getSharedPreferences("dashboard_theme",0).edit().putString("theme_id","f1_2").apply();
+  DashboardView glass=create(glassActivity);openPage(glass,9);
+  check(java.util.Arrays.asList((String[])field(field(glass,"settingsEditor"),"labels")).contains("포인트 컬러"),"Liquid Glass exposes its own accent setting");
+  openPage(glass,28);editor=field(glass,"settingsEditor");String[] glassLabels=(String[])field(editor,"labels");int[] glassSwatches=(int[])field(editor,"swatches");
+  check("인디고".equals(glassLabels[2])&&"보라".equals(glassLabels[3])&&"핑크".equals(glassLabels[4])&&glassSwatches[2]==0xff6155f5,
+        "Liquid Glass displays the iOS system-color palette independently of Material");
+  tapEditorIndex(glass,2);settingTap(glass,700,88);
+  com.veloster.dashboard.theme.ThemeSpec glassActive=(com.veloster.dashboard.theme.ThemeSpec)field(glass,"activeTheme");
+  check(glassActive.accent==0xff6155f5,"Liquid Glass applies its selected accent");
+  glass=create(glassActivity);glassActive=(com.veloster.dashboard.theme.ThemeSpec)field(glass,"activeTheme");
+  check(glassActive.accent==0xff6155f5,"Liquid Glass restores its per-theme accent selection");
+ }
+ static void selfCheck()throws Exception{displayCheck();accentPaletteCheck();}
+'''+source[end:])
    subprocess.run([javac,'-encoding','UTF-8','-cp',str(classes),'-d',str(classes),str(probe)],check=True)
    assets=tmp/'assets'
    shutil.copytree(ROOT/'apps/dashboard/src/0x1101L/assets', assets)

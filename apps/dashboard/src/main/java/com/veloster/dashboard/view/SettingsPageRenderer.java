@@ -22,12 +22,13 @@ public final class SettingsPageRenderer {
     static final int PEDAL_BAR=6,BRAKE_BAR=7,F1_ORDER=8,UI_GROUP=9,F1_GROUP=10,MENU_STYLE=12,MEDIA_NOTICES=13;
     static final int WALLPAPER=14,DIAGNOSTICS=15,MENU_DOCK=16;
     static final int LIQUID_GLASS=17,LIQUID_GLASS_TRANSPARENCY=18,LIQUID_GLASS_BLUR=19,LIQUID_GLASS_HIGHLIGHT=27;
+    static final int ACCENT_PALETTE=28;
     static final int WALLPAPER_COLUMNS=3;
     public static final int GAUGE_MENU=20,GAUGE_SIGNAL=21,GAUGE_STYLE=22,GAUGE_SWAP=23,GAUGE_RESET=24;
     public static final int GRAPH_SIGNAL=25,TRANSMISSION=26;
     private static final int TITLE_TEXT_SIZE=22,ROW_TEXT_SIZE=18,HEADER_ACTION_TEXT_SIZE=16;
     private static final int GROUP_INSET=4,ROW_PADDING_TRIM=4;
-    private static boolean choicePage(int screen){return screen>=0&&screen<=8||screen==MENU_STYLE||screen==MEDIA_NOTICES||screen==MENU_DOCK||screen==LIQUID_GLASS_TRANSPARENCY||screen==LIQUID_GLASS_BLUR||screen==LIQUID_GLASS_HIGHLIGHT||screen>=GAUGE_SIGNAL&&screen<=GAUGE_SWAP||screen==GRAPH_SIGNAL||screen==TRANSMISSION;}
+    private static boolean choicePage(int screen){return screen>=0&&screen<=8||screen==MENU_STYLE||screen==MEDIA_NOTICES||screen==MENU_DOCK||screen==LIQUID_GLASS_TRANSPARENCY||screen==LIQUID_GLASS_BLUR||screen==LIQUID_GLASS_HIGHLIGHT||screen==ACCENT_PALETTE||screen>=GAUGE_SIGNAL&&screen<=GAUGE_SWAP||screen==GRAPH_SIGNAL||screen==TRANSMISSION;}
     private static boolean applyPage(int screen){return choicePage(screen)||screen==GAUGE_RESET;}
     public static final class Editor {
         public interface Preview {void draw(Canvas canvas,int width,int height);void tap(float x,float y,int width,int height);}
@@ -37,10 +38,11 @@ public final class SettingsPageRenderer {
         ThemeSpec.Wallpaper[] wallpapers=new ThemeSpec.Wallpaper[0];
         Bitmap[] wallpaperThumbnails=new Bitmap[0];
         boolean[] wallpaperThumbnailTried=new boolean[0];
+        int[] swatches;
         String title="",message="";String[] labels=new String[0],values=new String[0];int[] actions=new int[0];
         public void page(int id,int parent,String title,String[] labels,String[] values,int[] actions){
             this.screen=id;this.parent=parent;this.title=title;this.labels=labels;this.values=values;this.actions=actions;scrollY=Float.NaN;checked=null;message="";preview=null;
-            wallpapers=new ThemeSpec.Wallpaper[0];wallpaperThumbnails=new Bitmap[0];wallpaperThumbnailTried=new boolean[0];
+            wallpapers=new ThemeSpec.Wallpaper[0];wallpaperThumbnails=new Bitmap[0];wallpaperThumbnailTried=new boolean[0];swatches=null;
         }
         void root(String language,boolean js){
             if(js)page(-1,-1,UiText.t("설정"),UiText.list(new String[]{"UI 설정","F1 설정","언어","진단"}),
@@ -53,6 +55,10 @@ public final class SettingsPageRenderer {
             wallpapers=items;this.selected=selected;
             wallpaperThumbnails=new Bitmap[items.length];wallpaperThumbnailTried=new boolean[items.length];
             for(int i=0;i<items.length;i++)labels[i]=items[i].name;
+        }
+        void swatchPage(String title,String[] labels,int[] colors,int selected){
+            page(ACCENT_PALETTE,UI_GROUP,title,labels,new String[0],new int[0]);
+            this.selected=selected;swatches=colors.clone();
         }
     }
     /** A single geometry source for drawing, scrolling, and hit testing. */
@@ -159,6 +165,12 @@ public final class SettingsPageRenderer {
             String value=editor.values.length>index?editor.values[index]:"";
             if(choicePage(editor.screen))value=editor.checked!=null?(editor.checked[index]?"✓":""):(editor.selected==index?"✓":"");
             row(c,theme,resources,editor.labels[index],value,l,top,!choicePage(editor.screen)&&editor.screen!=GAUGE_RESET);
+            if(editor.swatches!=null&&index<editor.swatches.length){
+                float cx=l.list.right()-l.rowPad-16,cy=top+l.rowHeight*.5f,radius=Math.min(12,l.rowHeight*.25f);
+                paint.setColor(editor.swatches[index]);paint.setStyle(Paint.Style.FILL);c.drawCircle(cx,cy,radius,paint);
+                paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(index==editor.selected?3:1);
+                paint.setColor(index==editor.selected?theme.accent:theme.stroke);c.drawCircle(cx,cy,radius+2,paint);paint.setStyle(Paint.Style.FILL);
+            }
         }
         if(l.maxScroll>0)c.restore();
         if(editor.message.length()>0)fitted(c,theme,resources,editor.message,l.list.x+pad,l.list.bottom()+19,16,l.list.width-2*pad,theme.critical,false);

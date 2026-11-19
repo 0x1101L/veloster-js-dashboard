@@ -24,6 +24,16 @@ public final class ThemeSettingsStore {
     }
 
     public void save(String id) { preferences.edit().putString(KEY_ID, id).apply(); }
+    private String accentKey(String themeId){return "accent_palette_"+(themeId==null?"":themeId);}
+    public int accentPalette(String themeId){
+        try{int value=preferences.getInt(accentKey(themeId),0);return value>=0&&value<com.veloster.dashboard.theme.ThemePalette.accentCount(themeId)?value:0;}
+        catch(ClassCastException ignored){return 0;}
+    }
+    public void saveAccentPalette(String themeId,int value){
+        if(themeId==null||themeId.length()==0)return;
+        int safe=value>=0&&value<com.veloster.dashboard.theme.ThemePalette.accentCount(themeId)?value:0;
+        preferences.edit().putInt(accentKey(themeId),safe).apply();
+    }
     public String selectedWallpaperId(){
         try{return preferences.getString(KEY_WALLPAPER_ID,"");}
         catch(ClassCastException ignored){return "";}

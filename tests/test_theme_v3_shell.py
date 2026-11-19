@@ -213,7 +213,8 @@ CHECK = '''
   a.getSharedPreferences("dashboard_theme",0).edit().putString("theme_id","f1_2_flat").apply();
   DashboardView view=create(a);view.setSize(800,425);uiSettings(view);
   String[] labels=(String[])field(editor(view),"labels");
-  check(labels[2].equals("메뉴 위치")&&labels[3].equals("왼쪽 메뉴 독"),"dock is directly below menu position");
+  check(labels[1].equals("포인트 컬러")&&labels[3].equals("메뉴 위치")&&labels[4].equals("왼쪽 메뉴 독"),
+        "Liquid Glass accent setting precedes menu position and dock");
   Object layout=settingsLayout(view);
   float first=(Float)field(layout,"firstRowY"),max=(Float)field(layout,"maxScroll");
   check(max>4,"UI settings overflow in the compact view");
@@ -268,8 +269,8 @@ CHECK = '''
         "configured F1 components grow on both axes as the available area grows");
   tap(view,350,20);tap(view,720,20);check(!a.isFinishing(),"old top back target must not close left shell");check(((com.veloster.dashboard.view.DashboardPage.State)field(view,"pageState")).is(1),"old top navigation coordinates do not navigate");
   menuNavigation(view,0);draw(view);com.veloster.dashboard.view.overview.OverviewLayout overview=(com.veloster.dashboard.view.overview.OverviewLayout)field(view,"overviewLayout");
-  check(overview.count()==2&&overview.signalAt(0)==7&&overview.widthAt(0)>overview.widthAt(1),"configured overview order and span");
-  tapLogical(view,overview.pagerX()+42,overview.pagerY());check(overview.page()==1&&overview.signalAt(0)==0,"transformed overview page control");
+  check(overview.count()==4&&overview.signalAt(0)==7&&overview.signalAt(1)==2&&overview.signalAt(2)==0&&overview.signalAt(3)==34
+        &&overview.widthAt(0)>overview.widthAt(1),"configured overview stays on one 5x4 screen and preserves order and spans");
   menuNavigation(view,2);check(((com.veloster.dashboard.view.DashboardPage.State)field(view,"pageState")).is(2),"left gauge navigation");
   touch(view,0,162,126);waitForTimers();check(settingsScreen(view)==-1&&!(Boolean)field(view,"settingsVisible"),"gauge padding rejects long press");touch(view,1,162,126);
   pageHold(view,"gauges");check(settingsScreen(view)==20,"responsive gauge long press opens canvas editor");tapSettings(view,70,88);
@@ -385,8 +386,8 @@ class ThemeV3ShellTests(unittest.TestCase):
             f1 = {key: dict(zip(('x', 'y', 'width', 'height'), value)) for key, value in bounds.items()}
             f1['speed'].update({'fontRole': 'numeric', 'colorRole': 'accent', 'padding': {'top': 4, 'right': 10, 'bottom': 6, 'left': 20}, 'alignment': 'center'})
             (draft / 'layouts/f1.json').write_text(json.dumps({'f1': f1}))
-            cards = [dict(zip(('id', 'source', 'page', 'column', 'row', 'columnSpan', 'rowSpan'), card)) for card in [('speed', 7, 0, 0, 0, 2, 1), ('temp', 2, 0, 2, 0, 1, 1), ('rpm', 0, 1, 0, 0, 1, 1), ('fuel', 34, 1, 1, 0, 1, 1)]]
-            (draft / 'layouts/overview.json').write_text(json.dumps({'overview': {'columns': 3, 'rows': 3, 'padding': {'top': 4, 'right': 8, 'bottom': 6, 'left': 10}, 'gapX': 8, 'gapY': 6, 'cards': cards}}))
+            cards = [dict(zip(('id', 'source', 'column', 'row', 'columnSpan', 'rowSpan'), card)) for card in [('speed', 7, 0, 0, 2, 1), ('temp', 2, 2, 0, 1, 1), ('rpm', 0, 3, 0, 1, 1), ('fuel', 34, 4, 0, 1, 1)]]
+            (draft / 'layouts/overview.json').write_text(json.dumps({'overview': {'columns': 5, 'rows': 4, 'padding': {'top': 4, 'right': 8, 'bottom': 6, 'left': 10}, 'gapX': 8, 'gapY': 0, 'cards': cards}}))
             original = runtime.STUBS['DashboardDesktop.java']
             media_control = runtime.STUBS['com/veloster/dashboard/vehicle/MediaControl.java']
             try:

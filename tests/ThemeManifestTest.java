@@ -28,7 +28,7 @@ public final class ThemeManifestTest {
         final String assetRoot=args[1];
         android.content.Context bundledContext=new android.content.Context(){public android.content.res.AssetManager getAssets(){return new android.content.res.AssetManager(){public java.io.InputStream open(String path)throws java.io.IOException{return Files.newInputStream(Paths.get(assetRoot).getParent().resolve(path));}};}};
         ThemeCatalog bundled=ThemeCatalog.load(bundledContext);
-        check(bundled.size()==5,"v3 bundle contains five selectable themes");
+        check(bundled.size()==6,"v3 bundle contains six selectable themes");
         check("original".equals(bundled.resolve(null).id),"Original remains the default theme");
         ThemeSpec f12=bundled.find("f1_2");
         check(f12!=null&&"Liquid Glass".equals(f12.displayName)&&f12.f1Grid()!=null&&f12.shell().left()&&
@@ -55,7 +55,7 @@ public final class ThemeManifestTest {
         check(ThemeResources.load(bundledContext,f12).font("body",false)!=android.graphics.Typeface.DEFAULT,
               "F1-2 loads its bundled Pretendard font");
         ThemeSpec flat=bundled.find("f1_2_flat");
-        check(bundled.wallpapers().size()==6&&flat.wallpapers().size()==4
+        check(bundled.wallpapers().size()==7&&flat.wallpapers().size()==4
               &&"f1_2_blue".equals(flat.defaultWallpaperId()),
               "wallpaper gallery includes color themes and merges inherited image options without duplicates");
         check(bundled.findWallpaper("original:color")!=null
@@ -80,6 +80,73 @@ public final class ThemeManifestTest {
               &&optics.mediaControls()==ThemeSpec.MediaControls.CONTAINER&&f12.usesLiquidGlass()
               &&!flat.usesLiquidGlass()&&optics.usesLiquidGlass(),
               "Optics is selectable with a left dock and retains its wide media container");
+        ThemeSpec materialAuto=bundled.find("material_auto_cowork");
+        String materialAutoManifest=read(assetRoot+"/material_auto_cowork/manifest.json");
+        ThemeSpec originalTheme=bundled.find("original");
+        check(materialAuto!=null&&"Material Auto".equals(materialAuto.displayName)
+              &&!materialAutoManifest.contains("\"extends\"")
+              &&materialAuto.background==0xff090d12&&materialAuto.accent==0xff9ccbff
+              &&materialAuto.warning==0xffffc46b&&materialAuto.critical==0xffff6b72
+              &&materialAuto.unavailable==0xff8995a3&&"flat".equals(materialAuto.material.style)
+              &&materialAuto.materialFor(SurfaceRole.DATA_CARD).style.equals("flat")
+              &&materialAuto.materialFor(SurfaceRole.PANEL).style.equals("flat")
+              &&materialAuto.columns==5&&materialAuto.rows==4
+              &&materialAuto.spacing.gridGapX==12&&materialAuto.spacing.gridGapY==10
+              &&materialAuto.typography.bodyScale==104&&materialAuto.typography.numericScale==112
+              &&materialAuto.shell().dock()&&materialAuto.shell().width==80
+              &&materialAuto.backdrop.mode==ThemeSpec.Backdrop.Mode.SOLID
+              &&materialAuto.f1Grid()!=null&&materialAuto.f1Grid().radius==12,
+              "Material Auto is standalone with its own palette, typography, spacing, shell and layouts");
+        OverviewLayout materialAutoOverview=new OverviewLayout();materialAutoOverview.theme(materialAuto);
+        for(String profile:new String[]{"js","js_n","pd"}){
+            materialAutoOverview.jsProfile("js".equals(profile));materialAutoOverview.pdProfile("pd".equals(profile));
+            check(materialAutoOverview.count()==20,"Material Auto keeps all overview slots on one 5x4 screen for "+profile);
+            for(int slot=0;slot<materialAutoOverview.count();slot++){
+                int signal=materialAutoOverview.signalAt(slot);
+                check(materialAutoOverview.hit(materialAutoOverview.left(signal)+materialAutoOverview.width(signal)/2,
+                      materialAutoOverview.top(signal)+materialAutoOverview.height(signal)/2)==signal,
+                      "Material Auto page hit geometry matches drawing for "+profile);
+            }
+        }
+        check(materialAuto.color(ThemeSpec.ColorRole.BACKGROUND)==materialAuto.background
+              &&materialAuto.color(ThemeSpec.ColorRole.SURFACE)==materialAuto.panel
+              &&materialAuto.color(ThemeSpec.ColorRole.SURFACE_RAISED)==materialAuto.panelRaised
+              &&materialAuto.color(ThemeSpec.ColorRole.ON_SURFACE)==materialAuto.textPrimary
+              &&materialAuto.color(ThemeSpec.ColorRole.ON_SURFACE_VARIANT)==materialAuto.textSecondary
+              &&materialAuto.color(ThemeSpec.ColorRole.PRIMARY)==materialAuto.accent
+              &&materialAuto.color(ThemeSpec.ColorRole.OUTLINE)==materialAuto.stroke
+              &&materialAuto.color(ThemeSpec.ColorRole.WARNING)==materialAuto.warning
+              &&materialAuto.color(ThemeSpec.ColorRole.CRITICAL)==materialAuto.critical
+              &&materialAuto.color(ThemeSpec.ColorRole.UNAVAILABLE)==materialAuto.unavailable,
+              "CoWork semantic color accessors resolve directly to the canonical v3 tokens");
+        check(ThemePalette.supportsAccentSelection(materialAuto)&&ThemePalette.supportsAccentSelection(f12)
+              &&ThemePalette.supportsAccentSelection(flat)&&ThemePalette.supportsAccentSelection(optics)
+              &&!ThemePalette.supportsAccentSelection(originalTheme),
+              "accent palette is exposed only for Material Auto and Liquid Glass themes");
+        ThemeSpec recolored=materialAuto.withAccent(ThemePalette.accentColor(materialAuto,2));
+        check(recolored!=materialAuto&&recolored.accent==0xff48c9b0&&materialAuto.accent==0xff9ccbff
+              &&recolored.warning==materialAuto.warning&&recolored.critical==materialAuto.critical,
+              "accent selection changes a runtime copy and preserves status colors and manifest values");
+        check(ThemePalette.accentColor(f12,0)==f12.accent
+              &&ThemePalette.accentColor(materialAuto,0)==materialAuto.accent
+              &&ThemePalette.accentColor(f12,1)==0xff0088ff
+              &&ThemePalette.accentColor(materialAuto,1)==0xff78b7ff,
+              "default accent restores each theme color and engine-specific swatches adapt to appearance");
+        check("파랑".equals(ThemePalette.accentName(materialAuto.id,1))
+              &&"인디고".equals(ThemePalette.accentName(f12.id,2))
+              &&"청록".equals(ThemePalette.accentName(materialAuto.id,2))
+              &&"보라".equals(ThemePalette.accentName(f12.id,3))
+              &&ThemePalette.accentColor(f12,2)==0xff6155f5
+              &&ThemePalette.accentColor(f12,3)==0xffcb30e0
+              &&"핑크".equals(ThemePalette.accentName(f12.id,4)),
+              "Material and Liquid Glass expose engine-specific palette labels");
+        check(materialAuto.typography.bodyScale!=originalTheme.typography.bodyScale
+              &&materialAuto.typography.numericScale!=originalTheme.typography.numericScale
+              &&materialAuto.spacing.gridGapX!=originalTheme.spacing.gridGapX
+              &&materialAuto.backdrop.mode==ThemeSpec.Backdrop.Mode.SOLID
+              &&materialAuto.backdrop.startColor==null&&materialAuto.backdrop.scanlineColor==0
+              &&!materialAuto.footerButtonBackground()&&materialAuto.footerContainerVisible(),
+              "Material Auto declares its own typography, spacing, backdrop and media treatment");
         for(ThemeSpec spec:new ThemeSpec[]{f12,flat,optics}){
             check(ThemePalette.accent(spec,0xffa4d9ef)==spec.accent
                   &&spec.navigationFill(false)==spec.panel&&spec.gaugeToggleFill()==spec.panelRaised
@@ -103,7 +170,7 @@ public final class ThemeManifestTest {
         check(optics.background==f12.background&&optics.backdrop.mode==f12.backdrop.mode
               &&optics.backdrop.endColor==f12.backdrop.endColor&&optics.backgroundAsset.equals(f12.backgroundAsset)
               &&optics.defaultWallpaperId().equals(f12.defaultWallpaperId())&&optics.wallpapers().size()==4
-              &&"f1_2".equals(optics.wallpapers().get(0).owner)&&bundled.wallpapers().size()==6,
+              &&"f1_2".equals(optics.wallpapers().get(0).owner)&&bundled.wallpapers().size()==7,
               "Optics inherits the F1-2 backdrop and wallpaper assets without adding gallery duplicates");
         check(optics.f1Grid()!=null&&optics.f1Grid().gap==f12.f1Grid().gap&&optics.rows==f12.rows
               &&optics.columns==f12.columns&&optics.bodyFont.equals(f12.bodyFont)
@@ -116,7 +183,7 @@ public final class ThemeManifestTest {
             check(current.footerButtonBackground()&&current.footerContainerVisible(),
                   id+" retains the existing footer appearance");
         }
-        check(catalog.size()==4,"bundled catalog parses all manifests");
+        check(catalog.size()==4,"v2 compatibility fixture parses all manifests");
         check(catalog.find("original").background==0xff040506,"Original manifest tokens parse");
         ThemeSpec focus=catalog.find("aurora_focus");
         check(focus!=null&&focus.columns==5&&focus.rows==4&&"aurora_focus".equals(focus.id),"Focus ID and existing grid parse");

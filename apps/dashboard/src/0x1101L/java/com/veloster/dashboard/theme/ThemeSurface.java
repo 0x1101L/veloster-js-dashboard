@@ -234,7 +234,7 @@ public final class ThemeSurface {
         float padding=Math.min(theme.spacing.buttonPadding,sidebar?w/8:Math.max(0,w/2-2));
         caller.setTypeface(resources==null?Typeface.DEFAULT_BOLD:resources.fontForText(label,true));
         float size=theme.textSize(label,14,true);caller.setTextSize(size);float measured=caller.measureText(label);
-        caller.setColor(selected?accent:theme.textSecondary);
+        caller.setColor(selected?accent:theme.color(ThemeSpec.ColorRole.ON_SURFACE_VARIANT));
         caller.setTextSize(measured>w-2*padding?size*(w-2*padding)/measured:size);
         float labelX=sidebar?x+(w-caller.measureText(label))/2:x+padding;
         c.drawText(label,labelX,y+h/2+5,caller);

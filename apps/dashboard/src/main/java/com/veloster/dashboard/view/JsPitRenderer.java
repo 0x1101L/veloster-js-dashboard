@@ -149,7 +149,7 @@ public final class JsPitRenderer {
         else if(graphLayout!=null){graphLayout.viewport(theme,content);graphRenderer.draw(c,model,now,graphLayout);}
         else if(gaugeLayout!=null){gaugeLayout.viewport(theme,content);gaugeRenderer.draw(c,model,now,gaugeLayout);}
         else if(cluster)clusterRenderer.drawAdaptive(c,content);
-        else {overviewRenderer.draw(c,samples,overviewLayout,pdProfile,jsProfile,model.dctTemperatures(now),model.jsDriveMode(now),model.jsFuelTrial(now));drawOverviewPager(c);}
+        else {overviewRenderer.draw(c,samples,overviewLayout,pdProfile,jsProfile,model.dctTemperatures(now),model.jsDriveMode(now),model.jsFuelTrial(now));}
         if(!expanded&&MediaBar.noticeVisible(regions,mediaBarPolicy,mediaNotices,track))clusterRenderer.drawMedia(c,content.notice(theme));
         c.restore();
         if(footer)mediaBar.drawAdaptive(c,theme,resources,track,artwork,expanded,content);
@@ -161,7 +161,6 @@ public final class JsPitRenderer {
         surface.maskScreenCorners(c,theme,width,height,regions.scale);
     }
     private void box(Canvas c,float l,float t,float r,float b,int color){paint.setColor(color);c.drawRect(l,t,r,b,paint);}
-    private void drawOverviewPager(Canvas c){if(!overviewLayout.hasPager())return;float x=overviewLayout.pagerX(),y=overviewLayout.pagerY();centered(c,"‹",x-42,y,20,theme.accent,true);centered(c,(overviewLayout.page()+1)+" / "+overviewLayout.pageCount(),x,y,14,theme.textPrimary,true);centered(c,"›",x+42,y,20,theme.accent,true);}
     private void text(Canvas c,String s,float x,float y,float size,int color,boolean bold){
         rawText(c,s,x,y,theme.textSize(s,size,bold),color,bold);
     }

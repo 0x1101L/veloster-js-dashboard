@@ -293,7 +293,8 @@ public final class DashboardView extends View implements Runnable {
         return new DashboardPage.Content(activeTheme,viewportPage(),display,footer);
     }
     private int uiSettingsRowCount(DashboardPage.Regions display){
-        return 5+(activeTheme.shell().left()?1:0)+(display.mediaEnabled?0:2)+(activeTheme.usesLiquidGlass()?1:0);
+        return 5+(com.veloster.dashboard.theme.ThemePalette.supportsAccentSelection(activeTheme)?1:0)
+                +(activeTheme.shell().left()?1:0)+(display.mediaEnabled?0:2)+(activeTheme.usesLiquidGlass()?1:0);
     }
     private void syncUiSettings(DashboardPage.Regions display){
         if(display.mediaEnabled)media=false;
@@ -314,7 +315,8 @@ public final class DashboardView extends View implements Runnable {
         selectedTheme=theme==null?ThemeSpec.original():theme;
         activeTheme=ThemeCatalog.withMenuPosition(selectedTheme,menuPosition).withMenuDock(menuDock)
                 .withDisplayOptions(pedalBarStyle,brakeBarStyle,f1Order)
-                .withLiquidGlassOptions(themeStore.liquidGlassTransparency(),themeStore.liquidGlassBlur(),themeStore.liquidGlassHighlight());
+                .withLiquidGlassOptions(themeStore.liquidGlassTransparency(),themeStore.liquidGlassBlur(),themeStore.liquidGlassHighlight())
+                .withAccent(com.veloster.dashboard.theme.ThemePalette.accentColor(selectedTheme,themeStore.accentPalette(selectedTheme.id)));
         ThemeSpec.Wallpaper selected=null;
         String selectedId=themeStore.selectedWallpaperId();
         if(selectedId.length()>0){
@@ -343,12 +345,17 @@ public final class DashboardView extends View implements Runnable {
             title=UiText.t("UI 설정");
             DashboardPage.Regions display=displayRegions();
             int count=uiSettingsRowCount(display);
-            labels=java.util.Arrays.copyOf(tr("테마","배경화면","메뉴 위치"),count);
-            values=java.util.Arrays.copyOf(new String[]{activeTheme.displayName,
-                UiText.t(themeStore.selectedWallpaperId().length()==0?"테마 기본값":"사용자 선택"),
-                menuPositionLabel()},count);
-            actions=java.util.Arrays.copyOf(new int[]{SettingsPageRenderer.THEME,SettingsPageRenderer.WALLPAPER,SettingsPageRenderer.MENU_POSITION},count);
-            int row=3;
+            boolean accentPicker=com.veloster.dashboard.theme.ThemePalette.supportsAccentSelection(activeTheme);
+            labels=accentPicker?java.util.Arrays.copyOf(tr("테마","포인트 컬러","배경화면","메뉴 위치"),count)
+                    :java.util.Arrays.copyOf(tr("테마","배경화면","메뉴 위치"),count);
+            values=accentPicker?java.util.Arrays.copyOf(new String[]{activeTheme.displayName,
+                com.veloster.dashboard.theme.ThemePalette.accentName(activeTheme.id,themeStore.accentPalette(activeTheme.id)),
+                UiText.t(themeStore.selectedWallpaperId().length()==0?"테마 기본값":"사용자 선택"),menuPositionLabel()},count)
+                    :java.util.Arrays.copyOf(new String[]{activeTheme.displayName,
+                UiText.t(themeStore.selectedWallpaperId().length()==0?"테마 기본값":"사용자 선택"),menuPositionLabel()},count);
+            actions=accentPicker?java.util.Arrays.copyOf(new int[]{SettingsPageRenderer.THEME,SettingsPageRenderer.ACCENT_PALETTE,SettingsPageRenderer.WALLPAPER,SettingsPageRenderer.MENU_POSITION},count)
+                    :java.util.Arrays.copyOf(new int[]{SettingsPageRenderer.THEME,SettingsPageRenderer.WALLPAPER,SettingsPageRenderer.MENU_POSITION},count);
+            int row=accentPicker?4:3;
             if(activeTheme.shell().left()){
                 labels[row]=UiText.t("왼쪽 메뉴 독");values[row]=menuDockLabel();actions[row++]=SettingsPageRenderer.MENU_DOCK;
             }
@@ -391,6 +398,12 @@ public final class DashboardView extends View implements Runnable {
             title=UiText.t("블러 강도");labels=glassBlurLabels();selected=glassChoiceIndex(GLASS_BLUR_CHOICES,themeStore.liquidGlassBlur());parent=SettingsPageRenderer.LIQUID_GLASS;break;
         case SettingsPageRenderer.LIQUID_GLASS_HIGHLIGHT:
             title=UiText.t("하이라이트");labels=tr("은은하게","표준","강하게");selected=themeStore.liquidGlassHighlight();parent=SettingsPageRenderer.LIQUID_GLASS;break;
+        case SettingsPageRenderer.ACCENT_PALETTE:{
+            if(!com.veloster.dashboard.theme.ThemePalette.supportsAccentSelection(activeTheme))return;
+            title=UiText.t("포인트 컬러");labels=new String[com.veloster.dashboard.theme.ThemePalette.accentCount(selectedTheme.id)];int[] colors=new int[labels.length];
+            for(int i=0;i<labels.length;i++){labels[i]=UiText.t(com.veloster.dashboard.theme.ThemePalette.accentName(selectedTheme.id,i));colors[i]=com.veloster.dashboard.theme.ThemePalette.accentColor(selectedTheme,i);}
+            settingsEditor.swatchPage(title,labels,colors,themeStore.accentPalette(selectedTheme.id));invalidate();return;
+        }
         case SettingsPageRenderer.WALLPAPER:{
             java.util.List<ThemeSpec.Wallpaper> wallpapers=themeCatalog.wallpapers();
             selected=-1;
@@ -521,16 +534,13 @@ public final class DashboardView extends View implements Runnable {
             ThemeSpec choice=themeCatalog.all().values().toArray(new ThemeSpec[0])[previewThemeIndex];
             final ThemePreviewController preview=new ThemePreviewController(activity,DATA.pdProfile(),DATA.jsProfile(),DATA.jsnProfile(),menuPosition,menuDock);
             preview.setDraft(choice.withDisplayOptions(pedalBarStyle,brakeBarStyle,f1Order)
-                    .withLiquidGlassOptions(themeStore.liquidGlassTransparency(),themeStore.liquidGlassBlur(),themeStore.liquidGlassHighlight()));
+                    .withLiquidGlassOptions(themeStore.liquidGlassTransparency(),themeStore.liquidGlassBlur(),themeStore.liquidGlassHighlight())
+                    .withAccent(com.veloster.dashboard.theme.ThemePalette.accentColor(choice,themeStore.accentPalette(choice.id))));
             preview.setMediaBarPolicy(mediaBarPolicy);
             settingsEditor.page(11,SettingsPageRenderer.THEME,UiText.t("테마 미리보기"),new String[0],new String[0],new int[0]);
             settingsEditor.preview=new SettingsPageRenderer.Editor.Preview(){
                 public void draw(Canvas canvas,int width,int height){preview.draw(canvas,width,height);}
                 public void tap(float x,float y,int width,int height){
-                    DashboardPage.Regions r=DashboardPage.regions(width,height,preview.draft());
-                    if(!r.content.contains(x,y))return;
-                    x/=r.scale;y/=r.scale;
-                    int target=preview.layout().pageControlTarget(x,y);if(target>=0)preview.page(target);
                 }
             };
             invalidate();return;
@@ -549,6 +559,8 @@ public final class DashboardView extends View implements Runnable {
             if(!LanguageSettings.save(activity,new String[]{"auto","ko","en"}[selected])){settingsEditor.message=UiText.t("언어 설정을 저장하지 못했습니다.");invalidate();return;}break;
         case SettingsPageRenderer.THEME:
             ThemeSpec choice=themeCatalog.all().values().toArray(new ThemeSpec[0])[selected];themeStore.save(choice.id);applyTheme(choice);break;
+        case SettingsPageRenderer.ACCENT_PALETTE:
+            themeStore.saveAccentPalette(selectedTheme.id,selected);applyTheme(selectedTheme);break;
         case SettingsPageRenderer.MENU_POSITION:
             if(selected!=ThemeSpec.MENU_THEME&&ThemeCatalog.withMenuPosition(selectedTheme,selected).shell().left()!=(selected==ThemeSpec.MENU_LEFT)){
                 settingsEditor.message=UiText.t("현재 테마에서 지원 안 함");invalidate();return;}
