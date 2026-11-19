@@ -127,9 +127,9 @@ v1에서는 별도 테마 APK 설치·검색·삭제 절차를 사용하지 않�
 1. **범위·기준선 확정:** 시작 시점의 워크트리와 브랜치를 확인하고, `Original`을 기본 테마로 고정한다. 현재 화면 캡처/값과 터치·사용자 설정을 기준선으로 남기며, 앱에 포함되는 테마만 v1 범위로 둔다.
 2. **내장 테마 계약·데이터 연결:** APK `assets`/리소스에 넣을 catalog와 테마 manifest의 ID, 버전, 허용 토큰·레이아웃 범위, 잘못된 값 fallback을 정한다. `ThemeSpec` 전달·저장 경계를 설계하고 `Original`이 현재 결과를 재현하는지 확인한다.
 3. **공통 스타일 적용:** 색상, 배경, 표면, 외곽선/형상, 폰트 역할·크기와 자산 로딩을 공통/JS/JSN 렌더 경로에 연결한다. 렌더 루프에서 파일 읽기나 폰트 생성이 반복되지 않게 캐시한다.
-4. **레이아웃 및 테마 선택:** `ThemeLayout`으로 페이지별 그리드·간격·모서리·크기를 공급하고, 터치 hit-test가 그리기와 동일 geometry를 쓰도록 한다. `Original`은 현행 20 슬롯/5×4·JS/PD 변형을 보존하고, Aurora Focus의 4×3 두 페이지 예시에서 모든 슬롯이 접근 가능한지 확인한다. 앱의 실제 설정 진입점을 확인한 뒤 테마 선택·미리보기 draft·적용·취소와 `themeId` 저장을 연결한다.
+4. **레이아웃 및 테마 선택:** `ThemeLayout`으로 간격·모서리·크기를 공급하고, 터치 hit-test가 그리기와 동일 geometry를 쓰도록 한다. 모든 테마는 고정 20 슬롯/5×4 Overview를 사용하며 JS/PD 변형도 한 화면 안에서 유지한다. 앱의 실제 설정 진입점을 확인한 뒤 테마 선택·미리보기 draft·적용·취소와 `themeId` 저장을 연결한다.
 5. **실시간 프리뷰:** 현재 PC 프리뷰 도구가 실제로 지원하는 범위를 확인하고 같은 Java 렌더러에 `ThemeSpec`과 고정 telemetry fixture를 전달한다. 편집 중 변경은 draft에만 반영하고, 운영 테마나 차량 데이터/명령에는 연결하지 않는다. PC 프리뷰의 플랫폼 한계를 별도로 표시한다.
-6. **회귀·기기 검증:** 유효하지 않은/누락 manifest, 초기 선택·복구, 한국어·숫자·단위·경고·무효·미수신, JS/PD profile, 모든 overview 슬롯의 터치와 페이지 이동을 검증한다. 호스트 테스트, APK 빌드, API 17 대상 기기에서의 표시·성능 결과를 각각 구분해 기록한다.
+6. **회귀·기기 검증:** 유효하지 않은/누락 manifest, 초기 선택·복구, 한국어·숫자·단위·경고·무효·미수신, JS/PD profile, 5×4의 모든 overview 슬롯 터치를 검증한다. 호스트 테스트, APK 빌드, API 17 대상 기기에서의 표시·성능 결과를 각각 구분해 기록한다.
 
 이 문서는 구현 순서만 정한다. 코드 변경·테스트 실행·APK 빌드·설치·배포는 이 순서 기록의 범위가 아니다. 별도 테마 APK 설치·삭제 기능도 v1에 포함하지 않는다. 구현을 시작할 때 각 단계의 실제 결과와 검증 증거를 따로 기록한다.
 
@@ -174,7 +174,7 @@ Apple의 CarPlay 가이드는 운전 중 짧은 시선으로 읽을 수 있는 �
 
 이 예시는 현행 800×480 화면의 상단 탭과 5열 차량 정보 흐름을 유지하면서 패널을 어두운 반투명 재질처럼 보이게 하고, 청록 강조색과 큰 숫자를 적용한다. 경고는 별도의 amber 칩으로 남겨 색상과 텍스트가 함께 드러나게 한다. 실제 v1에서는 무거운 blur/refraction 대신 불투명도·색·얇은 테두리·제한된 하이라이트로 표현해 API 17 성능과 주간 직사광선 가독성을 먼저 검증한다.
 
-배경·스타일뿐 아니라 overview 그리드까지 바꾸는 결과 예시는 [Aurora Focus 적용 샘플](THEME_ENGINE_APPLICATION_SAMPLE_20261117.md)에 별도로 정리했다. 이 샘플은 5×4 `Original` 화면에서 4×3 Focus 화면으로 바뀌며, 나머지 신호는 두 번째 페이지에 둔다.
+2026-11-17 초안의 Aurora Focus 예시는 4×3 두 페이지를 제안했지만 이는 Google 공식 가이드에서 나온 규격이 아니라 샘플 작성 과정의 임의 제안이었다. 해당 제안은 폐기했다. 현재 테마 규칙은 모든 테마가 5×4 단일 Overview를 사용하고 페이지 이동을 제공하지 않는 것이다. 배경·스타일 예시는 [Aurora Focus 적용 샘플](THEME_ENGINE_APPLICATION_SAMPLE_20261117.md)에 남긴다.
 
 참고: [Apple CarPlay Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/carplay), [Apple의 Liquid Glass 소개](https://www.apple.com/newsroom/2025/06/apple-introduces-a-delightful-and-elegant-new-software-design/).
 

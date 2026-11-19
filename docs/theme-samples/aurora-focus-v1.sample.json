@@ -40,16 +40,12 @@
   },
   "layouts": {
     "overview": {
-      "profile": "focus-4x3",
-      "columns": 4,
-      "rowsPerPage": 3,
+      "profile": "fixed-5x4",
+      "columns": 5,
+      "rows": 4,
       "gap": { "x": 12, "y": 10 },
       "margin": { "left": 16, "right": 16, "top": 10, "bottom": 8 },
-      "pages": [
-        ["speed", "engine_rpm", "gear", "throttle", "brake_pressure", "oil_temp", "coolant_temp", "intake_temp", "ambient_temp", "steering_angle", "power_est", "torque_est"],
-        ["boost_est", "lateral_g", "longitudinal_g", "tpms_or_fuel_group", "tcs_esc_abs_group", "battery_voltage", "battery_soc", "steering_rate"]
-      ],
-      "keepAllSignalsReachable": true
+      "cards": ["speed", "engine_rpm", "gear", "throttle", "brake_pressure", "oil_temp", "coolant_temp", "intake_temp", "ambient_temp", "steering_angle", "power_est", "torque_est", "boost_est", "lateral_g", "longitudinal_g", "tpms_or_fuel_group", "tcs_esc_abs_group", "battery_voltage", "battery_soc", "steering_rate"]
     }
   }
 }

@@ -19,15 +19,15 @@
 ## 주요 계약
 
 - 당시 번들 catalog는 `apps/dashboard/src/main/assets/themes/catalog.json`에 있었다. 2026-11-18에 `apps/dashboard/src/0x1101L/assets/themes/catalog.json`으로 이동했으며 앱 내부 경로는 유지한다. 각 manifest는 `themes/<id>/manifest.json`이다. 당시 catalog는 `original`과 `aurora_focus`를 포함했다. 파서나 manifest 오류가 있으면 canonical Original만 제공한다.
-- 현재 번들 테마는 모두 기존 5×4를 사용한다. 렌더러는 기존 4×3 geometry와 overview 페이징 경로도 유지하며, catalog 검증은 두 지원 grid만 허용한다.
-- 테마 ID는 기존 차량 UI/신호 preference와 분리해 보관한다. Apply에서만 ID를 저장하며 draft 변경과 페이지 이동은 운영 설정을 변경하지 않는다.
+- 2026-11-19 규칙: 모든 번들/신규 테마는 고정 5×4 Overview 한 화면만 사용하며 4×3 geometry와 overview pager는 허용하지 않는다. 구현 초기에는 4×3/페이징 지원이 있었으나 제거했다.
+- 테마 ID는 기존 차량 UI/신호 preference와 분리해 보관한다. Apply에서만 ID를 저장하며 draft 변경은 운영 설정을 변경하지 않는다.
 - 리소스 로더의 경로는 `themes/<id>/fonts/...` 및 `themes/<id>/backgrounds/...`로 제한한다. 현재 두 manifest의 font/background 값은 비어 있어 실제 추가 폰트·배경 파일은 번들되지 않았다. 로드 성공 경로와 누락 fallback은 호스트 대역으로 검사했다. 글리프 범위·라이선스·Android 폰트 렌더 품질은 확인하지 않았다.
 - Preview의 fixture 값은 화면 시안 전용이며 실차 측정값이나 차량 호환성 증거가 아니다.
 
 ## 검증 기록
 
 - `python3 scripts/test.py` — PASS, synthetic Java host test program 24개. JSON manifest, canonical Original fallback, 테마 리소스 경로/폰트 fallback·캐시, 선택 draft를 포함한다.
-- `python3 tests/test_performance_renderer.py` — PASS. JSN·PD·JS overview 두 페이지와 기존 페이지 상태를 렌더하고, overview/F1/performance/gauge/graph에서 Focus 스타일 변화와 표시 문구·값 보존을 검사한다.
+- 초기 구현 당시 `python3 tests/test_performance_renderer.py`는 JSN·PD·JS overview 두 페이지와 기존 페이지 상태를 확인했다. 2026-11-19에 overview pagination을 제거했으며, 이 기록은 과거 실행 결과다. 최신 고정 5×4 검증 결과는 후속 변경 기록을 따른다.
 - `python3 tests/test_js_diagnostics_renderer.py` — PASS. 100개 상태·언어·탭 화면과 다섯 진단 탭의 Focus 스타일·문구 보존을 검사한다.
 - `python3 tools/js_ui_preview.py --check` — PASS, 두 테마 × 화면·상태·언어 조합 200개를 Java2D 프리뷰어 입력 경로로 렌더했다.
 - `python3 -m unittest discover -s tests -p 'test_*.py'` — PASS, Python 테스트 88개.

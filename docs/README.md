@@ -44,3 +44,4 @@ Current verification is maintained in [STATUS.md](STATUS.md). Dated release/audi
 현재 배포본의 확인 범위는 [STATUS.md](STATUS.md#한국어)를 기준으로 합니다. 연구는 주제별 최신 판정 문서에 모으고, 날짜별 시험·수집 기록은 해당 문서의 출처로 남깁니다. 날짜가 붙은 배포·감사 기록은 당시 버전의 이력입니다. 준비·호스트 검사·실차 설치·재부팅 검증을 구분합니다. 연구 문서 안내는 [RESEARCH.md](RESEARCH.md)와 [RESEARCH_ko.md](RESEARCH_ko.md)를 따릅니다.
 
 - [테마 엔진 v3: 파일 분리·상속·배치·입력](theme_engine_v3.md)
+- [테마 생성 질문표](THEME_CREATION_QUESTIONNAIRE.md) · [Material 3·Android Auto 리서치 규격](MATERIAL_AUTO_THEME_RESEARCH_SPEC_20261119.md)

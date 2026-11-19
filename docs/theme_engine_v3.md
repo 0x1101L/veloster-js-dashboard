@@ -2,6 +2,8 @@
 
 기록: 2026-11-18 KST. v3는 번들 JSON을 실제 앱 로더가 읽는 형식이다. 선택 가능한 테마는 Original, Aurora Focus, Liquid Glass(`f1_2`), Liquid Glass (Flat)(`f1_2_flat`), Liquid Glass (Optics)(`f1_2_optics`)다. CarPlay Glass Light/Dark는 제거했다. 기존 사용자 설정 키와 남은 테마 ID는 유지하며 기본 선택은 Original이다.
 
+테마의 시각 선택과 참고자료는 [테마 생성 질문표](THEME_CREATION_QUESTIONNAIRE.md)를 작성한다. 이 질문표는 본 규격과 `theme/schema/` 및 실제 ThemeSpec/renderer 계약에 맞춰 유지한다. 엔진·schema·렌더링 계약을 바꾸는 경우 같은 변경에서 질문, 지원 상태, 범위와 참고 예시를 함께 동기화한다.
+
 ## 파일과 상속
 
 `themes/catalog.json`은 `schemaVersion: 3`과 등록할 `themeIds`를 가진다. 각 테마의 `manifest.json`은 `schemaVersion`, `id`, `displayName`, 선택적인 `extends`, `files`만 가진다. 부모는 같은 catalog에 등록된 ID다. 파일은 각 테마 디렉터리의 `name.json` 또는 `layouts/name.json`만 참조한다. `..`, 절대 경로, 외부 URL은 허용하지 않는다.
@@ -118,9 +120,7 @@ F1의 `f1` 객체는 `shift`, `gear`, `speed`, `boost`, `rpm`, `temperatures`, `
 
 F1-2의 `f1Grid`는 기존 `f1` 좌표 대신 사용하는 선택 규격이다. 두 객체를 함께 정의할 수 없다. `columns`, `rowWeights`, `inset`, `gap`, `padding`, `radius`, `cells`로 구성하고, 각 요소에 `column/row/columnSpan/rowSpan`을 넣는다. 보이는 음악 바와 공통 외곽·간격을 먼저 확보하고 남은 본문을 열과 행 가중치에 따라 나눈다. 결합 화면의 미디어 카드와 앨범 터치 좌표도 같은 프레임에서 구한다. 잘못된 span, 겹치는 셀, 결합 화면 안에 들어오기 어려운 셀은 로딩 시 거부한다. 기존 좌표 방식은 그대로 쓸 수 있다. [설계 근거와 검수](f1_2_carplay_reference_review.md).
 
-전체 조망의 `overview`는 `columns/rows`, `padding`, `gapX/gapY`, `cards`를 지정한다. 카드에는 고유 `id`, 기존 Telemetry 인덱스 `source`, `page`, `column`, `row`, `columnSpan`, `rowSpan`이 필요하다. 배열 순서가 그리기 순서이며 페이지와 그리드 위치는 명시한다. 다른 ID는 같은 source를 참조할 수 있고, 스타일 설정은 기존대로 source ID별로 공유된다. 카드 중복 ID, 범위 밖 span, 같은 페이지의 겹침, 너무 작은 셀은 거부한다. 크기 검증은 기존 설계 크기와 shell·viewport를 제외한 실제 공간 양쪽에서 수행한다. 패딩·gap은 실제 픽셀 간격으로 유지하고 남는 폭·높이를 그리드에 분배한다. 빈 목록은 허용한다. v3의 source는 실제 신호 ID이며 프로필에 따라 임의의 다른 신호로 바꾸지 않는다. JS의 source 1은 기존 DCT 온도 카드, source 34는 기존 연비 묶음 카드다. 다른 프로필에서 지원하지 않는 값은 기존 미수신 표현을 사용한다. v2 및 기본 레거시 배치는 기존 프로필별 슬롯 매핑을 유지한다.
-
-페이지가 두 개 이상이면 페이지 이동 버튼을 표시한다. 공간 예약과 그리기, 터치는 같은 페이지 수를 기준으로 한다.
+전체 조망(Overview)은 **항상 5열×4행의 단일 화면**이다. 테마는 그리드 크기를 변경하거나 이전/다음 Overview 페이지를 추가할 수 없다. 모든 Overview 정보는 20개 슬롯 안에 한 화면으로 배치하며 페이지 이동 UI·상태·저장을 만들지 않는다. `overview.columns/rows`는 각각 5와 4만 허용한다. 카드에는 고유 `id`, 기존 telemetry 인덱스 `source`, `column`, `row`, `columnSpan`, `rowSpan`을 지정한다. 카드 스키마에는 페이지 번호가 없다. 배열 순서가 그리기 순서다. 다른 ID는 같은 source를 참조할 수 있고, 스타일 설정은 기존대로 source ID별로 공유된다. 카드 중복 ID, 범위 밖 span, 겹침, 너무 작은 셀은 거부한다. 크기 검증은 shell·viewport를 제외한 실제 공간에서 수행한다. 패딩·gap은 실제 픽셀 간격으로 유지하고 남는 폭·높이를 그리드에 분배한다. 빈 목록은 허용한다. v3의 source는 실제 신호 ID이며 프로필에 따라 임의의 다른 신호로 바꾸지 않는다. JS의 source 1은 기존 DCT 온도 카드, source 34는 기존 연비 묶음 카드다. 다른 프로필에서 지원하지 않는 값은 기존 미수신 표현을 사용한다. v2 및 기본 레거시 배치는 기존 프로필별 슬롯 매핑을 유지한다.
 
 ### 전체 조망 카드 내부
 
