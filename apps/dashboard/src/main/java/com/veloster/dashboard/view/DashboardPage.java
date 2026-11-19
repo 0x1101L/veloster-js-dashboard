@@ -189,6 +189,7 @@ public final class DashboardPage {
         private final boolean defaultF1;
         private final int f1Side,f1GapX,f1GapY,f1Padding;
         private final float leftPaddingFactor,rightPaddingFactor;
+        private final float bottomPaddingFactor;
         private final String[] f1Slots={"speed","gear","rpm"};
         public Content(ThemeSpec theme,String page){
             this(theme,page,800,480);
@@ -206,6 +207,7 @@ public final class DashboardPage {
             ThemeSpec.Viewport v=theme.viewport(page);
             leftPaddingFactor=theme.shell().left()?ADJACENT_CONTENT_PADDING_FACTOR:1;
             rightPaddingFactor=sideMedia?ADJACENT_CONTENT_PADDING_FACTOR:1;
+            bottomPaddingFactor=footer?ADJACENT_CONTENT_PADDING_FACTOR:1;
             f1Page="f1".equals(page);
             f1Grid=f1Page?theme.f1Grid():null;
             defaultF1=f1Page&&f1Grid==null&&!theme.hasF1();
@@ -226,7 +228,8 @@ public final class DashboardPage {
         public Bounds padded(ThemeSpec theme){
             float dx=Math.min(theme.spacing.cardPadding,width/2),dy=Math.min(theme.spacing.cardPadding,height/2);
             float left=dx*leftPaddingFactor,right=dx*rightPaddingFactor;
-            return new Bounds(x+left,y+dy,width-left-right,height-2*dy);
+            float bottom=dy*bottomPaddingFactor;
+            return new Bounds(x+left,y+dy,width-left-right,height-dy-bottom);
         }
         public Bounds notice(ThemeSpec theme){
             Bounds b=padded(theme);
@@ -266,7 +269,7 @@ public final class DashboardPage {
             float vertical=f1Grid==null?f1Padding:f1Grid.inset;
             float gapX=f1Grid==null?f1GapX:f1Grid.gap;
             float left=side*leftPaddingFactor,innerWidth=width-left-side*rightPaddingFactor;
-            return new Bounds(x+left,y+vertical,innerWidth,height-2*vertical);
+            return new Bounds(x+left,y+vertical,innerWidth,height-vertical-vertical*bottomPaddingFactor);
         }
         private Bounds defaultF1Cell(String id){
             Bounds frame=f1Frame();
