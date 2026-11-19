@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+  <title id="title">Android Auto system UI reference map</title>
+  <desc id="desc">A recreated, non-scale schematic of the Android Auto system UI with a standard horizontal navigation bar and a widescreen vertical navigation bar.</desc>
+  <defs>
+    <style>
+      .bg { fill: #0b0d10; }
+      .screen { fill: #111820; stroke: #536171; stroke-width: 2; }
+      .surface { fill: #202a35; stroke: #394757; stroke-width: 1; }
+      .nav { fill: #07090c; stroke: #526172; stroke-width: 1.5; }
+      .text { fill: #edf2f7; font: 600 17px Arial, sans-serif; }
+      .small { fill: #aebdca; font: 14px Arial, sans-serif; }
+      .label { fill: #9ccaff; font: 600 14px Arial, sans-serif; }
+      .icon { fill: none; stroke: #dce6ef; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+      .accent { fill: #9ccaff; }
+    </style>
+  </defs>
+  <rect class="bg" width="1200" height="680" rx="18"/>
+  <text class="text" x="42" y="45">Android Auto · 구성 참고도</text>
+  <text class="small" x="42" y="70">Google 공식 시스템 UI 문서를 바탕으로 재작성 · 비율, 치수, 색상은 공식 사양이 아님</text>
+
+  <text class="label" x="70" y="118">표준 가로 탐색 바 예시</text>
+  <rect class="screen" x="70" y="137" width="660" height="340" rx="24"/>
+  <rect class="surface" x="91" y="158" width="618" height="250" rx="16"/>
+  <text class="text" x="117" y="198">앱 콘텐츠 영역</text>
+  <rect class="surface" x="117" y="220" width="266" height="150" rx="14"/>
+  <text class="small" x="139" y="253">내비게이션 / 지도</text>
+  <path class="icon" d="M165 325l43-55 48 39 48-57"/>
+  <rect class="surface" x="400" y="220" width="282" height="150" rx="14"/>
+  <text class="small" x="422" y="253">미디어 / 앱 콘텐츠</text>
+  <circle class="accent" cx="446" cy="300" r="19"/>
+  <path d="M440 289v22l17-11z" fill="#111820"/>
+  <text class="small" x="477" y="305">정보와 조작</text>
+  <rect class="nav" x="91" y="418" width="618" height="42" rx="18"/>
+  <g transform="translate(119 429)">
+    <circle class="icon" cx="10" cy="10" r="8"/><path class="icon" d="M7 10h6M10 7v6"/>
+    <text class="small" x="27" y="15">앱 실행기</text>
+  </g>
+  <g transform="translate(250 428)">
+    <path class="icon" d="M9 4v12M4 8c0 8 10 8 10 0M9 16v4M5 20h8"/>
+    <text class="small" x="27" y="16">어시스턴트</text>
+  </g>
+  <g transform="translate(397 428)">
+    <rect class="icon" x="1" y="2" width="19" height="17" rx="4"/>
+    <text class="small" x="29" y="16">최근 앱 dock</text>
+  </g>
+  <g transform="translate(458 428)">
+    <path class="icon" d="M5 16h12l-2-3V9a4 4 0 0 0-8 0v4zM9 19h4"/>
+    <circle class="accent" cx="19" cy="3" r="4"/>
+    <text class="small" x="29" y="16">알림 배지</text>
+  </g>
+  <g transform="translate(574 428)">
+    <text class="small" x="0" y="16">09:41</text>
+    <path class="icon" d="M49 14v-5M55 14V6M61 14V2"/>
+    <rect class="icon" x="68" y="4" width="18" height="11" rx="2"/>
+    <rect class="accent" x="87" y="7" width="3" height="5" rx="1"/>
+  </g>
+
+  <text class="label" x="790" y="118">와이드 화면 세로 탐색 바 예시</text>
+  <rect class="screen" x="790" y="137" width="340" height="340" rx="24"/>
+  <rect class="surface" x="857" y="158" width="252" height="298" rx="16"/>
+  <text class="small" x="880" y="190">앱 콘텐츠 영역</text>
+  <rect class="surface" x="879" y="213" width="207" height="100" rx="12"/>
+  <text class="small" x="896" y="245">내비게이션 / 지도</text>
+  <path class="icon" d="M910 287l32-34 34 26 34-37"/>
+  <rect class="surface" x="879" y="327" width="207" height="105" rx="12"/>
+  <text class="small" x="896" y="360">미디어 / 앱 콘텐츠</text>
+  <rect class="nav" x="808" y="158" width="38" height="298" rx="18"/>
+  <g class="icon">
+    <circle cx="827" cy="183" r="8"/><path d="M824 183h6M827 180v6"/>
+    <path d="M827 221v14M822 226c0 7 10 7 10 0M827 235v5"/>
+    <rect x="819" y="261" width="16" height="16" rx="4"/>
+    <path d="M822 321h10M827 316v10"/>
+  </g>
+  <circle class="accent" cx="838" cy="309" r="4"/>
+  <path class="icon" d="M817 388v-4M824 388v-8M831 388v-12M835 393h12v8h-12zM847 395h2v4h-2z"/>
+  <text class="small" x="827" y="449" text-anchor="middle" transform="rotate(-90 827 449)">09:41</text>
+  <text class="small" x="876" y="476">시계·연결·배터리는 탐색 바의 상태 요소 예시</text>
+
+  <rect class="surface" x="70" y="510" width="1060" height="112" rx="16"/>
+  <text class="text" x="94" y="544">질문표에 옮길 디자인 요소</text>
+  <text class="small" x="94" y="574">탐색 바 방향 · 실제 목적지 아이콘 · 선택 강조 · 공통 dock 표면 · 시계/상태 정보 · 콘텐츠 카드의 명도 계층</text>
+  <text class="small" x="94" y="600">아이콘 동작, 고정 폭, 배치 순서는 프로젝트 기능과 화면 조건에 맞춰 별도로 결정</text>
+</svg>
