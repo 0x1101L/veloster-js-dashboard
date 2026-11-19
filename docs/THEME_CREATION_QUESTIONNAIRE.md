@@ -2,7 +2,7 @@
 
 - 목적: 사용자 의도와 참고자료를 엔진이 지원하는 테마 선택으로 연결한다.
 - 적용 기준: 현재 테마 엔진 v3와 실제 schema/runtime 계약
-- 연동 문서: [테마 엔진 v3](theme_engine_v3.md), [Material 3·Android Auto 리서치 규격](MATERIAL_AUTO_THEME_RESEARCH_SPEC_20261119.md)
+- 연동 문서: [테마 엔진 v3](theme_engine_v3.md), [Material 3·Android Auto 리서치 규격](MATERIAL_AUTO_THEME_RESEARCH_SPEC_20261119.md), [Apple Typography HIG](https://developer.apple.com/design/human-interface-guidelines/typography)
 - 상태: 작성용 기준 문서. 기입한 답은 디자인 승인이나 구현·기기 검증 완료를 뜻하지 않는다.
 
 ## 작성 원칙
@@ -52,7 +52,10 @@
 | 표면 재질 | 카드·메뉴·패널마다 어떤 면 처리를 쓸까? | flat/glass/legacy 역할 매핑, 투명도·블러·하이라이트 | material·surfaceStyles·surfaceBlur. Glass 설정이 없는 역할에는 효과를 가정하지 않음 |
 | 모서리와 테두리 | 카드·메뉴·버튼·화면 외곽의 radius와 테두리는 어떤 스타일인가? | 곡선(circle/squircle), 반경, 외곽선 색/존재, 각 표면의 예시 | shell의 screenCorner/screenCornerRadius, material.radius, F1 전용 radius, colors.stroke 확인. 독립 border 두께·요소별 radius가 schema/runtime에 없으면 엔진 확장 필요 |
 | 간격·치수 | 버튼 크기, 카드 padding, grid gap과 본문 여백은? | 논리 단위 값, 사용 화면 크기, 밀집/여유의 우선순위 | spacing 및 화면별 layout schema 범위 안에서 지정 |
-| 타이포그래피 | 숫자·본문·기어의 글꼴과 위계를 어떻게 나눌까? | 글꼴 출처/라이선스, weight, 크기 배율, 한글·숫자 검토 | fonts와 typography schema. API 17 로드·글리프·fallback 확인 |
+| 타이포그래피·글꼴 | 본문·숫자·디스플레이에 같은 글꼴을 쓸까? 가변 폰트가 있으면 사용할까? | 역할별 글꼴 파일/출처/라이선스, variable/static 여부, 한글·숫자·단위 글리프와 fallback | `fonts.body/numeric/display`, `fallbackWeights`. 가변 폰트와 API 17용 정적 굵기 파일 지원 |
+| 타이포그래피·굵기 | 각 역할의 일반 텍스트와 강조 텍스트를 어느 굵기로 표시할까? | body/numeric/display별 normal·emphasis. Regular 400, Medium 500, Semibold 600, Bold 700 중 선택 | `fontStyles`가 역할별 400/500/600/700 지원. `weights`는 기존 auto/regular/bold 호환용. Thin/Light는 선택값으로 쓰지 않음 |
+| 타이포그래피·크기 | 본문·숫자·강조 표시를 기준 크기 대비 어느 정도 키우거나 줄일까? 기어 숫자는 별도 크기 조정이 필요한가? | body/numeric/display 배율(%), gearSize/combinedGearSize(%), 작게 보이는 핵심 텍스트와 최소 가독성 검수 기준 | `typography` JSON에 배율 지정 가능. 본문·숫자·디스플레이 60–140%, 기어 64–220%, 결합 기어 64–160%. 기준 글자 크기 자체(px/pt), 행간·자간은 직접 지정 불가(엔진 확장 필요) |
+| 타이포그래피·검수 | 어떤 실제 문구와 상태에서 글꼴 굵기·크기를 확인할까? | 한글/영문/숫자/단위 표본, 일반·강조 비교, 축소·잘림·겹침·대비 확인, 800×480 및 지원 변형 | Apple HIG는 가는 굵기를 피하고 Regular/Medium/Semibold/Bold를 권장한다. iOS 17pt/11pt를 차량 화면의 px로 그대로 환산하지 말고 실제 렌더러에서 가독성을 확인 |
 | 미디어·위젯 | 미디어 바와 앨범 영역을 어떻게 보일까? | 공통 바 배경, 버튼별 배경, 화면별 표시 밀도 | mediaFooter·mediaControls와 공통 표시 설정 분리 |
 | 상속·독립성 | 새 테마의 스타일을 어떻게 자체 선언할까? | 자체 선언 파일 목록과 신규 ID | 이번 작업의 신규 테마는 extends 없이 자체 선언 |
 | 검수 | 어떤 화면·상태·언어·크기에서 확인할까? | 800×480, 지원 변형, 한/영, 기본·선택·경고·무효·미수신, 대비 | 실제 renderer 프리뷰, schema/runtime 검사, 합성 데이터 표기. Android/실차 결과와 호스트 결과 분리 |
@@ -69,7 +72,13 @@
 | 색상/상태색 |  | 미정 |  | colors |  |
 | 배경/벽지 |  | 미정 |  | colors, components assets |  |
 | 표면/radius/테두리 |  | 미정 |  | components, shell, 화면 schema |  |
-| 글꼴/크기 |  | 미정 |  | fonts |  |
+| 글꼴 파일/출처/라이선스 및 variable/static 여부 |  | 미정 |  | fonts, fallbackWeights |  |
+| body 글꼴·normal/emphasis 굵기 |  | 미정 |  | fonts, fontStyles.body |  |
+| numeric 글꼴·normal/emphasis 굵기 |  | 미정 |  | fonts, fontStyles.numeric |  |
+| display 글꼴·normal/emphasis 굵기 |  | 미정 |  | fonts, fontStyles.display |  |
+| 본문/숫자/디스플레이 배율(%) |  | 미정 |  | typography.bodyScale/numericScale/displayScale |  |
+| 기어/결합 기어 배율(%) |  | 미정 |  | typography.gearSize/combinedGearSize |  |
+| 한글·숫자·단위 가독성 및 잘림 검수 |  | 미정 |  | renderer preview/tests |  |
 | 간격/화면 배치 |  | 미정 |  | 화면별 layouts |  |
 | 검수 범위 |  | 미정 |  | preview/tests |  |
 
@@ -86,6 +95,8 @@
 | 미확인 | 문서와 코드의 지원 여부가 일치하는지 확인되지 않았다 | 코드를 확인하기 전에는 선택을 확정하지 않는다 |
 
 예: 현재 v3에는 재질별 공통 radius와 화면 외곽 곡선 설정이 있다. 그러나 테두리 두께를 표면마다 독립 지정하는 필드는 확인되지 않았다. 따라서 radius는 지원 항목으로 묻고, 개별 border 두께는 엔진 확장 필요로 표시한다. 이 구분은 실제 schema와 구현이 바뀌면 다시 검증한다.
+
+타이포그래피에서 사용자가 고르는 크기는 렌더러가 정한 기준 글자 크기에 곱하는 배율이다. 각 텍스트의 기준 px/pt를 직접 지정하거나 행간·자간을 조정하는 기능은 현재 v3 schema에 없다. Apple HIG의 17pt 기본·11pt 최소 크기는 iOS 포인트 단위이므로 Android 차량 화면에 숫자만 옮겨 적용하지 않는다. HIG의 가독성 원칙과 권장 굵기(Regular, Medium, Semibold, Bold)를 참고하고, 실제 Dashboard 해상도와 화면에서 확인한다. [Apple Typography HIG](https://developer.apple.com/design/human-interface-guidelines/typography)
 
 ## 동기화 규칙
 
