@@ -344,7 +344,10 @@ public final class HubActivity extends Activity {
         public int wifiState(){if(wifi==null)return -1;return wifi.getWifiState();}
         public int apState()throws Exception{return ((Integer)invoke("getWifiApState",new Class<?>[0])).intValue();}
         public byte[] config()throws Exception{return pack((WifiConfiguration)invoke("getWifiApConfiguration",new Class<?>[0]));}
-        public boolean wifi(boolean on){return wifi.setWifiEnabled(on);}
+        public boolean wifi(boolean on)throws Exception{
+            int state=wifiState();
+            return EngineerWifiControl.request(wifi,on,on?apState():-1,state);
+        }
         public boolean ap(byte[] c,boolean on)throws Exception{return Boolean.TRUE.equals(invoke("setWifiApEnabled",new Class<?>[]{WifiConfiguration.class,Boolean.TYPE},unpack(c),Boolean.valueOf(on)));}
         public boolean config(byte[] c)throws Exception{return Boolean.TRUE.equals(invoke("setWifiApConfiguration",new Class<?>[]{WifiConfiguration.class},unpack(c)));}
         public boolean noWifiInterfaces()throws Exception{
