@@ -77,6 +77,18 @@ class LayoutEditorModelTests(unittest.TestCase):
         self.assertNotIn("contentArea", self.model.local["shell"])
         self.assertFalse(self.model.dirty)
 
+    def test_top_menu_spacing_alignment_and_clock_controls_are_editable(self):
+        self.model.load("f1_2", "shell")
+        self.model.set_property(("shell", "topMenuBar", "buttonMargin", "top"), 3)
+        self.model.set_property(("shell", "topMenuBar", "buttonMargin", "right"), 7)
+        self.model.set_property(("shell", "topMenuBar", "contentAlignment"), "end")
+        self.model.set_property(("shell", "topMenuBar", "clockPosition"), "start")
+        top_menu = self.model.local["shell"]["topMenuBar"]
+        self.assertEqual(top_menu["buttonMargin"], {"top": 3, "right": 7})
+        self.assertEqual(top_menu["contentAlignment"], "end")
+        self.assertEqual(top_menu["clockPosition"], "start")
+        validate_role(self.model.data, "shell", ROOT)
+
     def test_save_does_not_write_other_theme_drafts(self):
         path = ("shell", "sideMenuBar", "width")
         self.model.load("f1_2", "shell")

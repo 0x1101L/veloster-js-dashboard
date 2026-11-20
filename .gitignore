@@ -36,4 +36,4 @@ logs/
 /theme/themes/*/*.history.json
 
 # Built locally by tools/build_layout_editor_app.sh.
-/dist/JS Dashboard Layout Editor.app/
+/dist/Dashboard Layout Studio.app/

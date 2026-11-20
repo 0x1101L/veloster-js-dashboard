@@ -53,6 +53,7 @@ final class LayoutEditorUi {
             {"height","높이"},{"padding","안쪽 여백 (패딩)"},{"horizontal","가로"},{"vertical","세로"},
             {"top","위"},{"right","오른쪽"},{"bottom","아래"},{"left","왼쪽"},{"gap","영역 사이 간격"},
             {"itemGap","항목 간격"},{"itemGapX","열 간격"},{"itemGapY","행 간격"},{"alignment","정렬"},
+            {"buttonMargin","버튼 여백"},{"contentAlignment","텍스트·이미지 정렬"},{"clockPosition","시계 위치"},
             {"buttonHeight","버튼 높이"},{"cornerShape","모서리 모양"},{"cornerRadius","모서리 반경"},
             {"appearance","메뉴 모양"},{"presentation","메뉴 표시 방식"},{"overview","조망 배치"},
             {"grid","카드 그리드"},{"cards","카드 목록"},{"cardDefaults","공통 카드"},
@@ -83,10 +84,12 @@ final class LayoutEditorUi {
     private final Map<String,String> themeNames = new HashMap<>();
     private final JButton save = button("테마 저장",true);
     private final JButton discard = button("초안 취소",false);
+    private final JButton refreshButton = button("소스 새로고침",false);
     private final JCheckBoxMenuItem follow = new JCheckBoxMenuItem("테마 메뉴 규격 적용",true);
     private final ThemeRefresh refresh;
     private final JScrollPane propertyScroll;
     private final SharedPreferences layoutPreferences;
+    private final Runnable refreshRenderer;
     private JSplitPane workspaceSplit;
     private JSplitPane canvasSplit;
     private boolean applyingWidths, widthsInitialized;
@@ -94,18 +97,21 @@ final class LayoutEditorUi {
     private final Set<String> dirty = new HashSet<>();
     private final Map<List<Object>,DefaultMutableTreeNode> nodes = new LinkedHashMap<>();
     private boolean loading, pending;
-    private String themeId = "f1_2", role = "overview";
+    private String themeId, role;
     private String documentSource = "";
     private List<Object> selected = Collections.emptyList();
     private JComponent deferredFocus;
+    private Runnable deferredClose;
     private JTextField editedField;
     private List<Object> editedPath;
     private int scrollAfterEdit;
 
     LayoutEditorUi(JPanel liveScreen,JComboBox<String> car,JComboBox<String> sampleState,
-                   Runnable languageAction,Runnable themeSettingsAction,Runnable capture,
-                   SharedPreferences panelPreferences,ThemeRefresh refresh) {
+                   Runnable languageAction,Runnable themeSettingsAction,Runnable capture,Runnable refreshRenderer,
+                   SharedPreferences panelPreferences,String initialTheme,String initialRole,ThemeRefresh refresh) {
         this.layoutPreferences=panelPreferences;
+        this.refreshRenderer=refreshRenderer;
+        themeId=initialTheme;role=initialRole;
         preferredOutline=panelPreferences.getInt("outlineWidth",220);
         preferredInspector=panelPreferences.getInt("inspectorWidth",380);
         this.refresh = refresh;
@@ -113,7 +119,7 @@ final class LayoutEditorUi {
 
         JPanel header = bar(WHITE,10,18);
         header.setBorder(BorderFactory.createCompoundBorder(ruleBelow(),header.getBorder()));
-        header.add(label("Dashboard Studio",19,INK),BorderLayout.WEST);
+        header.add(label("레이아웃 스튜디오",19,INK),BorderLayout.WEST);
         status.setHorizontalAlignment(SwingConstants.RIGHT);
         header.add(status,BorderLayout.CENTER);
         JPanel actions = flow(WHITE,FlowLayout.RIGHT);
@@ -179,7 +185,7 @@ final class LayoutEditorUi {
         language.addActionListener(e -> languageAction.run());
         themeSettings.addActionListener(e -> themeSettingsAction.run());
         screenshot.addActionListener(e -> capture.run());
-        viewActions.add(themeSettings); viewActions.add(screenshot);
+        viewActions.add(themeSettings); viewActions.add(refreshButton); viewActions.add(screenshot);
         tools.add(viewActions,BorderLayout.EAST);
         canvas.add(tools,BorderLayout.SOUTH);
 
@@ -237,6 +243,7 @@ final class LayoutEditorUi {
         });
         follow.addActionListener(e -> refreshCanvas(""));
         save.addActionListener(e -> send("save",themeId));
+        refreshButton.addActionListener(e -> this.refreshRenderer.run());
         discard.addActionListener(e -> {
             if (JOptionPane.showConfirmDialog(root,"이 테마의 저장하지 않은 변경을 버릴까요?",
                     "초안 취소",JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION) send("reset",themeId);
@@ -246,10 +253,24 @@ final class LayoutEditorUi {
 
     JPanel panel() {return root;}
     boolean followsTheme() {return follow.isSelected();}
-    boolean canClose() {
-        if (pending) return false;
-        return dirty.isEmpty() || JOptionPane.showConfirmDialog(root,"저장하지 않은 테마 변경을 버리고 닫을까요?",
-                "에디터 닫기",JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION;
+    void requestClose(Runnable closeAction) {
+        if (pending) {
+            deferredClose=closeAction;
+            showStatus("작업을 마친 뒤 닫습니다",ACTIVE);
+            return;
+        }
+        confirmClose(closeAction);
+    }
+    private void confirmClose(Runnable closeAction) {
+        if (dirty.isEmpty() || JOptionPane.showConfirmDialog(root,"저장하지 않은 테마 변경을 버리고 닫을까요?",
+                "에디터 닫기",JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION) closeAction.run();
+    }
+    private void finishDeferredClose() {
+        if (!pending && deferredClose!=null) {
+            Runnable closeAction=deferredClose;
+            deferredClose=null;
+            confirmClose(closeAction);
+        }
     }
     void requestCurrent() {send("load",themeId,role);}
     void setThemes(List<String> ids) {
@@ -282,6 +303,7 @@ final class LayoutEditorUi {
                 if (deferredFocus!=null) deferredFocus.requestFocusInWindow();
                 deferredFocus=null;
                 updateActions();
+                finishDeferredClose();
             });
         }
     }
@@ -293,6 +315,7 @@ final class LayoutEditorUi {
         DefaultMutableTreeNode top=nodes.get(Collections.emptyList());
         boolean reuseTree=same&&sameTree(top,document,true);
         themeId=nextTheme; role=nextRole; pending=false;
+        layoutPreferences.edit().putString("active_theme",themeId).putString("active_role",role).apply();
         if (unsaved) dirty.add(themeId); else dirty.remove(themeId);
         if(!same)syncSelectors();
         loading=true;
@@ -338,6 +361,7 @@ final class LayoutEditorUi {
         showStatus(unsaved?"저장하지 않은 변경":"",unsaved?ACTIVE:MUTED);
         deferredFocus=null;
         updateActions();
+        finishDeferredClose();
     }
 
     private void refreshCanvas(String previewRole) {

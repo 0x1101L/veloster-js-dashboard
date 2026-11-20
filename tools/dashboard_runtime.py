@@ -7,6 +7,7 @@ import hashlib
 import json
 import base64
 import queue
+import shutil
 import threading
 import subprocess
 import time
@@ -66,14 +67,27 @@ def compile_runtime(folder):
     return java, classes
 
 
+def preference_directory(editor, checkout_root=ROOT, home=None):
+    home = Path(home) if home is not None else Path.home()
+    scope_key = str(Path(checkout_root).resolve()) + (':layout-editor' if editor else ':preview')
+    preference_scope = hashlib.sha256(scope_key.encode('utf-8')).hexdigest()[:20]
+    support = home / 'Library/Application Support'
+    if not editor:
+        return support / 'JS Dashboard Preview/preferences' / preference_scope
+
+    legacy = support / 'JS Dashboard Preview/preferences' / preference_scope
+    current = support / 'JS Dashboard Layout Studio/preferences' / preference_scope
+    if not current.exists() and legacy.is_dir():
+        current.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(legacy, current)
+    return current
+
+
 def run(asset_root=None, editor=False, editor_theme='f1_2', editor_themes=None, editor_handler=None):
     import tempfile
     asset_root = Path(asset_root).resolve() if asset_root else ROOT / 'apps/dashboard/src/0x1101L/assets'
     with tempfile.TemporaryDirectory(prefix='dashboard-runtime-') as folder:
-        scope_key = str(ROOT.resolve()) + (':layout-editor' if editor else ':preview')
-        preference_scope = hashlib.sha256(scope_key.encode('utf-8')).hexdigest()[:20]
-        preference_dir = (Path.home() / 'Library/Application Support/JS Dashboard Preview/preferences'
-                          / preference_scope)
+        preference_dir = preference_directory(editor)
         generation = 0
         reload_attempt = 0
         generation_dir = Path(folder) / ('generation-' + str(generation))
@@ -197,7 +211,7 @@ end tell
                         detail = str(error).replace('\n', ' ')[:1800]
                         send_to_runtime('LAYOUT_EDITOR_STATUS\t0\t' + __import__('base64').b64encode(detail.encode('utf-8')).decode('ascii'))
                     continue
-                if not editor and message.startswith('READY Dashboard') and spotify_thread is None:
+                if message.startswith('READY Dashboard') and spotify_thread is None:
                     spotify_thread = threading.Thread(target=spotify_loop, name='spotify-preview-bridge', daemon=True)
                     spotify_thread.start()
                 if message != 'DASHBOARD_PREVIEW_RELOAD':
@@ -710,8 +724,7 @@ public class DashboardDesktop {
   SwingUtilities.invokeLater(()->{try{
    Activity activity=new Activity();LanguageSettings.init(activity);
    boolean editorMode=Boolean.parseBoolean(System.getProperty("dashboard.editor","false"));
-   JFrame frame=new JFrame(editorMode?"Dashboard Theme & Layout Studio":"JS Dashboard Preview");activity.window=frame;frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-   if(editorMode)new com.veloster.dashboard.theme.ThemeSettingsStore(activity).save(System.getProperty("dashboard.editor.theme","f1_2"));
+   JFrame frame=new JFrame(editorMode?"레이아웃 스튜디오":"JS Dashboard Preview");activity.window=frame;frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
    PreviewProfile[] vehicles=PreviewProfile.ALL;
    String[] sampleStates={"received","waiting","invalid","held","expired"};
    android.content.SharedPreferences desktopPrefs=activity.getSharedPreferences("desktop_preview",0);
@@ -751,10 +764,17 @@ public class DashboardDesktop {
    final ThemeCatalog[] acceptedEditorCatalog={null};
    String themeIds=System.getProperty("dashboard.editor.themes","original,f1_2,aurora_focus,material_auto_cowork");
    if(editorMode){
+    android.content.SharedPreferences editorPreferences=activity.getSharedPreferences("layout_editor_panels",0);
+    String defaultEditorTheme=new com.veloster.dashboard.theme.ThemeSettingsStore(activity).selectedId();
+    String initialEditorTheme=editorPreferences.getString("active_theme",defaultEditorTheme);
+    String initialEditorRole=editorPreferences.getString("active_role","overview");
+    java.util.List<String> availableThemes=java.util.Arrays.asList(themeIds.split(","));
+    if(!availableThemes.contains(initialEditorTheme))initialEditorTheme=availableThemes.contains("f1_2")?"f1_2":availableThemes.get(0);
+    if(!java.util.Arrays.asList("overview","f1","gauges","graphs","performance","settings","diagnostics","shell","colors","fonts","components").contains(initialEditorRole))initialEditorRole="overview";
     layoutEditorUi=new LayoutEditorUi(screen,car,state,()->language.doClick(),()->{
      try{openThemeSettings(current[0]);screen.repaint();}catch(Exception e){throw new RuntimeException(e);}
-    },()->capture(frame,current[0]),
-     activity.getSharedPreferences("layout_editor_panels",0),(themeId,followTheme,previewRole)->{try{
+    },()->capture(frame,current[0]),DashboardDesktop::requestReload,
+     editorPreferences,initialEditorTheme,initialEditorRole,(themeId,followTheme,previewRole)->{try{
      String detail=refreshEditorTheme(activity,current[0],acceptedEditorCatalog[0],themeId,followTheme,previewRole);
      screen.repaint();sync.run();
      return detail;
@@ -764,12 +784,12 @@ public class DashboardDesktop {
     editorRoot=layoutEditorUi.panel();
     frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     frame.addWindowListener(new java.awt.event.WindowAdapter(){
-     public void windowClosing(java.awt.event.WindowEvent event){if(layoutEditorUi.canClose())frame.dispose();}
+     public void windowClosing(java.awt.event.WindowEvent event){layoutEditorUi.requestClose(frame::dispose);}
     });
    }else editorRoot=DashboardPreviewUi.shell(DashboardPreviewUi.contextBar(car,language,theme),screen,DashboardPreviewUi.actionBar(state,DashboardDesktop::requestReload,()->capture(frame,current[0])));
    JPanel root=editorRoot;
    root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("R"),"reload");
-   root.getActionMap().put("reload",new AbstractAction(){public void actionPerformed(java.awt.event.ActionEvent event){if(editorMode)layoutEditorUi.requestCurrent();else requestReload();}});
+   root.getActionMap().put("reload",new AbstractAction(){public void actionPerformed(java.awt.event.ActionEvent event){requestReload();}});
    frame.setContentPane(root);frame.pack();frame.setMinimumSize(editorMode?new java.awt.Dimension(1040,640):new java.awt.Dimension(720,480));frame.setLocationByPlatform(true);frame.setVisible(true);
    listenForReloadMessages(frame,current,activity,themeIds,acceptedEditorCatalog);
    if(editorMode)layoutEditorUi.requestCurrent();

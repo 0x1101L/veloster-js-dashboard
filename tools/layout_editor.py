@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Visual editor for Dashboard theme layout files."""
+"""Layout Studio for Dashboard theme and layout files."""
 import argparse
 
 from layout_editor_host import run

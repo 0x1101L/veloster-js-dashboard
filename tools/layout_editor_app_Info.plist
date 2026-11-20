@@ -3,11 +3,13 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleExecutable</key>
-	<string>Dashboard Layout Editor</string>
+	<string>Dashboard Layout Studio</string>
 	<key>CFBundleIdentifier</key>
-	<string>dev.joylab.jsdashboard.layouteditor</string>
+	<string>dev.joylab.jsdashboard.layoutstudio</string>
 	<key>CFBundleName</key>
-	<string>Dashboard Layout Editor</string>
+	<string>레이아웃 스튜디오</string>
+	<key>CFBundleDisplayName</key>
+	<string>레이아웃 스튜디오</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

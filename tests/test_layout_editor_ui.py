@@ -48,6 +48,8 @@ public class LayoutEditorResizeCheck {
  }
  static LayoutEditorUi editor;
  static DashboardView view;
+ static int refreshRequests;
+ static boolean deferredCloseInvoked;
  static String encode(String value){return Base64.getEncoder().encodeToString(value.getBytes(StandardCharsets.UTF_8));}
  static void document(String role)throws Exception{
   editor.handle("LAYOUT_EDITOR_DOC\t"+encode("f1_2")+"\t"+encode(role)+"\t"+encode("theme.json")+"\t"
@@ -109,8 +111,9 @@ public class LayoutEditorResizeCheck {
     check(outer.getLeftComponent().getWidth()>=184,"structure panel clipped at "+width);
     check(inner.getLeftComponent().getWidth()>=480,"preview canvas clipped at "+width);
     check(inner.getRightComponent().getWidth()>=330,"property panel clipped at "+width);
-    JButton theme=button(ui.panel(),"앱 테마 설정"),capture=button(ui.panel(),"캔버스 캡처");
-    check(theme.getWidth()==theme.getPreferredSize().width&&capture.getWidth()==capture.getPreferredSize().width,
+    JButton theme=button(ui.panel(),"앱 테마 설정"),refresh=button(ui.panel(),"소스 새로고침"),capture=button(ui.panel(),"캔버스 캡처");
+    check(theme.getWidth()==theme.getPreferredSize().width&&refresh.getWidth()==refresh.getPreferredSize().width
+        &&capture.getWidth()==capture.getPreferredSize().width,
         "canvas actions clipped at "+width);
     JButton options=button(ui.panel(),"보기 옵션 ▾");
     int optionsEnd=SwingUtilities.convertPoint(options,options.getWidth(),0,ui.panel()).x;
@@ -151,7 +154,9 @@ public class LayoutEditorResizeCheck {
  static LayoutEditorUi makeEditor(Activity activity){
   return new LayoutEditorUi(new DashboardDesktop.Screen(view),new JComboBox<>(new String[]{"JS"}),
      new JComboBox<>(new String[]{"received"}),()->{},()->{try{DashboardDesktop.openThemeSettings(view);}
-     catch(Exception e){throw new RuntimeException(e);}},()->{},activity.getSharedPreferences("test-layout-panels",0),
+     catch(Exception e){throw new RuntimeException(e);}},()->{},()->refreshRequests++,activity.getSharedPreferences("test-layout-panels",0),
+     activity.getSharedPreferences("test-layout-panels",0).getString("active_theme","f1_2"),
+     activity.getSharedPreferences("test-layout-panels",0).getString("active_role","overview"),
      (theme,follow,role)->{try{DashboardDesktop.editorPage(view,role);return "800 × 480";}
      catch(Exception e){throw new RuntimeException(e);}});
  }
@@ -165,17 +170,35 @@ public class LayoutEditorResizeCheck {
    editor=makeEditor(activity);
    editor.setThemes(Arrays.asList("original","f1_2","f1_2_optics"));
   });
+  edt(()->{
+   editor.requestCurrent();
+   editor.requestClose(()->deferredCloseInvoked=true);
+   check(!deferredCloseInvoked,"close must wait while the initial document request is pending");
+  });
+  editor.handle("LAYOUT_EDITOR_DOC\t"+encode("f1_2")+"\t"+encode("overview")+"\t"+encode("theme.json")+"\t"
+      +encode("{\"path\":[],\"kind\":\"object\",\"children\":[]}")+"\t0");
+  edt(()->{});
+  check(deferredCloseInvoked,"a close request during initial loading must finish after the document arrives");
   document("overview");
   JTree tree=(JTree)read(editor,"tree");
   javax.swing.tree.TreeModel existingTree=tree.getModel();
   document("overview");
   check(tree.getModel()==existingTree,"same document replaced the tree");
   navigation();
+  edt(()->{
+   JButton refresh=(JButton)read(editor,"refreshButton");refresh.doClick();
+   check(refreshRequests==1,"source refresh button was not connected");
+  });
   liveThemeRefresh(activity);
   resize();
+  edt(()->editor.handle("LAYOUT_EDITOR_DOC\t"+encode("original")+"\t"+encode("colors")+"\t"+encode("theme.json")+"\t"
+      +encode("{\"path\":[],\"kind\":\"object\",\"children\":[]}")+"\t0"));
+  edt(()->{});
   LayoutEditorUi[] reopened=new LayoutEditorUi[1];
   edt(()->reopened[0]=makeEditor(activity));
   LayoutEditorUi restored=reopened[0];
+  check(read(restored,"themeId").equals("original")&&read(restored,"role").equals("colors"),
+      "last active theme and document were not restored");
   size(restored,1440);
   edt(()->check(((JSplitPane)read(restored,"workspaceSplit")).getLeftComponent().getWidth()==260
       &&((JSplitPane)read(restored,"canvasSplit")).getRightComponent().getWidth()==420,"restart did not restore widths"));
