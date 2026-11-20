@@ -48,6 +48,9 @@
           "properties": {
             "buttonHeight": { "type": "integer", "minimum": 24, "maximum": 50 },
             "padding": { "$ref": "#/$defs/areaPadding" },
+            "buttonMargin": { "$ref": "#/$defs/buttonMargin" },
+            "contentAlignment": { "enum": ["start", "center", "end"], "default": "center" },
+            "clockPosition": { "enum": ["start", "center", "end"], "default": "center" },
             "itemGap": { "type": "integer", "minimum": 0, "maximum": 40 },
             "presentation": { "enum": ["labels", "icons"], "default": "labels" }
           }
@@ -110,6 +113,16 @@
         "vertical": { "type": "integer", "minimum": 0, "maximum": 40 },
         "left": { "type": "integer", "minimum": 0, "maximum": 40 },
         "right": { "type": "integer", "minimum": 0, "maximum": 40 }
+      }
+    },
+    "buttonMargin": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "top": { "type": "integer", "minimum": 0, "maximum": 40 },
+        "right": { "type": "integer", "minimum": 0, "maximum": 40 },
+        "bottom": { "type": "integer", "minimum": 0, "maximum": 40 },
+        "left": { "type": "integer", "minimum": 0, "maximum": 40 }
       }
     },
     "paddedArea": {

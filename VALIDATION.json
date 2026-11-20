@@ -96,7 +96,8 @@
     "Preserving v5 app data when downgrading to v3"
   ],
   "public_photo": {
-    "file": "docs/images/dashboard-overview-in-car.jpg",
+    "file": null,
+    "removed_from_repository_on": "2026-11-20",
     "origin": "Owner-provided actual in-car photograph, explicitly requested for public sharing",
     "sha256": "9ca451042e14bcca4fceb98dcb727009410d063ff2cda9cda3c6a6336d42db84",
     "pixel_data_unchanged": true,
@@ -144,25 +145,29 @@
     "label_source_sha256": "cb49cb615f6ca4567819663a48e6c1b90e89008ae5ad35df7e5b5dcfa19911d2",
     "screenshots": [
       {
-        "file": "docs/images/my-apps-v8-main-preview.png",
+        "file": null,
+        "removed_from_repository_on": "2026-11-20",
         "sha256": "2ba85b1f28762bd67efc5622740f6c44a4720ca30bfe00f02ad747bd60a6d7e4",
         "type": "browser preview with production source labels and example app list",
         "exif_and_text_metadata_present": false
       },
       {
-        "file": "docs/images/my-apps-v8-edit-preview.png",
+        "file": null,
+        "removed_from_repository_on": "2026-11-20",
         "sha256": "63f6ac99a90da3a8f7fdcd0e6fa03670d98f0d32f5363dedfe8eb3bf638b6037",
         "type": "browser preview with production source labels and example app list",
         "exif_and_text_metadata_present": false
       },
       {
-        "file": "docs/images/my-apps-v8-reboot-preview.png",
+        "file": null,
+        "removed_from_repository_on": "2026-11-20",
         "sha256": "450a4e5b9385c567c8d2ff06a435da261409c7c6eaa71ff848a90246d273a13d",
         "type": "browser preview with production source labels and example app list",
         "exif_and_text_metadata_present": false
       },
       {
-        "file": "docs/images/my-apps-earlier-in-car.png",
+        "file": null,
+        "removed_from_repository_on": "2026-11-20",
         "sha256": "ce94662741a82ca6dde70c34d4a0ed9db3a7576098d830d9b6599b346cb24065",
         "type": "earlier real vehicle capture, 2026-10-20",
         "exif_and_text_metadata_present": false
@@ -615,7 +620,7 @@
   "js_version_24_integrated_trial_validation": {
     "file": "apks/JS-Dashboard-build-20261117-023306.apk",
     "source_commit": "8c20449a4b2fdc59b146ebdc65fd7baf66f2d1e5",
-    "inputs": "Isolated integration including local changes and conflict resolutions; patch against origin/dev 8c20449 in docs/build-inputs/js-v24-origin-dev.patch.",
+    "inputs": "Isolated integration including local changes and conflict resolutions; the patch against origin/dev 8c20449 was retained at docs/build-inputs/js-v24-origin-dev.patch when this validation was recorded, then removed from the checkout on 2026-11-20 during documentation cleanup.",
     "host_tests": "21 synthetic Java programs; 88 Python tests; 100 Java2D diagnostic renders; translation catalog check.",
     "signature": "API17 V1 AOSP signer and zipalign verified.",
     "unverified": "Physical screen and touch, signal correctness, extended operation and Java 7 compilation.",

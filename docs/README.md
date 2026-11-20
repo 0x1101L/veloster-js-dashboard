@@ -19,29 +19,19 @@ For the existing JSN app, this guide covers compatibility, ADB, installation, an
 
 [Detailed limitations / 상세 한계](LIMITATIONS.md) · [Release history / 배포 기록](RELEASE.md) · [Signing and dependencies / 서명·의존성](../NOTICE.md)
 
-## Development and research
+## Development and project records / 개발·프로젝트 기록
 
 | Document | Purpose / 용도 |
 | --- | --- |
-| [Build and test](BUILD.md) | Existing upstream build instructions; they do not validate the new JS/PD profiles / 기존 upstream 빌드 안내이며 JS·PD 신규 분기 검증과는 별개 |
-| [Research walkthrough](RESEARCH.md) · [한국어](RESEARCH_ko.md) | Firmware research and the standalone-app approach / 분석 과정 |
-| [Common media bar and notifications](f1_media_bar.md) | Shared controls, display policies and host verification / 공통 미디어 제어·표시 정책·호스트 검증 |
-| [Performance dashboard](PERFORMANCE.md) | Unreleased optional page and actual-code previews / 새 선택형 화면·미리보기 |
-| [Private error records](DIAGNOSTICS.md) | Bounded app diagnostics and read-only retrieval / 오류 기록·읽기 |
-| [JS telemetry capture handoff](JS_DEBUG_CAPTURE.md) | Structured sample format and offline extraction for a separate debugging agent / JS 값 추출·인계 |
-| [JS diagnostics screen](JS_DIAGNOSTICS.md) | HUD/navigation, signal reception and Wi-Fi/DCT observations / JS 디버깅 화면·수신 상태와 경과 |
-| [JS debugging guide](JS_DEBUGGING_GUIDE.md) | ADB tools, in-app instrumentation, host tests and evidence boundaries / ADB 도구·앱 내부 계측·호스트 테스트의 구분 |
-| [JS HUD research](JS_HUD_RESEARCH.md) | OEM components, MICOM path and applied observations / 순정 구성요소·MICOM 경로·적용 내역 |
-| [CarPlay navigation research](CARPLAY_NAVIGATION_DASHBOARD_RESEARCH.md) | Current-source feasibility and evidence review / 현 소스 기준 구현 가능성·근거 검토 |
-| [CarPlay TBT test plan](CARPLAY_TBT_TEST_PLAN_20261115.md) | iAP2 capture candidate, single-USB handoff, app-private import and verification gates / iAP2 캡처 후보·단일 USB 전환·앱 내부 가져오기 절차와 검증 경계 |
-| [NEMESIS review](NEMESIS_REVIEW.md) | Platform differences and reusable ideas / 적용 가능성·참고 코드 |
-| [Experiments](../experimental/README.md) | AVRCP and SystemUI work outside released apps / 미배포 실험 |
-| [Installation audit, 2026-10-26](INSTALL_AUDIT.md) | Historical v9 entry-point findings / 당시 진입점 개선 기록 |
-| [Release metadata](../release.json) · [Validation history](../VALIDATION.json) | Artifact identities and recorded check scope / 산출물·검사 이력 |
+| [Build and test](BUILD.md) | Public build prerequisites and commands / 공개 빌드의 준비와 명령 |
+| [Common display settings](common_display_settings.md) · [Media bar](f1_media_bar.md) | Shared display, media controls and verification limits / 공통 화면·미디어 제어·검증 한계 |
+| [Performance page](PERFORMANCE.md) | Optional page behavior and host previews / 선택형 화면과 호스트 미리보기 |
+| [Theme engine v3](theme_engine_v3.md) | Current theme file, inheritance, layout and input contract / 현재 테마 파일·상속·배치·입력 규격 |
+| [Theme creation questionnaire](THEME_CREATION_QUESTIONNAIRE.md) | Theme review against the v3 contract / v3 규격에 따른 테마 검수 질문 |
+| [Theme implementation record](THEME_ENGINE_IMPLEMENTATION_20261117.md) · [Material Auto](MATERIAL_AUTO_THEME_IMPLEMENTATION_20261119.md) | Dated implementation and host-check records / 날짜별 구현·호스트 검사 기록 |
+| [Experiments](../experimental/README.md) | Source and status of local experiments / 로컬 실험의 소스와 상태 |
+| [Installation audit](INSTALL_AUDIT.md) | Historical v9 entry-point findings / v9 진입점 감사 이력 |
 
-Current verification is maintained in [STATUS.md](STATUS.md). Dated release/audit records describe their original versions and are not evidence that newer work passed vehicle checks.
+Detailed research, vehicle evidence, and diagnostic procedures are maintained in the connected private project-memory workspace under its research and documents indexes. Those records are not part of the public checkout. Use [STATUS.md](STATUS.md) for current public verification; dated records do not establish later device or vehicle behavior.
 
-현재 배포본의 확인 범위는 [STATUS.md](STATUS.md#한국어)를 기준으로 합니다. 연구는 주제별 최신 판정 문서에 모으고, 날짜별 시험·수집 기록은 해당 문서의 출처로 남깁니다. 날짜가 붙은 배포·감사 기록은 당시 버전의 이력입니다. 준비·호스트 검사·실차 설치·재부팅 검증을 구분합니다. 연구 문서 안내는 [RESEARCH.md](RESEARCH.md)와 [RESEARCH_ko.md](RESEARCH_ko.md)를 따릅니다.
-
-- [테마 엔진 v3: 파일 분리·상속·배치·입력](theme_engine_v3.md)
-- [테마 생성 질문표](THEME_CREATION_QUESTIONNAIRE.md) · [Material 3·Android Auto 리서치 규격](MATERIAL_AUTO_THEME_RESEARCH_SPEC_20261119.md)
+연구·차량 근거·진단 절차는 연결된 비공개 프로젝트 메모리의 연구·문서 색인에서 관리하며 공개 checkout에는 포함하지 않습니다. 공개 확인 범위는 [STATUS.md](STATUS.md#한국어)를 기준으로 합니다. 날짜가 붙은 기록은 이후 기기나 실차 동작을 입증하지 않습니다.

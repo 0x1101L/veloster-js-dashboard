@@ -56,6 +56,8 @@ F1-2의 `layouts/f1.json`은 `f1Grid`로 행 가중치와 열·행 span을 지�
 
 ## 검수와 적용
 
+현재 소스의 Material Auto·Original 캡처는 [`theme-previews/`](theme-previews/README.md)에 둔다. 저장소 루트에서 `python3 tools/render_theme_previews.py`를 실행하면 실제 Java Dashboard 렌더러와 Java2D shim으로 해당 캡처를 다시 만든다. 모든 차량·값·미디어 데이터는 합성이며 Android 기기나 실차 검증 결과가 아니다.
+
 **Liquid Glass (Optics)**는 [검수 시안](themes/f1-2-optics/manifest.json)을 기반으로 한 탐색 테마다. F1-2의 배경·글꼴·본문 배치를 상속한다. 정보 카드·기어·설정 그룹은 평면 반투명 표면과 낮은 블러를 사용하고, 미디어 컨테이너와 왼쪽 독은 조금 더 강한 블러를 쓴다. 유리 조작부는 단일 하이라이트 선으로 렌더링하며 이중 외곽선을 그리지 않는다. 하단 바는 공통 배경을 표시하고 개별 버튼 배경을 숨긴다.
 
 `python3 theme/preview_glass_optics.py`는 앱에 등록된 Liquid Glass·Flat·Optics에 하단 바와 와이드 플레이어의 공통 배경 및 배경 없는 개별 버튼을 실제 Java 렌더러로 확인한다. 임시 자산에서는 공통 배경을 끈 경우와 버튼 배경을 켠 경우, 와이드 버튼과 블러 미적용을 비교한다. 표준·낮은 높이·와이드 화면의 입력을 호스트에서 확인하며, 결과는 `theme/artifacts/f1-2-optics/`에 저장된다.

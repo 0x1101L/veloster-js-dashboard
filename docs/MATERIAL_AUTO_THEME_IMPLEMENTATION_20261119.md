@@ -9,7 +9,7 @@
 
 `material_auto_cowork`는 테스트용 임시 항목이 아니라 번들 테마 카탈로그의 정식 기본 제공 테마이며, 설정의 테마 선택 화면에서 `Material Auto`로 선택할 수 있다. Material Auto 테스트 테마를 정식 카탈로그 항목으로 승격하는 작업은 이미 카탈로그 등록으로 완료된 상태다. 이는 소스 내 정식 등록 상태를 뜻하며, APK 배포·설치나 실차 검증을 뜻하지 않는다.
 
-Java2D 호스트 프리뷰 캡처는 [Material Auto 화면 모음](theme-previews/material-auto/)에 보관한다. 데이터는 합성이며 차량 기기 캡처가 아니다.
+Java2D 호스트 프리뷰 캡처는 [Material Auto 화면 모음](../theme/theme-previews/material-auto/)에 둔다. 이미지는 현재 소스에서 다시 렌더링한 합성 데이터이며 차량 기기 캡처가 아니다.
 
 ## 변경
 

@@ -4,7 +4,7 @@
 
 **Unreleased source candidate, 2026-11-02.** Select **Performance / 퍼포먼스** at the top left. Overview, F1, Gauges and Graphs remain available. The last selected page is saved; a fresh installation still starts on Overview. Back and language controls keep their existing positions.
 
-![Korean performance page, synthetic host rendering](images/performance-preview-ko.png)
+![Korean performance page, current Java2D host rendering with synthetic data](../theme/theme-previews/performance/js-6-received-ko-original.png)
 
 This is the actual Canvas renderer with **synthetic test values**, rendered on the host at 800×480. It is not a vehicle screenshot. The layout was inspired by the owner's supplied navigation-info reference; the drawing is implemented in this project's Java source with a simple vector car silhouette. No reference bitmap or third-party UI code is bundled.
 
@@ -15,15 +15,17 @@ This is the actual Canvas renderer with **synthetic test values**, rendered on t
 
 The RPM arc uses 0–8,000 rpm, pedal bars use 0–100 % / 0–100 bar, and the G dot uses ±1 G per axis. Bars/dot clamp visually; numeric readings retain their values. These are visual scales, not new protocol limits or warnings. The reference's automatic-transmission `D`, SPORT mode and transmission-fluid temperature were not added because this vehicle's existing verified model does not supply them.
 
-![English performance page, synthetic 800×425 host rendering](images/performance-preview-en.png)
+![English performance page, current Java2D host rendering with synthetic data](../theme/theme-previews/performance/js-6-received-en-original.png)
 
-Host verification covers Korean/English at 800×480 and 800×425, received/waiting/expired/invalid data, all five page hit targets, and rendering of the four prior pages. Host fonts and rasterization approximate Android; target fonts, performance and touch behavior still require vehicle verification. Existing display restrictions remain in force.
+These refreshed captures use the current source at 800×480. Separate host tests cover Korean/English at 800×480 and 800×425, received/waiting/expired/invalid data, all five page hit targets, and rendering of the four prior pages. Host fonts and rasterization approximate Android; target fonts, performance and touch behavior still require vehicle verification. Existing display restrictions remain in force.
 
-Reproduce the preview with JDK 17 available:
+Refresh these captures and the theme preview gallery from the repository root with a JDK available:
 
 ```sh
-python3 tests/test_performance_renderer.py --out build/performance-preview
+python3 tools/render_theme_previews.py
 ```
+
+The broader host scenario checks remain in `python3 tests/test_performance_renderer.py`.
 
 Implementation: [PerformanceRenderer](../apps/dashboard/src/main/java/com/veloster/dashboard/view/performance/PerformanceRenderer.java), [DashboardPage](../apps/dashboard/src/main/java/com/veloster/dashboard/view/DashboardPage.java), [DashboardView](../apps/dashboard/src/main/java/com/veloster/dashboard/view/DashboardView.java). Fixtures are confined to tests. No new vehicle command or telemetry decoding was introduced.
 

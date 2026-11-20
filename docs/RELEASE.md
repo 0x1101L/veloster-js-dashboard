@@ -67,7 +67,7 @@ This is a public AOSP platform test certificate, not a private publisher identit
 
 `v2026.10.26` contains a new complete ZIP with the current apps, sources, scripts and guides. The original `v2026.10.23` APKs and ZIP are retained unchanged and do not contain the new entry solution. Use the new complete archive for the guided installer rather than downloading only an APK.
 
-The owner-provided overview photo is an actual car image. Its pixels/orientation were retained while GPS, camera/date metadata and auxiliary MPO images were removed. The My Apps v8 previews are historical browser renderings, not v9 or vehicle captures. The selected earlier car screenshot is dated 2026-10-20. No new screenshots were presented as evidence of v9 running on a vehicle.
+The owner-provided overview photo, historical My Apps v8 browser previews, and the 2026-10-20 earlier-build vehicle screenshot were removed from this checkout on 2026-11-20 during documentation cleanup. They were historical references, not evidence of v9 running on a vehicle. No new screenshots are presented here as vehicle evidence.
 
 ## 한국어
 

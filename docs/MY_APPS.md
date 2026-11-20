@@ -14,9 +14,7 @@ See [Language settings](LANGUAGES.md) for Korean/English selection. Button label
 
 ## Layout reference — earlier v8
 
-![My Apps v8 PC preview, not an in-car capture](images/my-apps-v8-main-preview.png)
-
-**This is a browser-rendered preview of the earlier v8 layout, not a v10 screen or an Android/vehicle screenshot.** v10 adds **실행 바로가기 / Quick entry** above the fixed controls. Other labels shown come from v8 source; app names are examples. Native widgets, fonts, system bars, and available apps can differ. An earlier real vehicle capture is shown at the end of this guide.
+The historical v8 browser preview and earlier vehicle image were removed from this checkout on 2026-11-20. This section preserves the version boundary only: v10 adds **실행 바로가기 / Quick entry** above the fixed controls. It does not document the current screen's exact appearance.
 
 ## What each button does
 
@@ -49,9 +47,7 @@ A compatible launcher is another option. The research vehicle's separately modif
 3. Tap **목록 편집**, select or clear the app checkboxes, then tap **저장** (Save).
 4. Tap the app name to launch it. The selection is stored locally and reused after relaunch.
 
-![Earlier v8 My Apps list editor, PC preview with example applications](images/my-apps-v8-edit-preview.png)
-
-Only enabled, exported activities that this app is allowed to launch are listed. Packages without a launchable activity may not appear. Available system apps can be selected through the editor; this does not grant them new permissions. The fixed dashboard/engineering shortcuts remain separate from the editable app list. Example applications in these previews are not bundled with the release.
+Only enabled, exported activities that this app is allowed to launch are listed. Packages without a launchable activity may not appear. Available system apps can be selected through the editor; this does not grant them new permissions. The fixed dashboard/engineering shortcuts remain separate from the editable app list.
 
 ## USB, Bluetooth, and restart
 
@@ -61,14 +57,6 @@ For Bluetooth, open **블루투스 연결 설정**, choose **주변 기기 검�
 
 For a restart, tap **강제 재시작** and then explicitly confirm **재시작**, or select **취소** (Cancel). Display, music, and PC connectivity are interrupted by a real restart; perform this action while parked. A permission error is possible on unsupported head units.
 
-![Earlier v8 head-unit restart confirmation, PC preview](images/my-apps-v8-reboot-preview.png)
-
 The **연결 점검** page retains hotspot test, credentials display, and settings-restore controls. Viewing status does not start the hotspot. Starting or restoring it requires an explicit action. Wi-Fi activation failed on the research vehicle; do not interpret this page or the `carplayhub` package name as a working wireless CarPlay feature.
 
-## Earlier real vehicle screenshot
-
-![Earlier My Apps build running on the actual head unit](images/my-apps-earlier-in-car.png)
-
-This is an actual head-unit capture from **2026-10-20**, showing an earlier build. Its **새 N모드** label predates the separate **N 계기판** shortcut, and Bluetooth/restart controls had not yet been added to this screen. It illustrates the native appearance, not the current v10 feature set. This curated image contains no visible map, device addresses, or personal app list; the raw session logs are not published.
-
-The v8 previews were prepared on 2026-10-25 from the then-current public source. This guide was revised for v10 on 2026-10-26; the images remain historical v8 previews. Neither this documentation revision nor the v10 host checks involved a new vehicle connection, installation, radio action, or reboot.
+The v8 browser previews were prepared on 2026-10-25; this guide was revised for v10 on 2026-10-26. Those historical images were removed on 2026-11-20. Neither this documentation revision nor the v10 host checks involved a new vehicle connection, installation, radio action, or reboot.

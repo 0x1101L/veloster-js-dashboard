@@ -17,23 +17,11 @@
 
 스타일, 이미지, 명확한 출처를 참고자료에 넣으면 출처 링크와 이미지 출력물을 함께 남긴다. 이미지는 문서에서 바로 볼 수 있게 첨부 파일을 저장소에 두고 상대 경로로 삽입한다. 출처 페이지·이미지 원본 URL, 작성자/게시자, 자료 제목, 확인 날짜, 사용 범위나 라이선스를 같이 기록한다. 저작권·라이선스를 확인하지 못한 이미지의 경우 임의로 저장소에 복제하지 말고 출처 페이지 링크와 직접 확인 가능한 이미지 미리보기를 제공한다.
 
-아래 구성도는 Google 공식 Android Auto 시스템 UI 문서를 읽기 쉽게 다시 그린 참고도이며, 공식 스크린샷이나 픽셀·치수 규격이 아니다. Android Auto는 하단 또는 측면 탐색 바에 앱 실행기, 어시스턴트, 앱 dock, 알림 배지를 둘 수 있다. 시계·날씨·연결·배터리는 탐색 바의 상태 요소 또는 별도 상태 표시줄 구성으로 나타날 수 있다. 실제 방향과 순서는 화면과 차량 구성에 따라 달라진다.
+아래 링크는 Android Auto 시스템 UI의 시각적 계층을 참고하기 위한 외부 자료다. Dashboard의 기능·위치·치수 규격을 정의하지 않는다.
 
 [Google 공식 Android Auto 시스템 UI 개요](https://developers.google.com/cars/design/android-auto/product-experience/system-ui/overview) · [탐색 바 구성](https://developers.google.com/cars/design/android-auto/product-experience/system-ui/nav-bar) · [상태 표시줄 구성](https://developers.google.com/cars/design/android-auto/product-experience/system-ui/status-bar)
 
-![Google 공식 Android Auto UI 설명을 바탕으로 재작성한 구성도. 공식 스크린샷이 아니며 비율과 치수는 참고용이 아니다.](images/android-auto-ui-reference.svg)
-
-이미지별 기록:
-
-| 항목 | 기록 |
-|---|---|
-| 문서 내 이미지 | `images/android-auto-ui-reference.svg` |
-| 이미지 성격 | 공식 자료를 바탕으로 다시 그린 설명용 구성도 |
-| 1차 출처 | [Google for Developers · Android Auto System UI](https://developers.google.com/cars/design/android-auto/product-experience/system-ui/overview) |
-| 함께 볼 출처 | [Navigation bar](https://developers.google.com/cars/design/android-auto/product-experience/system-ui/nav-bar), [Status bar](https://developers.google.com/cars/design/android-auto/product-experience/system-ui/status-bar), [Widgets](https://developers.google.com/cars/design/android-auto/product-experience/system-ui/widgets) |
-| 출처 표기 | Google Developers 문서는 별도 표시가 없는 한 CC BY 4.0. 이 SVG는 문서 설명을 바탕으로 새로 그린 구성도이며 Google 화면 캡처를 포함하지 않음 |
-| 확인일 | 2026-11-19 |
-| 적용 경계 | 시각적 요소와 계층만 참고. 위치, 치수, 동작을 Dashboard 규격으로 간주하지 않음 |
+참고 링크: [Navigation bar](https://developers.google.com/cars/design/android-auto/product-experience/system-ui/nav-bar), [Status bar](https://developers.google.com/cars/design/android-auto/product-experience/system-ui/status-bar), [Widgets](https://developers.google.com/cars/design/android-auto/product-experience/system-ui/widgets). Google 자료는 별도 표기가 없는 한 CC BY 4.0이며, 적용 범위는 시각적 요소와 계층 참고에 한정한다.
 
 ## 질문표
 
