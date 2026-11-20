@@ -92,7 +92,7 @@ Liquid Glass (Optics)도 `f1_2`를 상속한다. 정보 카드·기어·설정 �
 
 `shell.navigationPosition`이 `left`이면 상단 메뉴 영역을 숨기고 `sideMenuBar`가 폭을 차지한다. `top`이면 `topMenuBar`를 컨텐츠와 미디어 위쪽에 배치한다. 설정 생략 시 기본값은 상단 메뉴다.
 
-좌측 시계는 메뉴 최상단, 돌아가기는 최하단에 고정한다. 페이지·설정·돌아가기 버튼은 같은 크기의 정사각형이며 메뉴 폭과 사용 가능한 높이 안에 배치한다. Original에서 사용자 설정으로 왼쪽 메뉴를 고르면 셸 폭은 96px이다. `sideMenuBar.buttonHeight`는 좌측 시계 영역의 높이이며 테마 파일의 검증 범위는 유지한다. `sideMenuBar.alignment`는 현재 보이는 페이지와 설정 버튼 묶음을 정렬한다. 좌측 전체를 별도 패널색으로 덮지 않고 본문과 같은 전체 화면 배경을 사용한다. F1-2의 좌측 메뉴 폭은 80px, 버튼은 48 × 48이며 좌측 버튼의 모서리 반경은 한 변의 1/4 이하로 제한해 정사각형 윤곽을 유지한다. flat 메뉴 버튼은 별도 선택 밑줄을 표시하지 않는다. 전체 조망 카드도 상단 직선 장식을 표시하지 않는다.
+좌측 시계는 메뉴 최상단, 돌아가기는 최하단에 고정한다. 페이지·설정·돌아가기 버튼은 같은 크기의 정사각형이며 메뉴 폭과 사용 가능한 높이 안에 배치한다. Original에서 사용자 설정으로 왼쪽 메뉴를 고르면 셸 폭은 96px이다. `sideMenuBar.buttonHeight`는 좌측 시계 영역의 높이이며 테마 파일의 검증 범위는 유지한다. `sideMenuBar.alignment`는 현재 보이는 페이지와 설정 버튼 묶음을 정렬한다. 좌측 전체를 별도 패널색으로 덮지 않고 본문과 같은 전체 화면 배경을 사용한다. F1-2의 좌측 메뉴 폭은 기준 좌표에서 64px이며 버튼 크기는 가용 폭과 높이 안에서 정한다. 좌측 버튼의 모서리 반경은 한 변의 1/4 이하로 제한해 정사각형 윤곽을 유지한다. flat 메뉴 버튼은 별도 선택 밑줄을 표시하지 않는다. 전체 조망 카드도 상단 직선 장식을 표시하지 않는다.
 
 `shell.frame.gap.horizontal/vertical`은 메뉴바·컨텐츠·미디어 등 큰 영역 사이 간격이다. 각 영역의 `padding`은 해당 영역의 안쪽 여백이며 화면 바깥 margin은 두지 않는다. 왼쪽 메뉴에서는 `sideMenuBar.gap`이 시계·메뉴·돌아가기 묶음 사이를, `sideMenuBar.itemGap`이 메뉴 버튼 사이를 정한다. `overview.grid.itemGapX/Y`와 `f1Grid.itemGap`은 각 화면 안에서 반복되는 항목 사이 간격이다. `layout.padding`은 사용하지 않는다.
 
@@ -112,7 +112,7 @@ Liquid Glass(F1-2)의 `sideMenuBar.appearance` 기본값은 `dock`이다. Flat�
 
 `DashboardPage.Content`는 `shell.frame.padding`과 프레임 영역 간격을 적용해 본문 사각형을 계산한다. 화면 바깥 margin은 없고, 모든 페이지의 시각 요소와 터치 판정은 같은 계산 결과를 사용한다.
 
-각 영역은 바깥 여백 없이 배치하고, 필요할 때 영역별 `padding`으로 안쪽 여백을 지정한다. `sideMenuBar.padding.vertical`은 왼쪽 메뉴 내부의 위아래 여백이다. Overview 카드 안쪽 여백은 `cardDefaults.padding`, F1 셀 안쪽 여백은 `f1Grid.padding`으로 정한다. 여러 설정 리스트와 배경화면 그리드는 페이지 본문 전체를 공유하는 하나의 스크롤 영역에 놓고, 개별 리스트 안쪽 스크롤은 제공하지 않는다. 화면 상단의 돌아가기와 적용은 고정한다.
+화면 가장자리 여백은 `shell.frame.padding`으로, 각 영역 내부 여백은 해당 영역의 `padding`으로 지정한다. `sideMenuBar.padding.vertical`은 왼쪽 메뉴 내부의 위아래 여백이다. Overview 카드 안쪽 여백은 `cardDefaults.padding`, F1 셀 안쪽 여백은 `f1Grid.padding`으로 정한다. 여러 설정 리스트와 배경화면 그리드는 페이지 본문 전체를 공유하는 하나의 스크롤 영역에 놓고, 개별 리스트 안쪽 스크롤은 제공하지 않는다. 화면 상단의 돌아가기와 적용은 고정한다.
 
 주요 화면 영역은 공통 좌표계에서 `shell.frame.gap`으로 간격을 두어 배치한다. 프레임과 각 영역의 padding은 안쪽 여백이며 외곽 margin을 만들지 않는다. `itemGap`은 해당 영역 안의 반복 요소 간격으로만 사용한다.
 
