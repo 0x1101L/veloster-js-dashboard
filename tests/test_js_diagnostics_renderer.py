@@ -66,7 +66,7 @@ public class JsDiagnosticsPreview {
   d.event("navigation.route.observer","registered");d.event("navigation.observer","registered");
   d.event("navigation.state_destination","-1",1300);d.event("navigation.notification","notice",1500);
   d.event("cluster.service","present; matching descriptor");d.event("class","com.hkmc.cluster.NavigationCluster");
-  d.event("method","updateTBTInfo");d.event("micom.service","present");d.wifi(1,1,1,1);d.hscan(1);d.event("binding.bcm","registered",1000);d.event("binding.bcm","received",1500);
+  d.event("method","updateTBTInfo");d.event("micom.service","present");d.wifi(1,1,1,1,1);d.event("navigation.dipo.service","present");d.event("navigation.dipo.status","stat=1 turnByTurn=1",1400);d.hscan(1);d.event("binding.bcm","registered",1000);d.event("binding.bcm","received",1500);
   if(state.equals("received")||state.equals("held")) { d.lighting(0x80,0xe0,1700);d.lighting(0x00,0x00,1900); }
   if(state.equals("invalid")){d.event("navigation.route.invalid","bad payload");d.event("navigation.state.error","SecurityException");}
   return d;

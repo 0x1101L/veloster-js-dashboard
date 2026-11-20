@@ -19,7 +19,7 @@ public final class SettingsPageRenderer {
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
 
     static final int LANGUAGE=0,THEME=1,SHIFT_TARGET=2,MEDIA_BAR=3,PAGE_MENU=4,MENU_POSITION=5,VEHICLE_SETTINGS=40;
-    static final int PEDAL_BAR=6,BRAKE_BAR=7,F1_ORDER=8,UI_GROUP=9,F1_GROUP=10,MENU_STYLE=12,MEDIA_NOTICES=13,MEDIA_BUTTONS=29,MEDIA_BUTTON_STYLE=30,PAGE_GROUP=31,THEME_SETTINGS=32;
+    static final int PEDAL_BAR=6,BRAKE_BAR=7,F1_ORDER=8,UI_GROUP=9,F1_GROUP=10,MENU_STYLE=12,MEDIA_NOTICES=13,MEDIA_BUTTONS=29,MEDIA_BUTTON_STYLE=30,PAGE_GROUP=31,THEME_SETTINGS=32,MENU_SHAPE=33;
     static final int OVERVIEW_GROUP=36,OVERVIEW_SIGNALS=37,OVERVIEW_ORDER=38,OVERVIEW_RESET=39;
     static final int WALLPAPER=14,DIAGNOSTICS=15,MENU_DOCK=16;
     static final int LIQUID_GLASS=17,LIQUID_GLASS_TRANSPARENCY=18,LIQUID_GLASS_BLUR=19,LIQUID_GLASS_HIGHLIGHT=27;
@@ -31,7 +31,7 @@ public final class SettingsPageRenderer {
     private static final int ITEM_HORIZONTAL_INSET=12;
     private static final int HEADER_ACTION_INSET=12;
     private static final int GROUP_INSET=0;
-    private static boolean choicePage(int screen){return screen>=0&&screen<=8||screen==MENU_STYLE||screen==MEDIA_NOTICES||screen==MEDIA_BUTTONS||screen==MEDIA_BUTTON_STYLE||screen==OVERVIEW_SIGNALS||screen==MENU_DOCK||screen==LIQUID_GLASS_TRANSPARENCY||screen==LIQUID_GLASS_BLUR||screen==LIQUID_GLASS_HIGHLIGHT||screen==ACCENT_PALETTE||screen>=GAUGE_SIGNAL&&screen<=GAUGE_SWAP||screen==GRAPH_SIGNAL||screen==TRANSMISSION;}
+    private static boolean choicePage(int screen){return screen>=0&&screen<=8||screen==MENU_STYLE||screen==MENU_SHAPE||screen==MEDIA_NOTICES||screen==MEDIA_BUTTONS||screen==MEDIA_BUTTON_STYLE||screen==OVERVIEW_SIGNALS||screen==MENU_DOCK||screen==LIQUID_GLASS_TRANSPARENCY||screen==LIQUID_GLASS_BLUR||screen==LIQUID_GLASS_HIGHLIGHT||screen==ACCENT_PALETTE||screen>=GAUGE_SIGNAL&&screen<=GAUGE_SWAP||screen==GRAPH_SIGNAL||screen==TRANSMISSION;}
     private static boolean applyPage(int screen){return choicePage(screen)||screen==GAUGE_RESET;}
     public static final class Editor {
         public interface Preview {void draw(Canvas canvas,int width,int height);void tap(float x,float y,int width,int height);}

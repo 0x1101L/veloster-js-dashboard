@@ -18,11 +18,14 @@
       "alignment": "center",
       "buttonHeight": 40,
       "padding": {
-        "vertical": 12
+        "vertical": 8,
+        "left": 0,
+        "right": 0
       },
-      "gap": 5,
-      "itemGap": 5,
       "appearance": "dock",
+      "presentation": "icons"
+    },
+    "topMenuBar": {
       "presentation": "icons"
     }
   }

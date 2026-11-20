@@ -77,6 +77,7 @@ public final class ThemeSettingsStore {
                 .putInt("liquid_glass_highlight",highlight>=0&&highlight<=2?highlight:1).apply();
     }
     private String menuStyleKey(String themeId){return "menu_style_"+(themeId==null?"":themeId);}
+    private String menuShapeKey(String themeId){return "menu_shape_"+(themeId==null?"":themeId);}
     /** -1 means inherit the theme default; 0 is labels and 1 is icons. */
     public int menuStyleOverride(String themeId){
         try{int value=preferences.getInt(menuStyleKey(themeId),-1);return value==0||value==1?value:-1;}
@@ -89,6 +90,15 @@ public final class ThemeSettingsStore {
     public void saveMenuStyle(String themeId,int value){
         if(themeId==null||themeId.length()==0)return;
         preferences.edit().putInt(menuStyleKey(themeId),value<0?-1:value==1?1:0).apply();
+    }
+    /** Top navigation only: 0 keeps separate buttons, 1 groups page entries as segmented tabs. */
+    public int menuShape(String themeId){
+        try{return preferences.getInt(menuShapeKey(themeId),0)==1?1:0;}
+        catch(ClassCastException ignored){return 0;}
+    }
+    public void saveMenuShape(String themeId,int value){
+        if(themeId==null||themeId.length()==0)return;
+        preferences.edit().putInt(menuShapeKey(themeId),value==1?1:0).apply();
     }
     /** Preserve the previous shared choice for the theme active during the one-time upgrade. */
     public void migrateLegacyMenuStyle(String themeId){

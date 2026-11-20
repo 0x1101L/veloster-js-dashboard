@@ -12,8 +12,10 @@ public class JsDiagStateTest {
   check(s.snapshot().nav==1&&s.snapshot().navValue==-1&&s.snapshot().navError==1,"query denial clears value without implying registration failure");
   s.event("navigation.observer.stopped","stopped");
   check(s.snapshot().nav==0&&s.snapshot().navNotice==-1,"stop clears notification");
-  s.wifi(1,1,3,1);s.hscan(2);
-  check(s.snapshot().wifiState==3&&s.snapshot().hscan==2,"wifi and socket status");
+  s.wifi(1,1,3,1,1);s.hscan(2);
+  check(s.snapshot().wifiState==3&&s.snapshot().wifiConnection==1&&s.snapshot().hscan==2,"wifi radio, network and socket status");
+  s.event("navigation.dipo.service","present");s.event("navigation.dipo.status","stat=1 turnByTurn=1",2500);
+  check(s.snapshot(3000).dipoService.equals("present")&&s.snapshot(3000).dipoStatus.equals("stat=1 turnByTurn=1")&&s.snapshot(3000).dipoAgeMs==500,"DiPO raw state and app age");
   s.event("cluster.service","present; matching descriptor; method permissions unverified");
   check(s.snapshot().clusterService==1&&s.snapshot().cluster==-1,"Binder discovery is distinct from class discovery");
   s.event("cluster.service","descriptor mismatch");check(s.snapshot().clusterService==2,"wrong Binder contract rejected");
@@ -47,7 +49,7 @@ public class JsDiagStateTest {
   s.clearLighting();check(s.snapshot(2300).lightingByte3==-1&&s.snapshot(2300).lightingCount==0,"lighting observation clears on disconnect");
   s.event("binding.bcm","stopped",600);check(s.source("bcm",700).status.equals("stopped"),"stop retained separately from reception");
   s.reset();check(s.source("bcm",700).status.equals("unknown"),"reset clears source states");
-  check(s.snapshot().wifiState==-1&&s.snapshot().hscan==-1&&s.snapshot().routeWatch==-1&&s.snapshot().clusterService==-1,"reset");
+  check(s.snapshot().wifiState==-1&&s.snapshot().wifiConnection==-1&&s.snapshot().hscan==-1&&s.snapshot().routeWatch==-1&&s.snapshot().clusterService==-1,"reset");
   check(s.snapshot().routeCount==0&&s.snapshot().navQueryCount==0&&s.snapshot().routeAgeMs==-1,"reset clears diagnostic counts and ages");
   System.out.println("PASS: diagnostic observation states");
  }

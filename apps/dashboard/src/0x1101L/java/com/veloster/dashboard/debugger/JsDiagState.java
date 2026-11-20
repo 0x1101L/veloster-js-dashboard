@@ -14,7 +14,9 @@ public final class JsDiagState {
     }
     private String dctService="unknown";
     private int cluster=-1,tbt=-1,micom=-1,nav=-1,navValue=-1,navNotice=-1,hscan=-1;
-    private int wifiFeature=-1,wifiService=-1,wifiState=-1,wifiWatch=-1;
+    private int wifiFeature=-1,wifiService=-1,wifiState=-1,wifiWatch=-1,wifiConnection=-1;
+    private String dipoService="unknown",dipoStatus="unknown",dipoError="unknown";
+    private long dipoAt=-1;
     private int clusterService=-1,routeWatch=-1,routeNotice=-1,routeValue;
     private int routeSource=-1,routeError,navError;
     private boolean navValueKnown,routeDetachFailed,navDetachFailed;
@@ -27,11 +29,12 @@ public final class JsDiagState {
         public SourceSnapshot source(String name){SourceSnapshot s=sources.get(name);return s==null?new SourceSnapshot(new Source(),-1):s;}
         public String[] sourceNames(){String[] names=sources.keySet().toArray(new String[sources.size()]);java.util.Arrays.sort(names);return names;}
         public final String dctService;
-        public final int cluster,tbt,micom,nav,navValue,navNotice,hscan,wifiFeature,wifiService,wifiState,wifiWatch;
+        public final int cluster,tbt,micom,nav,navValue,navNotice,hscan,wifiFeature,wifiService,wifiState,wifiWatch,wifiConnection;
+        public final String dipoService,dipoStatus,dipoError;
         public final int clusterService,routeWatch,routeNotice,routeValue;
         public final int routeSource,routeError,navError;
         public final boolean navValueKnown,routeDetachFailed,navDetachFailed;
-        public final long routeCount,routeInvalidCount,navQueryCount,navNoticeCount,routeAgeMs,navAgeMs,navNoticeAgeMs;
+        public final long routeCount,routeInvalidCount,navQueryCount,navNoticeCount,routeAgeMs,navAgeMs,navNoticeAgeMs,dipoAgeMs;
         public final int lightingByte3,lightingByte4;
         public final long lightingCount,lightingAgeMs;
         private Snapshot(JsDiagState s,long now){
@@ -39,7 +42,8 @@ public final class JsDiagState {
             for(java.util.Map.Entry<String,Source> entry:s.sources.entrySet())sources.put(entry.getKey(),new SourceSnapshot(entry.getValue(),now));
             dctService=s.dctService;
             cluster=s.cluster;tbt=s.tbt;micom=s.micom;nav=s.nav;navValue=s.navValue;navNotice=s.navNotice;hscan=s.hscan;
-            wifiFeature=s.wifiFeature;wifiService=s.wifiService;wifiState=s.wifiState;wifiWatch=s.wifiWatch;
+            wifiFeature=s.wifiFeature;wifiService=s.wifiService;wifiState=s.wifiState;wifiWatch=s.wifiWatch;wifiConnection=s.wifiConnection;
+            dipoService=s.dipoService;dipoStatus=s.dipoStatus;dipoError=s.dipoError;dipoAgeMs=age(s.dipoAt,now);
             clusterService=s.clusterService;routeWatch=s.routeWatch;routeNotice=s.routeNotice;routeValue=s.routeValue;
             routeSource=s.routeSource;routeError=s.routeError;navError=s.navError;navValueKnown=s.navValueKnown;routeDetachFailed=s.routeDetachFailed;navDetachFailed=s.navDetachFailed;
             routeCount=s.routeCount;routeInvalidCount=s.routeInvalidCount;navQueryCount=s.navQueryCount;navNoticeCount=s.navNoticeCount;
@@ -50,12 +54,13 @@ public final class JsDiagState {
     private static long age(long at,long now){return at<0||now<at?-1:now-at;}
     public synchronized void reset(){
         sources.clear();dctService="unknown";
-        cluster=tbt=micom=nav=navValue=navNotice=hscan=wifiFeature=wifiService=wifiState=wifiWatch=clusterService=routeWatch=routeNotice=routeSource=-1;
+        cluster=tbt=micom=nav=navValue=navNotice=hscan=wifiFeature=wifiService=wifiState=wifiWatch=wifiConnection=clusterService=routeWatch=routeNotice=routeSource=-1;
+        dipoService=dipoStatus=dipoError="unknown";dipoAt=-1;
         routeValue=routeError=navError=0;navValueKnown=routeDetachFailed=navDetachFailed=false;
         routeCount=routeInvalidCount=navQueryCount=navNoticeCount=0;routeAt=navAt=navNoticeAt=-1;
         clearLighting();
     }
-    public synchronized void wifi(int feature,int service,int state,int watch){wifiFeature=feature;wifiService=service;wifiState=state;wifiWatch=watch;}
+    public synchronized void wifi(int feature,int service,int state,int watch,int connection){wifiFeature=feature;wifiService=service;wifiState=state;wifiWatch=watch;wifiConnection=connection;}
     public synchronized void hscan(int value){hscan=value;}
     public synchronized void lighting(int byte3,int byte4,long now){
         if(byte3<0||byte3>255||byte4<0||byte4>255)return;
@@ -66,6 +71,9 @@ public final class JsDiagState {
     public synchronized void event(String name,String detail,long now){
         if(name==null||detail==null)return;
         if("dct.service".equals(name)){dctService=detail;return;}
+        if("navigation.dipo.service".equals(name)){dipoService=detail;return;}
+        if("navigation.dipo.status".equals(name)){dipoStatus=detail;dipoError="none";dipoAt=now;return;}
+        if("navigation.dipo.error".equals(name)){dipoError=detail;dipoAt=now;return;}
         if(name.startsWith("binding.")){
             String source=name.substring(8);Source s=sources.get(source);
             if(s==null){s=new Source();sources.put(source,s);}

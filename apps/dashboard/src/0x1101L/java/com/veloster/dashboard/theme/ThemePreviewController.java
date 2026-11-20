@@ -20,6 +20,7 @@ public final class ThemePreviewController {
     private final JsPitRenderer jsPit=new JsPitRenderer();
     private ThemeSpec draft=ThemeSpec.original();
     private boolean menuIcons;
+    private boolean menuSegmented;
 
     public ThemePreviewController(boolean pd,boolean js,boolean jsn){
         this(null,pd,js,jsn);
@@ -58,7 +59,8 @@ public final class ThemePreviewController {
 
     public void setDraft(ThemeSpec value){draft=ThemeCatalog.withMenuPosition(value==null?ThemeSpec.original():value,menuPosition).withMenuDock(menuDock);layout.theme(draft);ThemeResources resources=context==null?null:ThemeResources.load(context,draft);pit.setTheme(draft,resources);jsPit.setTheme(draft,resources);applyMenuPresentation();}
     public void setMenuIcons(boolean value){menuIcons=value;applyMenuPresentation();}
-    private void applyMenuPresentation(){DashboardPage.Menu menu=new DashboardPage.Menu();menu.icons(draft.shell().left()||menuIcons);pit.setPageMenu(menu);jsPit.setPageMenu(menu);}
+    public void setMenuSegmented(boolean value){menuSegmented=value;applyMenuPresentation();}
+    private void applyMenuPresentation(){DashboardPage.Menu menu=new DashboardPage.Menu();menu.icons(draft.shell().left()||menuIcons);menu.segmented(menuSegmented);pit.setPageMenu(menu);jsPit.setPageMenu(menu);}
     public void setMediaBarPolicy(int policy){pit.setMediaDisplay(policy,false);jsPit.setMediaDisplay(policy,false);}
     public ThemeSpec draft(){return draft;}
     public OverviewLayout layout(){return layout;}

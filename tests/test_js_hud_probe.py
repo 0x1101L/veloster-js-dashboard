@@ -36,7 +36,8 @@ STUBS = {
     'android/content/IntentFilter.java': 'package android.content;public class IntentFilter {public final String action;public IntentFilter(String a){action=a;}}',
     'android/content/BroadcastReceiver.java': 'package android.content;public abstract class BroadcastReceiver {public boolean initialSticky;public boolean isInitialStickyBroadcast(){return initialSticky;}public abstract void onReceive(Context c,Intent i);}',
     'android/content/Context.java': '''package android.content;public class Context {
- public BroadcastReceiver receiver,lastReceiver;public IntentFilter filter;public int adds,removes;public boolean fail,failRemove;public Intent sticky;
+ public BroadcastReceiver receiver,lastReceiver;public IntentFilter filter;public int adds,removes;public boolean fail,failRemove;public Intent sticky;public Object dipo;
+ public Object getSystemService(String name){return "dipo".equals(name)?dipo:null;}
  public ContentResolver resolver=new ContentResolver();public ContentResolver getContentResolver(){return resolver;}
  public Intent registerReceiver(BroadcastReceiver r,IntentFilter f){adds++;receiver=lastReceiver=r;filter=f;if(fail)throw new SecurityException();if(sticky!=null){r.initialSticky=true;r.onReceive(this,sticky);r.initialSticky=false;}return sticky;}
  public void unregisterReceiver(BroadcastReceiver r){removes++;if(failRemove)throw new IllegalStateException();if(receiver==r)receiver=null;}}''',
@@ -45,11 +46,16 @@ STUBS = {
 HARNESS = '''package com.veloster.dashboard;
 import android.content.*;import android.os.*;import com.veloster.dashboard.debugger.JsDiagState;
 import com.veloster.dashboard.debugger.JsHudProbe;
+import com.veloster.dashboard.debugger.DipoNavigationProbe;
 import com.veloster.dashboard.listener.JsRouteStatusObserver;
 public class JsHudProbeHarness {
  static void check(boolean b,String m){if(!b)throw new AssertionError(m);}
- static class Output implements JsHudProbe.Sink {JsDiagState state=new JsDiagState();int values;
+ static class Output implements JsHudProbe.Sink,DipoNavigationProbe.Sink {JsDiagState state=new JsDiagState();int values;
  public void event(String n,String d){state.event(n,d);if(n.equals("navigation.route_state"))values++;}}
+ public static class DipoMode {final int turn;DipoMode(int value){turn=value;}public int getTurnByTurn(){return turn;}}
+ public static class DipoManager {int stat;DipoMode mode;boolean fail;
+  public int getCurrentDiPOStat(){if(fail)throw new SecurityException();return stat;}
+  public DipoMode getCurrentDiPOMode(){if(fail)throw new SecurityException();return mode;}}
  static Intent route(Object v){return new Intent(JsRouteStatusObserver.ACTION).put(JsRouteStatusObserver.STATE,v);}
  static void lifecycle(){
   Context c=new Context();Output o=new Output();JsHudProbe p=new JsHudProbe(c,o);
@@ -110,8 +116,16 @@ public class JsHudProbeHarness {
   ServiceManager.fail=true;p.inspect();check(o.state.snapshot().clusterService==2,"denied service query contained");ServiceManager.fail=false;
   ServiceManager.binder=new IBinder(){public boolean pingBinder(){return true;} public String getInterfaceDescriptor(){throw new SecurityException();}};p.inspect();check(o.state.snapshot().clusterService==2,"descriptor failure contained");
  }
+ static void dipo(){
+  Context c=new Context();Output o=new Output();DipoNavigationProbe p=new DipoNavigationProbe(c,o);p.inspectOnce();
+  check(o.state.snapshot().dipoService.equals("unavailable"),"missing DiPO service remains distinct from inactive status");
+  DipoManager manager=new DipoManager();manager.stat=1;manager.mode=new DipoMode(1);c.dipo=manager;p.inspectOnce();
+  check(o.state.snapshot().dipoService.equals("present")&&o.state.snapshot().dipoStatus.equals("stat=1 turnByTurn=1"),"DiPO values retained as raw read-only state");
+  manager.mode=null;p.inspectOnce();check(o.state.snapshot().dipoStatus.equals("stat=1 turnByTurn=unknown(mode-null)"),"null mode is not converted to inactive");
+  manager.fail=true;p.inspectOnce();check(o.state.snapshot().dipoError.equals("SecurityException"),"permission errors are visible without crashing");
+ }
  static void profile(){Build.PRODUCT="hyundaiB_kr";try{new JsHudProbe(new Context(),new Output());throw new AssertionError("profile gate");}catch(IllegalStateException expected){}finally{Build.PRODUCT="js_kr";}}
- public static void main(String[] args) throws Exception {queryAfterStop();lifecycle();independent();failedCleanup();sticky();service();profile();System.out.println("PASS passive HUD observation scenarios");}
+ public static void main(String[] args) throws Exception {queryAfterStop();lifecycle();independent();failedCleanup();sticky();service();dipo();profile();System.out.println("PASS passive HUD observation scenarios");}
 }'''
 
 
@@ -129,7 +143,7 @@ class JsHudProbeTests(unittest.TestCase):
             harness = root / 'JsHudProbeHarness.java'
             harness.write_text(HARNESS)
             app = ROOT / 'apps/dashboard/src/main/java/com/veloster/dashboard'
-            sources += [harness, ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/JsHudProbe.java', ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/listener/JsRouteStatusObserver.java',
+            sources += [harness, ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/JsHudProbe.java', ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/DipoNavigationProbe.java', ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/listener/JsRouteStatusObserver.java',
                         ROOT / 'apps/dashboard/src/0x1101L/java/com/veloster/dashboard/debugger/JsDiagState.java']
             result = subprocess.run([javac, '-source', '8', '-target', '8', '-d', str(root),
                                      *map(str, sources)], capture_output=True, text=True)

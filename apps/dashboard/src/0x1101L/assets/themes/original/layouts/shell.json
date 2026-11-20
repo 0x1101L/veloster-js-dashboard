@@ -16,7 +16,11 @@
     "topMenuBar": {
       "buttonHeight": 38,
       "itemGap": 6,
-      "presentation": "labels"
+      "presentation": "labels",
+      "buttonMargin": {
+        "left": 4
+      },
+      "contentAlignment": "center"
     }
   }
 }

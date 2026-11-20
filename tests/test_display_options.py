@@ -82,14 +82,23 @@ CHECK=r'''
   android.graphics.Canvas labels=draw(v);
   check(!labels.texts.contains("F1")&&labels.texts.contains("ENGINE"),"F1-2 theme defaults to icon navigation");
   menuGeometry(v,labels,left);
-  menuTap(v,6);tapEditorLabel(v,UiText.t("UI 설정"));tapEditorLabel(v,UiText.t("상단 메뉴 표시"));
+  menuTap(v,6);tapEditorLabel(v,UiText.t("UI 설정"));
+  if(left){
+   String[] leftRows=(String[])field(field(v,"settingsEditor"),"labels");
+   check(leftRows[2].equals(UiText.t("왼쪽 메뉴 독"))&&!java.util.Arrays.asList(leftRows).contains(UiText.t("상단 메뉴 표시")),"left layout shows only its menu control");
+   new com.veloster.dashboard.theme.ThemeSettingsStore(a).saveMenuPosition(com.veloster.dashboard.theme.ThemeSpec.MENU_TOP);v=create(a);
+   menuTap(v,6);tapEditorLabel(v,UiText.t("UI 설정"));
+  }
+  tapEditorLabel(v,UiText.t("상단 메뉴 표시"));
   check((Integer)field(field(v,"settingsEditor"),"screen")==12,"UI group opens menu display editor");
   String[] menuChoices=(String[])field(field(v,"settingsEditor"),"labels");
   check(menuChoices.length==3&&menuChoices[0].equals(UiText.t("테마 기본값"))&&draw(v).texts.contains(UiText.t("아이콘"))&&draw(v).texts.contains(UiText.t("텍스트")),"localized theme-default and override choices");
   tapEditorIndex(v,1);settingTap(v,70,88);menuTap(v,1);
   check(!draw(v).texts.contains("F1"),"cancel leaves theme-default icons");
   menuTap(v,6);tapEditorLabel(v,UiText.t("UI 설정"));tapEditorLabel(v,UiText.t("상단 메뉴 표시"));
-  tapEditorIndex(v,1);settingTap(v,700,88);menuTap(v,1);
+  tapEditorIndex(v,1);settingTap(v,700,88);
+  if(left){new com.veloster.dashboard.theme.ThemeSettingsStore(a).saveMenuPosition(com.veloster.dashboard.theme.ThemeSpec.MENU_LEFT);v=create(a);}
+  menuTap(v,1);
   android.graphics.Canvas names=draw(v);
   check(left?!names.texts.contains("F1")&&names.texts.contains("ENGINE"):names.texts.contains("F1"),
         left?"left navigation forces icons despite a theme-specific name override":"theme-specific name override applies");
@@ -110,12 +119,16 @@ CHECK=r'''
   check(!exit.isFinishing(),"space beside the back button is not clickable");
   menuTap(exitView,DashboardPage.BACK);
   check(exit.isFinishing(),"back button remains clickable");
+  if(left){new com.veloster.dashboard.theme.ThemeSettingsStore(a).saveMenuPosition(com.veloster.dashboard.theme.ThemeSpec.MENU_TOP);v=create(a);}
   menuTap(v,6);tapEditorLabel(v,UiText.t("UI 설정"));tapEditorLabel(v,UiText.t("상단 메뉴 표시"));
   tapEditorIndex(v,2);settingTap(v,700,88);menuTap(v,1);
+  if(left){new com.veloster.dashboard.theme.ThemeSettingsStore(a).saveMenuPosition(com.veloster.dashboard.theme.ThemeSpec.MENU_LEFT);v=create(a);menuTap(v,1);}
   check(!draw(v).texts.contains("F1")&&draw(v).texts.contains("ENGINE"),"explicit icon override draws and activates icons");
   menuGeometry(v,draw(v),left);
+  if(left){new com.veloster.dashboard.theme.ThemeSettingsStore(a).saveMenuPosition(com.veloster.dashboard.theme.ThemeSpec.MENU_TOP);v=create(a);}
   menuTap(v,6);tapEditorLabel(v,UiText.t("UI 설정"));tapEditorLabel(v,UiText.t("상단 메뉴 표시"));tapEditorIndex(v,1);settingTap(v,700,88);menuTap(v,1);
   if(left){
+   new com.veloster.dashboard.theme.ThemeSettingsStore(a).saveMenuPosition(com.veloster.dashboard.theme.ThemeSpec.MENU_LEFT);v=create(a);menuTap(v,1);
    check(!draw(v).texts.contains("F1")&&draw(v).texts.contains("ENGINE"),"left navigation stays in icon mode after selecting names");
    choose(v,5,1,true);menuTap(v,1);
    check(draw(v).texts.contains("F1"),"switching to top navigation restores the saved name mode");

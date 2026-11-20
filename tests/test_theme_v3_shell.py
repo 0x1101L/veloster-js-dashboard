@@ -90,6 +90,9 @@ CHECK = '''
   DashboardView view=create(a);
   com.veloster.dashboard.view.DashboardPage.Menu menu=(com.veloster.dashboard.view.DashboardPage.Menu)field(view,"pageMenu");
   check(menu.icons(),"F1-2 theme default selects icon navigation");
+  rootSettings(view);tapEditorLabel(view,UiText.t("UI 설정"));
+  String[] menuRows=(String[])field(editor(view),"labels");
+  check(menuRows[1].equals("메뉴 배치")&&menuRows[2].equals("상단 메뉴 모양")&&menuRows[3].equals("상단 메뉴 표시"),"top menu settings follow placement, shape, then item display");
   rootSettings(view);tapEditorLabel(view,UiText.t("UI 설정"));tapEditorLabel(view,UiText.t("상단 메뉴 표시"));
   String[] choices=(String[])field(editor(view),"labels");
   check(choices.length==3&&choices[0].equals(UiText.t("테마 기본값"))&&choices[1].equals(UiText.t("텍스트"))&&choices[2].equals(UiText.t("아이콘")),"menu mode offers theme default and per-theme overrides");
@@ -98,17 +101,53 @@ CHECK = '''
   a.getSharedPreferences("dashboard_theme",0).edit().putString("theme_id","original").apply();
   view=create(a);menu=(com.veloster.dashboard.view.DashboardPage.Menu)field(view,"pageMenu");
   check(!menu.icons(),"Original theme retains its own label default");
+  com.veloster.dashboard.theme.ThemeSpec originalTheme=(com.veloster.dashboard.theme.ThemeSpec)field(view,"activeTheme");
+  com.veloster.dashboard.view.DashboardPage.Bounds firstButton=com.veloster.dashboard.view.DashboardPage.navigationBounds(originalTheme,menu,com.veloster.dashboard.view.DashboardPage.PERFORMANCE);
+  for(int i=1;i<5;i++){
+   com.veloster.dashboard.view.DashboardPage.Bounds nextButton=com.veloster.dashboard.view.DashboardPage.navigationBounds(originalTheme,menu,com.veloster.dashboard.view.DashboardPage.menuPageAt(i));
+   check(Math.abs(firstButton.width-nextButton.width)<.01f,"button-style page items keep a 1:1 width ratio");
+  }
+  com.veloster.dashboard.view.DashboardPage.Regions originalRegions=com.veloster.dashboard.view.DashboardPage.regions(800,480,originalTheme);
+  check(firstButton.x==18&&firstButton.y==8&&originalRegions.topMenu.x==0&&originalRegions.topMenu.y==0
+        &&originalRegions.topMenu.width==800&&originalRegions.topMenu.height==52,
+        "Original keeps its legacy top-menu button position and full-width lower edge");
+  check(com.veloster.dashboard.view.DashboardPage.tap(originalTheme,menu,firstButton.x+firstButton.width/2,firstButton.y+firstButton.height/2,
+        firstButton.x+firstButton.width/2,firstButton.y+firstButton.height/2,800)==com.veloster.dashboard.view.DashboardPage.PERFORMANCE,
+        "Original equal-width buttons remain tappable at their restored position");
   a.getSharedPreferences("dashboard_theme",0).edit().putString("theme_id","f1_2").apply();
   view=create(a);menu=(com.veloster.dashboard.view.DashboardPage.Menu)field(view,"pageMenu");
   check(!menu.icons(),"F1-2 user override remains isolated to that theme");
   a.getSharedPreferences("dashboard_theme",0).edit().putInt("menu_position",com.veloster.dashboard.theme.ThemeSpec.MENU_LEFT).apply();
   view=create(a);menu=(com.veloster.dashboard.view.DashboardPage.Menu)field(view,"pageMenu");
   check(menu.icons(),"left navigation forces icons despite a saved name override");
+  rootSettings(view);tapEditorLabel(view,UiText.t("UI 설정"));
+  String[] displayLabels=(String[])field(editor(view),"labels");
+  check(displayLabels[2].equals(UiText.t("왼쪽 메뉴 독"))
+        &&!java.util.Arrays.asList(displayLabels).contains(UiText.t("상단 메뉴 표시")),
+        "left navigation exposes its dock setting without top-menu display controls");
   a.getSharedPreferences("dashboard_theme",0).edit().putInt("menu_position",com.veloster.dashboard.theme.ThemeSpec.MENU_TOP).apply();
   view=create(a);menu=(com.veloster.dashboard.view.DashboardPage.Menu)field(view,"pageMenu");
   check(!menu.icons(),"returning to top navigation restores the saved name override");
   rootSettings(view);tapEditorLabel(view,UiText.t("UI 설정"));tapEditorLabel(view,UiText.t("상단 메뉴 표시"));selectEditorIndex(view,0);settingsTap(view,700,88);
   check(menu.icons(),"selecting theme default restores F1-2 icon navigation");
+  rootSettings(view);tapEditorLabel(view,UiText.t("UI 설정"));tapEditorLabel(view,UiText.t("상단 메뉴 모양"));
+  choices=(String[])field(editor(view),"labels");
+  check(choices.length==2&&choices[0].equals(UiText.t("버튼형"))&&choices[1].equals(UiText.t("세그먼트형")),"top menu shape is independent from label/icon presentation");
+  selectEditorIndex(view,1);settingsTap(view,700,88);
+  check(menu.segmented(),"segmented top menu preference applies to the active theme");
+  com.veloster.dashboard.theme.ThemeSpec active=(com.veloster.dashboard.theme.ThemeSpec)field(view,"activeTheme");
+  for(int i=0;i<5;i++){
+   int id=com.veloster.dashboard.view.DashboardPage.menuPageAt(i);
+   com.veloster.dashboard.view.DashboardPage.Bounds bounds=com.veloster.dashboard.view.DashboardPage.navigationBounds(active,menu,id);
+   float x=bounds.x+bounds.width/2,y=bounds.y+bounds.height/2;
+   check(com.veloster.dashboard.view.DashboardPage.tap(active,menu,x,y,x,y,800)==id,"segmented top menu keeps each rendered segment tappable");
+  }
+  a.getSharedPreferences("dashboard_theme",0).edit().putString("theme_id","original").apply();
+  view=create(a);menu=(com.veloster.dashboard.view.DashboardPage.Menu)field(view,"pageMenu");
+  check(!menu.segmented(),"button menu shape remains the default for other themes");
+  a.getSharedPreferences("dashboard_theme",0).edit().putString("theme_id","f1_2").apply();
+  view=create(a);menu=(com.veloster.dashboard.view.DashboardPage.Menu)field(view,"pageMenu");
+  check(menu.segmented(),"segmented menu shape remains saved for its selected theme");
   com.veloster.dashboard.theme.ThemePreviewController preview=new com.veloster.dashboard.theme.ThemePreviewController(a,false,true,false,com.veloster.dashboard.theme.ThemeSpec.MENU_LEFT);
   preview.setMenuIcons(false);preview.setDraft(com.veloster.dashboard.theme.ThemeSpec.original());
   check(((com.veloster.dashboard.view.DashboardPage.Menu)field(field(preview,"pit"),"pageMenu")).icons(),"left-menu theme preview also forces icons");
@@ -252,9 +291,8 @@ CHECK = '''
   int[] starts=(int[])field(editor(view),"sectionStarts");String[] titles=(String[])field(editor(view),"sectionTitles");
   check(starts.length==3&&starts[0]==0&&starts[1]==1&&titles[0].equals("테마")
         &&titles[1].equals("메뉴")&&titles[2].equals("미디어"),"UI settings render theme, menu and media as separate lists");
-  check(labels[0].equals("테마 설정")&&labels[1].equals("메뉴 배치")&&labels[2].equals("상단 메뉴 표시")
-        &&labels[3].equals("왼쪽 메뉴 독")&&labels[4].equals("표시할 페이지"),
-        "menu controls have consistent names and remain grouped together");
+  check(labels[0].equals("테마 설정")&&labels[1].equals("메뉴 배치")&&labels[2].equals("왼쪽 메뉴 독")
+        &&labels[3].equals("표시할 페이지"),"left navigation shows only its relevant menu appearance setting");
   tapEditorLabel(view,UiText.t("테마 설정"));
   String[] themeLabels=(String[])field(editor(view),"labels");
   check(themeLabels.length==4&&themeLabels[0].equals("테마")&&themeLabels[1].equals("배경화면")
@@ -383,6 +421,24 @@ CHECK = '''
   menuCheck();positionCheck();dockCheck();
   System.out.println("PASS production left shell navigation and transformed touch");
  }
+ static void topMenuControlCheck()throws Exception{
+  Activity a=new Activity();LanguageSettings.save(a,"ko");DashboardView view=create(a);
+  com.veloster.dashboard.theme.ThemeCatalog catalog=(com.veloster.dashboard.theme.ThemeCatalog)field(view,"themeCatalog");
+  com.veloster.dashboard.theme.ThemeSpec theme=catalog.find("top_menu_controls");
+  check(theme!=null,"top-menu controls fixture loads");
+  com.veloster.dashboard.view.DashboardPage.Menu menu=new com.veloster.dashboard.view.DashboardPage.Menu();menu.icons(true);
+  com.veloster.dashboard.view.DashboardPage.Bounds button=com.veloster.dashboard.view.DashboardPage.navigationBounds(theme,menu,com.veloster.dashboard.view.DashboardPage.PERFORMANCE);
+  com.veloster.dashboard.view.DashboardPage.Bounds clock=com.veloster.dashboard.view.DashboardPage.navigationBounds(theme,menu,com.veloster.dashboard.view.DashboardPage.CLOCK);
+  check(theme.shell().topMenuButtonMargin.top==3&&theme.shell().topMenuButtonMargin.right==5
+        &&theme.shell().topMenuButtonMargin.bottom==4&&theme.shell().topMenuButtonMargin.left==7
+        &&"end".equals(theme.shell().topMenuContentAlignment)&&"start".equals(theme.shell().topMenuClockPosition),
+        "top-menu margins, content alignment and clock position load from layout settings");
+  check(Math.abs(button.x-28.48f)<.01f&&button.y==21&&Math.abs(button.width-71.04f)<.01f&&button.height==27
+        &&Math.abs(com.veloster.dashboard.view.DashboardPage.topMenuContentX(theme,button)-91.52f)<.01f
+        &&Math.abs(clock.x-611.2f)<.01f&&clock.y==18&&Math.abs(clock.width-65.28f)<.01f&&clock.height==34,
+        "top-menu control settings update button bounds while retaining the clock slot: button="+button.x+","+button.y+","+button.width+","+button.height+" clock="+clock.x+","+clock.y+","+clock.width+","+clock.height+" contentX="+com.veloster.dashboard.view.DashboardPage.topMenuContentX(theme,button));
+  System.out.println("PASS top-menu margins, content alignment and clock position");
+ }
  static void layoutPaddingCheck()throws Exception{
   Activity a=new Activity();LanguageSettings.save(a,"ko");
   a.getSharedPreferences("dashboard_theme",0).edit().putString("theme_id","f1_2_optics").apply();
@@ -391,7 +447,7 @@ CHECK = '''
   com.veloster.dashboard.view.DashboardPage.Content content=new com.veloster.dashboard.view.DashboardPage.Content(theme,"f1",regions,false);
   com.veloster.dashboard.view.DashboardPage.Bounds dock=com.veloster.dashboard.view.DashboardPage.leftMenuBounds(theme);
   check(theme.layoutSpacing().padding==16&&regions.content.x==16&&regions.content.y==16
-        &&theme.shell().width==64&&theme.shell().top==12&&theme.shell().bottom==12
+        &&theme.shell().width==64&&theme.shell().top==8&&theme.shell().bottom==8
         &&content.x==96&&content.y==16&&content.x+content.width==784&&content.y+content.height==464,
         "Liquid Glass applies 16-unit outer layout padding and keeps left-menu content inset");
   check(dock.x==16&&dock.y==16&&dock.width==64&&dock.height==448,
@@ -473,6 +529,10 @@ class ThemeV3ShellTests(unittest.TestCase):
                 'square_glass': {'frame': {'cornerRadius': 0}},
                 'circle_glass': {'frame': {'cornerShape': 'circle'}},
                 'alias_glass': {'frame': {'cornerShape': 'sqircle'}},
+                'top_menu_controls': {'navigationPosition': 'top', 'sideMenuBar': {'appearance': 'buttons'}, 'topMenuBar': {
+                    'padding': {'top': 2, 'right': 4, 'bottom': 2, 'left': 6},
+                    'buttonMargin': {'top': 3, 'right': 5, 'bottom': 4, 'left': 7},
+                    'contentAlignment': 'end', 'clockPosition': 'start'}},
                 'left_padding_dock': {'frame': {'padding': {'horizontal': 16, 'vertical': 16}},
                     'sideMenuBar': {'width': 64, 'padding': {'left': 20, 'right': 8, 'vertical': 12}, 'appearance': 'dock'}},
                 'left_padding_buttons': {'frame': {'padding': {'horizontal': 16, 'vertical': 16}},
@@ -508,7 +568,7 @@ public class MediaControl {public static volatile int previous,next,toggles;
 '''
                 runtime.STUBS['DashboardDesktop.java'] = original.replace(' public static void main(String[] args)throws Exception{', CHECK + '''
  public static void main(String[] args)throws Exception{
-  if(args.length>0&&args[0].equals("--shell-check")){SwingUtilities.invokeAndWait(()->{try{menuStyleCheck();System.out.println("PASS theme-specific menu defaults and overrides");dockCheck();System.out.println("PASS Liquid Glass theme-default left dock and overrides");settingsScrollCheck();System.out.println("PASS separate settings lists and page-level scrolling");shellCheck();layoutPaddingCheck();f1MenuCheck();screenCornerCheck();}catch(Exception e){throw new RuntimeException(e);}});return;}
+  if(args.length>0&&args[0].equals("--shell-check")){SwingUtilities.invokeAndWait(()->{try{topMenuControlCheck();menuStyleCheck();layoutPaddingCheck();System.out.println("PASS theme-specific menu defaults and overrides");dockCheck();System.out.println("PASS Liquid Glass theme-default left dock and overrides");settingsScrollCheck();System.out.println("PASS separate settings lists and page-level scrolling");shellCheck();f1MenuCheck();screenCornerCheck();}catch(Exception e){throw new RuntimeException(e);}});return;}
 ''', 1)
                 java, classes = runtime.compile_runtime(folder)
             finally:

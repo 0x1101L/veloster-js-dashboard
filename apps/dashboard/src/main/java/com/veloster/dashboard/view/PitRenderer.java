@@ -99,7 +99,7 @@ public final class PitRenderer {
             menuButton(c,UiText.t("그래프"),DashboardPage.GRAPHS,graphLayout!=null,navWidth);
             menuButton(c,UiText.t("설정"),DashboardPage.SETTINGS,settingsPage,navWidth);
             DashboardPage.Bounds topClock=DashboardPage.navigationBounds(theme,pageMenu,DashboardPage.CLOCK,navWidth);
-            surface.navigationClock(c,theme,resources,paint,clock(),topClock.x,topClock.y,topClock.width,topClock.height);
+            surface.navigationClock(c,theme,resources,paint,clock(),topClock.x,topClock.y,topClock.width,topClock.height,theme.shell().topMenuClockPosition);
             menuButton(c,UiText.t("돌아가기"),DashboardPage.BACK,false,navWidth);
             c.restore();
         }
@@ -156,8 +156,9 @@ public final class PitRenderer {
         DashboardPage.Bounds bounds=DashboardPage.navigationBounds(theme,pageMenu,id,layoutWidth);
         float x=bounds.x,y=bounds.y,w=bounds.width,h=bounds.height;
         boolean icons=pageMenu.icons();
-        surface.navigationButton(c,theme,resources,paint,icons?null:label,x,y,w,h,on,theme.accent);
-        if(icons)menuIcons.draw(c,id,x+w/2,y+h/2,on?theme.accent:theme.textSecondary);
+        float contentX=theme.shell().left()?x+w/2:DashboardPage.topMenuContentX(theme,bounds);
+        surface.navigationButton(c,theme,resources,paint,icons?null:label,x,y,w,h,on,theme.accent,theme.shell().left()?"center":theme.shell().topMenuContentAlignment);
+        if(icons)menuIcons.draw(c,id,contentX,y+h/2,on?theme.accent:theme.textSecondary);
     }
     private void centered(Canvas c,String s,float x,float y,float size,int color,boolean bold){
         size=theme.textSize(s,size,bold);

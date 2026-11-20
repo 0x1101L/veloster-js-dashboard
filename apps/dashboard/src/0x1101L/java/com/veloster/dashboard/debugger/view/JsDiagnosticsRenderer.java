@@ -117,11 +117,15 @@ public final class JsDiagnosticsRenderer {
             observerState(diagnostic.nav),diagnostic.navValueKnown?String.valueOf(diagnostic.navValue):UiText.t("미확인"),String.valueOf(diagnostic.navQueryCount),
             String.valueOf(diagnostic.navNoticeCount),diagAge(diagnostic.navAgeMs)+" / "+diagAge(diagnostic.navNoticeAgeMs),diagnostic.navDetachFailed?UiText.t("해제 실패"):diagError(diagnostic.navError)};
         for(int i=0;i<labels.length;i++)diagRow(c,18,160+i*20,labels[i],values[i]);
-        String[] checks={"HUD 장착","방향 · 거리 수신","HUD 출력"};
-        String[] states={UiText.t("사용자 확인"),UiText.t("미검증"),UiText.t("미검증")};
-        for(int i=0;i<checks.length;i++)diagRow(c,409,170+i*36,checks[i],states[i]);
-        diagNote(c,"경로 변경 전후의 정수값과 수신 횟수를 대조하세요.",448);
-        diagNote(c,"경과는 앱 수신 이후 시간입니다. sticky 원 발신 시각은 미확인입니다.",468);
+        diagRow(c,409,170,"HUD 장착",UiText.t("사용자 확인"));
+        diagRow(c,409,194,"DiPO 서비스",UiText.t(diagnostic.dipoService));
+        diagRow(c,409,218,"DiPO 안내 원값",UiText.t(diagnostic.dipoStatus));
+        diagRow(c,409,242,"DiPO 조회 오류",UiText.t(diagnostic.dipoError));
+        diagRow(c,409,266,"마지막 DiPO 조회",diagAge(diagnostic.dipoAgeMs));
+        diagRow(c,409,290,"방향 · 거리 수신",UiText.t("미검증"));
+        diagRow(c,409,314,"HUD 출력",UiText.t("미검증"));
+        diagNote(c,"DiPO 값은 안내 상태 후보이며 방향·거리 payload가 아닙니다.",448);
+        diagNote(c,"경로 변경 전후의 정수값과 수신 횟수를 대조하세요.",468);
     }
     private void drawTabs(Canvas c){
         float stripY=area.y,stripH=44,inset=4,segment=(area.width-2*inset)/5;
@@ -234,8 +238,8 @@ public final class JsDiagnosticsRenderer {
         diagRow(c,18,240,"Wi-Fi 알림",observed(diagnostic.wifiWatch,"등록됨","미등록"));
         diagRow(c,18,273,"Wi-Fi 서비스",serviceAvailability(diagnostic.wifiService));
         diagRow(c,18,306,"Wi-Fi 모듈",UiText.t("미검증"));
-        diagRow(c,18,339,"Android 상태",wifiRadio(diagnostic.wifiState));
-        fitted(c,UiText.t("Wi-Fi 켜짐은 통신 모듈 검증과 별개"),32,386,12,340,ThemePalette.secondary(theme,0xff91a5ae));
+        diagRow(c,18,339,"Wi-Fi 네트워크",wifiConnection(diagnostic.wifiConnection));
+        fitted(c,UiText.t("Wi-Fi 켜짐은 인터넷 연결을 뜻하지 않습니다."),32,386,12,340,ThemePalette.secondary(theme,0xff91a5ae));
         text(c,UiText.t("Bluetooth HAL 관찰"),423,138,16,ThemePalette.primary(theme,0xffe1edf2),true);
         wideDiagRow(c,423,174,"컨트롤러",UiText.t(bluetoothStatus.controller));
         wideDiagRow(c,423,207,"선택된 HCD",UiText.t(bluetoothStatus.patch));
@@ -246,6 +250,7 @@ public final class JsDiagnosticsRenderer {
         fitted(c,UiText.t("권한 거부·기록 없음은 미확인으로 표시됩니다."),423,373,12,340,ThemePalette.secondary(theme,0xff91a5ae));
         fitted(c,UiText.t("컨트롤러·HCD·fwcfg 결과만 추리며 원문 로그는 표시하지 않습니다."),423,396,11,340,ThemePalette.secondary(theme,0xff91a5ae));
     }
+    private String wifiConnection(int state){return state==1?UiText.t("연결됨"):state==0?UiText.t("연결 안 됨"):state==-2?UiText.t("권한 오류"):UiText.t("미확인");}
     private void text(Canvas c,String s,float x,float y,float size,int color,boolean bold){
         rawText(c,s,x(x),y(y),theme.textSize(s,size,bold),color,bold);
     }

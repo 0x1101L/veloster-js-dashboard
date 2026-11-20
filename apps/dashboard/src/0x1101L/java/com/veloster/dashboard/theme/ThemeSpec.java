@@ -295,7 +295,8 @@ public final class ThemeSpec {
         public final String position,alignment;
         public final int width,top,right,bottom,left,gap,buttonHeight;
         public final int framePadding,framePaddingHorizontal,framePaddingVertical,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap;
-        public final Insets sideMenuPadding,topMenuPadding,contentPadding,mediaPadding,bottomMediaPadding;
+        public final Insets sideMenuPadding,topMenuPadding,topMenuButtonMargin,contentPadding,mediaPadding,bottomMediaPadding;
+        public final String topMenuContentAlignment,topMenuClockPosition;
         public final int screenCornerRadius;
         public final ScreenCorner screenCorner;
         private final boolean dock;
@@ -307,31 +308,55 @@ public final class ThemeSpec {
             this(position,alignment,width,top,right,bottom,left,gap,buttonHeight,screenCornerRadius,screenCorner,dock,menuIcons,framePadding,framePadding,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap,new Insets(top,right,bottom,left),new Insets(0,0,0,0),new Insets(0,0,0,0),new Insets(0,0,0,0),new Insets(0,0,0,0));
         }
         private Shell(String position,String alignment,int width,int top,int right,int bottom,int left,int gap,int buttonHeight,int screenCornerRadius,ScreenCorner screenCorner,boolean dock,boolean menuIcons,int framePaddingHorizontal,int framePaddingVertical,int frameGapHorizontal,int frameGapVertical,int groupGap,int itemGap,int topMenuItemGap,Insets sidePadding,Insets topPadding,Insets contentPadding,Insets mediaPadding,Insets bottomPadding){
+            this(position,alignment,width,top,right,bottom,left,gap,buttonHeight,screenCornerRadius,screenCorner,dock,menuIcons,
+                framePaddingHorizontal,framePaddingVertical,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap,
+                sidePadding,topPadding,contentPadding,mediaPadding,bottomPadding,new Insets(0,0,0,0),"legacy","center");
+        }
+        private Shell(String position,String alignment,int width,int top,int right,int bottom,int left,int gap,int buttonHeight,int screenCornerRadius,ScreenCorner screenCorner,boolean dock,boolean menuIcons,int framePaddingHorizontal,int framePaddingVertical,int frameGapHorizontal,int frameGapVertical,int groupGap,int itemGap,int topMenuItemGap,Insets sidePadding,Insets topPadding,Insets contentPadding,Insets mediaPadding,Insets bottomPadding,Insets topButtonMargin,String topContentAlignment,String topClockPosition){
             this.position=position;this.alignment=alignment;this.width=width;this.top=top;this.right=right;
             this.bottom=bottom;this.left=left;this.gap=gap;this.buttonHeight=buttonHeight;
             this.framePadding=framePaddingVertical;this.framePaddingHorizontal=framePaddingHorizontal;this.framePaddingVertical=framePaddingVertical;
             this.frameGapHorizontal=frameGapHorizontal;this.frameGapVertical=frameGapVertical;
             this.groupGap=groupGap;this.itemGap=itemGap;this.topMenuItemGap=topMenuItemGap;
-            this.sideMenuPadding=sidePadding;this.topMenuPadding=topPadding;this.contentPadding=contentPadding;this.mediaPadding=mediaPadding;this.bottomMediaPadding=bottomPadding;
+            this.sideMenuPadding=sidePadding;this.topMenuPadding=topPadding;this.topMenuButtonMargin=topButtonMargin;
+            this.topMenuContentAlignment=topContentAlignment;this.topMenuClockPosition=topClockPosition;
+            this.contentPadding=contentPadding;this.mediaPadding=mediaPadding;this.bottomMediaPadding=bottomPadding;
             this.screenCornerRadius=screenCornerRadius;this.screenCorner=screenCorner;this.dock=dock;this.menuIcons=menuIcons;
         }
         Shell withAreaPadding(Insets side,Insets top,Insets content,Insets media,Insets bottom){
             return new Shell(position,alignment,width,this.top,right,this.bottom,left,gap,buttonHeight,screenCornerRadius,screenCorner,dock,menuIcons,
-                framePaddingHorizontal,framePaddingVertical,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap,side,top,content,media,bottom);
+                framePaddingHorizontal,framePaddingVertical,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap,side,top,content,media,bottom,
+                topMenuButtonMargin,topMenuContentAlignment,topMenuClockPosition);
         }
         Shell withFramePadding(int horizontal,int vertical){
             return new Shell(position,alignment,width,top,right,bottom,left,gap,buttonHeight,screenCornerRadius,screenCorner,dock,menuIcons,
-                horizontal,vertical,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap,sideMenuPadding,topMenuPadding,contentPadding,mediaPadding,bottomMediaPadding);
+                horizontal,vertical,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap,sideMenuPadding,topMenuPadding,contentPadding,mediaPadding,bottomMediaPadding,
+                topMenuButtonMargin,topMenuContentAlignment,topMenuClockPosition);
         }
         Shell withScreenCorner(int screenCornerRadius,ScreenCorner screenCorner){
-            return new Shell(position,alignment,width,top,right,bottom,left,gap,buttonHeight,screenCornerRadius,screenCorner,dock,menuIcons,framePadding,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap);
+            return new Shell(position,alignment,width,top,right,bottom,left,gap,buttonHeight,screenCornerRadius,screenCorner,dock,menuIcons,
+                framePaddingHorizontal,framePaddingVertical,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap,
+                sideMenuPadding,topMenuPadding,contentPadding,mediaPadding,bottomMediaPadding,topMenuButtonMargin,topMenuContentAlignment,topMenuClockPosition);
         }
-        Shell withDock(boolean value){return new Shell(position,alignment,width,top,right,bottom,left,gap,buttonHeight,screenCornerRadius,screenCorner,value,menuIcons,framePadding,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap);}
-        Shell withMenuIcons(boolean value){return new Shell(position,alignment,width,top,right,bottom,left,gap,buttonHeight,screenCornerRadius,screenCorner,dock,value,framePadding,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap);}
+        Shell withDock(boolean value){return new Shell(position,alignment,width,top,right,bottom,left,gap,buttonHeight,screenCornerRadius,screenCorner,value,menuIcons,
+            framePaddingHorizontal,framePaddingVertical,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap,
+            sideMenuPadding,topMenuPadding,contentPadding,mediaPadding,bottomMediaPadding,topMenuButtonMargin,topMenuContentAlignment,topMenuClockPosition);}
+        Shell withMenuIcons(boolean value){return new Shell(position,alignment,width,top,right,bottom,left,gap,buttonHeight,screenCornerRadius,screenCorner,dock,value,
+            framePaddingHorizontal,framePaddingVertical,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap,
+            sideMenuPadding,topMenuPadding,contentPadding,mediaPadding,bottomMediaPadding,topMenuButtonMargin,topMenuContentAlignment,topMenuClockPosition);}
         Shell withLayout(int framePadding,int frameGapHorizontal,int frameGapVertical,int groupGap,int itemGap){
-            return new Shell(position,alignment,width,top,right,bottom,left,itemGap,buttonHeight,screenCornerRadius,screenCorner,dock,menuIcons,framePadding,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap);
+            return new Shell(position,alignment,width,top,right,bottom,left,itemGap,buttonHeight,screenCornerRadius,screenCorner,dock,menuIcons,
+                framePadding,framePadding,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap,
+                sideMenuPadding,topMenuPadding,contentPadding,mediaPadding,bottomMediaPadding,topMenuButtonMargin,topMenuContentAlignment,topMenuClockPosition);
         }
-        Shell withTopMenuItemGap(int value){return new Shell(position,alignment,width,top,right,bottom,left,gap,buttonHeight,screenCornerRadius,screenCorner,dock,menuIcons,framePadding,frameGapHorizontal,frameGapVertical,groupGap,itemGap,value);}
+        Shell withTopMenuItemGap(int value){return new Shell(position,alignment,width,top,right,bottom,left,gap,buttonHeight,screenCornerRadius,screenCorner,dock,menuIcons,
+            framePaddingHorizontal,framePaddingVertical,frameGapHorizontal,frameGapVertical,groupGap,itemGap,value,
+            sideMenuPadding,topMenuPadding,contentPadding,mediaPadding,bottomMediaPadding,topMenuButtonMargin,topMenuContentAlignment,topMenuClockPosition);}
+        Shell withTopMenuControls(Insets buttonMargin,String contentAlignment,String clockPosition){
+            return new Shell(position,alignment,width,top,right,bottom,left,gap,buttonHeight,screenCornerRadius,screenCorner,dock,menuIcons,
+                framePaddingHorizontal,framePaddingVertical,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap,
+                sideMenuPadding,topMenuPadding,contentPadding,mediaPadding,bottomMediaPadding,buttonMargin,contentAlignment,clockPosition);
+        }
         public boolean dock(){return left()&&dock;}
         public boolean menuIcons(){return menuIcons;}
         public int topMenuHeight(){return TOP_BUTTON_HEIGHT;}

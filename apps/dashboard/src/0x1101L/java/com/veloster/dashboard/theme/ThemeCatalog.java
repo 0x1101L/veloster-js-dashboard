@@ -353,8 +353,21 @@ public final class ThemeCatalog {
         Map<String,Object> side=shell.containsKey("sideMenuBar")?object(shell.get("sideMenuBar"),"sideMenuBar"):Collections.<String,Object>emptyMap();
         allowedKeys(side,new String[]{"width","alignment","buttonHeight","padding","gap","itemGap","appearance","presentation"});
         Map<String,Object> top=shell.containsKey("topMenuBar")?object(shell.get("topMenuBar"),"topMenuBar"):Collections.<String,Object>emptyMap();
-        allowedKeys(top,new String[]{"buttonHeight","padding","itemGap","presentation"});
+        allowedKeys(top,new String[]{"buttonHeight","padding","buttonMargin","contentAlignment","clockPosition","itemGap","presentation"});
         int topMenuItemGap=rangeOr(top,"itemGap",0,40,6);
+        ThemeSpec.Insets topButtonMargin=new ThemeSpec.Insets(0,0,0,0);
+        if(top.containsKey("buttonMargin")){
+            Map<String,Object> margin=object(top.get("buttonMargin"),"topMenuBar buttonMargin");
+            allowedKeys(margin,new String[]{"top","right","bottom","left"});
+            topButtonMargin=new ThemeSpec.Insets(rangeOr(margin,"top",0,40,0),rangeOr(margin,"right",0,40,0),
+                rangeOr(margin,"bottom",0,40,0),rangeOr(margin,"left",0,40,0));
+        }
+        String topContentAlignment=top.containsKey("contentAlignment")?string(top,"contentAlignment"):"legacy";
+        String topClockPosition=top.containsKey("clockPosition")?string(top,"clockPosition"):"center";
+        if(top.containsKey("contentAlignment")&&!("start".equals(topContentAlignment)||"center".equals(topContentAlignment)||"end".equals(topContentAlignment)))
+            throw new IllegalArgumentException("invalid topMenuBar contentAlignment");
+        if(!("start".equals(topClockPosition)||"center".equals(topClockPosition)||"end".equals(topClockPosition)))
+            throw new IllegalArgumentException("invalid topMenuBar clockPosition");
         String alignment=side.containsKey("alignment")?string(side,"alignment"):"center";
         if(!(alignment.equals("start")||alignment.equals("center")||alignment.equals("end")))throw new IllegalArgumentException("unsupported sideMenuBar alignment");
         int width=rangeOr(side,"width",48,240,96),itemGap=rangeOr(side,"itemGap",0,24,0),height=rangeOr(side,"buttonHeight",24,50,38);
@@ -380,6 +393,7 @@ public final class ThemeCatalog {
             .withScreenCorner(cornerRadius,screenCorner).withLayout(framePaddingVertical,frameGapX,frameGapY,groupGap,itemGap).withTopMenuItemGap(topMenuItemGap).withFramePadding(framePaddingHorizontal,framePaddingVertical);
         parsed=parsed.withAreaPadding(new ThemeSpec.Insets(innerPaddingVertical,innerPaddingRight,innerPaddingVertical,innerPaddingLeft),
             areaPadding(top),areaPadding(content),areaPadding(media),areaPadding(bottom));
+        parsed=parsed.withTopMenuControls(topButtonMargin,topContentAlignment,topClockPosition);
         return parsed;
     }
     private static ThemeSpec.Insets areaPadding(Map<String,Object> area){
@@ -520,6 +534,9 @@ public final class ThemeCatalog {
         ThemeSpec.Shell defaults=spec.shell();
         ThemeSpec resolved=spec.withShell(shell.withScreenCorner(defaults.screenCornerRadius,defaults.screenCorner).withMenuIcons(defaults.menuIcons())
             .withTopMenuItemGap(defaults.topMenuItemGap));
+        resolved=resolved.withShell(resolved.shell().withAreaPadding(defaults.sideMenuPadding,defaults.topMenuPadding,
+            defaults.contentPadding,defaults.mediaPadding,defaults.bottomMediaPadding)
+            .withTopMenuControls(defaults.topMenuButtonMargin,defaults.topMenuContentAlignment,defaults.topMenuClockPosition));
         try{validateContentSize(resolved);return resolved;}
         catch(IllegalArgumentException unsupported){return spec;}
     }

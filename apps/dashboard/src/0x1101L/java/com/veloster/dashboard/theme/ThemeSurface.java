@@ -238,6 +238,10 @@ public final class ThemeSurface {
     /** Navigation button appearance; bounds and hit testing stay with DashboardPage. */
     public void navigationButton(Canvas c,ThemeSpec theme,ThemeResources resources,Paint caller,
                                  String label,float x,float y,float w,float h,boolean selected,int accent){
+        navigationButton(c,theme,resources,caller,label,x,y,w,h,selected,accent,"center");
+    }
+    public void navigationButton(Canvas c,ThemeSpec theme,ThemeResources resources,Paint caller,
+                                 String label,float x,float y,float w,float h,boolean selected,int accent,String alignment){
         if(theme.shell().dock()){
             if(selected)fill(c,theme,x+2,y+2,w-4,h-4,Math.min(w,h)/4,0x22000000|(accent&0xffffff));
         }else drawWithLegacy(c,theme,SurfaceRole.NAVIGATION_BUTTON,caller,x,y,w,h,
@@ -252,11 +256,17 @@ public final class ThemeSurface {
         float size=theme.textSize(label,14,true);caller.setTextSize(size);float measured=caller.measureText(label);
         caller.setColor(selected?accent:theme.color(ThemeSpec.ColorRole.ON_SURFACE_VARIANT));
         caller.setTextSize(measured>w-2*padding?size*(w-2*padding)/measured:size);
-        float labelX=sidebar?x+(w-caller.measureText(label))/2:x+padding;
+        float labelWidth=caller.measureText(label);
+        float labelX=sidebar||"center".equals(alignment)?x+(w-labelWidth)/2:
+            "end".equals(alignment)?x+w-padding-labelWidth:x+padding;
         c.drawText(label,labelX,y+h/2+5,caller);
     }
     public void navigationClock(Canvas c,ThemeSpec theme,ThemeResources resources,Paint caller,
                                 String value,float x,float y,float width,float height){
+        navigationClock(c,theme,resources,caller,value,x,y,width,height,"center");
+    }
+    public void navigationClock(Canvas c,ThemeSpec theme,ThemeResources resources,Paint caller,
+                                String value,float x,float y,float width,float height,String position){
         caller.setTypeface(resources==null?Typeface.DEFAULT_BOLD:resources.fontForText(value,true));
         float size=theme.textSize(value,20,true);
         caller.setTextSize(size);
@@ -265,7 +275,9 @@ public final class ThemeSurface {
         caller.setTextSize(theme.shell().dock()?size*.9f:size);
         Paint.FontMetrics metrics=caller.getFontMetrics();
         caller.setColor(theme.textPrimary);
-        c.drawText(value,x+(width-caller.measureText(value))/2,y+(height-metrics.ascent-metrics.descent)/2,caller);
+        float textWidth=caller.measureText(value);
+        float textX="start".equals(position)?x+4:"end".equals(position)?x+width-textWidth-4:x+(width-textWidth)/2;
+        c.drawText(value,textX,y+(height-metrics.ascent-metrics.descent)/2,caller);
     }
     /** Render the card with the shared recipe and retain the layout radius for legacy themes. */
     public void card(Canvas c,ThemeSpec theme,float x,float y,float w,float h,float radius,int color){

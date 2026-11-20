@@ -1,6 +1,7 @@
 """Run the production DashboardView input path in the desktop platform adapter."""
 from pathlib import Path
 from io import StringIO
+import hashlib
 import subprocess
 import sys
 import tempfile
@@ -9,11 +10,50 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
-from dashboard_runtime import compile_runtime
+from dashboard_runtime import compile_runtime, preference_directory
 import dashboard_runtime
 
 
 class DashboardRuntimeTests(unittest.TestCase):
+    def test_layout_studio_preferences_migrate_without_touching_preview_preferences(self):
+        with tempfile.TemporaryDirectory(prefix='dashboard-preference-migration-') as folder:
+            home = Path(folder)
+            scope = hashlib.sha256((str(ROOT.resolve()) + ':layout-editor').encode()).hexdigest()[:20]
+            legacy = home / 'Library/Application Support/JS Dashboard Preview/preferences' / scope
+            legacy.mkdir(parents=True)
+            (legacy / 'settings.properties').write_text('saved', encoding='utf-8')
+
+            current = preference_directory(True, home=home)
+
+            self.assertEqual(current.parent.parent.name, 'JS Dashboard Layout Studio')
+            self.assertEqual((current / 'settings.properties').read_text(encoding='utf-8'), 'saved')
+            self.assertTrue((legacy / 'settings.properties').exists())
+            self.assertEqual(preference_directory(False, home=home).parent.parent.name, 'JS Dashboard Preview')
+
+    def test_spotify_bridge_starts_in_layout_studio_mode(self):
+        class FakeProcess:
+            def __init__(self):
+                self.stdout = StringIO('READY Dashboard Java touch runtime: showing=true\n')
+                self.stdin = type('Input', (), {'write': lambda *_: None, 'flush': lambda *_: None,
+                                                'close': lambda *_: None})()
+
+            def poll(self):
+                return None
+
+            def wait(self, timeout=None):
+                return 0
+
+        process = FakeProcess()
+        spotify_query = type('Result', (), {'returncode': 0, 'stdout': 'STOPPED'})()
+        with tempfile.TemporaryDirectory(prefix='dashboard-runtime-studio-') as folder:
+            with patch.object(dashboard_runtime, 'compile_runtime', return_value=('java', Path(folder))):
+                with patch.object(dashboard_runtime.subprocess, 'Popen', return_value=process):
+                    with patch.object(dashboard_runtime.subprocess, 'run', return_value=spotify_query) as run_command:
+                        with patch.object(dashboard_runtime, 'preference_directory', return_value=Path(folder) / 'prefs'):
+                            dashboard_runtime.run(editor=True, editor_handler=lambda *_: None)
+
+        self.assertTrue(any(call.args[0][0] == 'osascript' for call in run_command.call_args_list))
+
     def test_refresh_recompiles_and_restarts_preview_process(self):
         class FakeProcess:
             def __init__(self, output):

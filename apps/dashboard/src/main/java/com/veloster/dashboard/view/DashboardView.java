@@ -112,6 +112,7 @@ public final class DashboardView extends View implements Runnable {
         try{mediaButtonStyle=a.getSharedPreferences("pit_vehicle_ui",0).getInt(MEDIA_BUTTON_STYLE,0)==1?1:0;}catch(ClassCastException ignored){}
         try{pageMenu=new DashboardPage.Menu(a.getSharedPreferences("pit_vehicle_ui",0).getInt("page_menu_visible_mask",DashboardPage.Menu.ALL));}catch(ClassCastException ignored){}
         pageMenu.icons(activeTheme.shell().left()||themeStore.menuIcons(selectedTheme.id,selectedTheme.shell().menuIcons()));
+        pageMenu.segmented(themeStore.menuShape(selectedTheme.id)==1);
         settingsRoot();setVisibility(GONE); }
     public static void attach(Activity a) {
         try {
@@ -203,7 +204,7 @@ public final class DashboardView extends View implements Runnable {
     public static void setDiagnosticEventSink(DiagnosticEventSink sink){diagnosticEventSink=sink;}
     public static void diagReset(){DIAG.reset();}
     public static void diagEvent(String name,String detail){DIAG.event(name,detail,SystemClock.elapsedRealtime());DiagnosticEventSink sink=diagnosticEventSink;if(sink!=null&&("binding.media.3".equals(name)||name.startsWith("carplay.media.")))sink.event(name,detail);}
-    public static void diagWifi(int feature,int service,int state,int watch){DIAG.wifi(feature,service,state,watch);}
+    public static void diagWifi(int feature,int service,int state,int watch,int connection){DIAG.wifi(feature,service,state,watch,connection);}
     public static void diagHscan(int state){DIAG.hscan(state);}
     public static void diagLighting(int cid,int function,byte[] data,long receivedAt){
         if(cid!=0xc7||function!=0x01||data==null||data.length!=8)return;
@@ -297,7 +298,7 @@ public final class DashboardView extends View implements Runnable {
         return new DashboardPage.Content(activeTheme,viewportPage(),display,footer);
     }
     private int uiSettingsRowCount(DashboardPage.Regions display){
-        return 6+(activeTheme.shell().left()?1:0)+(display.mediaEnabled?0:2);
+        return 5+(activeTheme.shell().left()?1:2)+(display.mediaEnabled?0:2);
     }
     private int themeSettingsRowCount(){return 2
             +(com.veloster.dashboard.theme.ThemePalette.supportsAccentSelection(activeTheme)?1:0)
@@ -325,6 +326,7 @@ public final class DashboardView extends View implements Runnable {
                 .withLiquidGlassOptions(themeStore.liquidGlassTransparency(),themeStore.liquidGlassBlur(),themeStore.liquidGlassHighlight())
                 .withAccent(com.veloster.dashboard.theme.ThemePalette.accentColor(selectedTheme,themeStore.accentPalette(selectedTheme.id)));
         pageMenu.icons(activeTheme.shell().left()||themeStore.menuIcons(selectedTheme.id,selectedTheme.shell().menuIcons()));
+        pageMenu.segmented(themeStore.menuShape(selectedTheme.id)==1);
         ThemeSpec.Wallpaper selected=null;
         String selectedId=themeStore.selectedWallpaperId();
         if(selectedId.length()>0){
@@ -356,10 +358,11 @@ public final class DashboardView extends View implements Runnable {
     private String barLabel(int style){return UiText.t(style==1?"분할 막대":"연속 막대");}
     private String menuStyleLabel(){
         int override=themeStore.menuStyleOverride(selectedTheme.id);
-        String top=override==0?UiText.t("텍스트"):override==1?UiText.t("아이콘"):
+        String presentation=override==0?UiText.t("텍스트"):override==1?UiText.t("아이콘"):
                 UiText.t("테마 기본값")+" ("+UiText.t(selectedTheme.shell().menuIcons()?"아이콘":"텍스트")+")";
-        return activeTheme.shell().left()?UiText.t("상단")+": "+top+" · "+UiText.t("왼쪽")+": "+UiText.t("아이콘"):top;
+        return presentation;
     }
+    private String menuShapeLabel(){return UiText.t(themeStore.menuShape(selectedTheme.id)==1?"세그먼트형":"버튼형");}
     private String orderLabel(int value){
         String label="";for(int i=0;i<3;i++){String id=DashboardPage.f1OrderNode(value,i);if(i>0)label+=" · ";label+=UiText.t("speed".equals(id)?"속도":"gear".equals(id)?"기어":"RPM");}return label;
     }
@@ -393,9 +396,11 @@ public final class DashboardView extends View implements Runnable {
             labels[row]=UiText.t("테마 설정");values[row]=activeTheme.displayName;actions[row++]=SettingsPageRenderer.THEME_SETTINGS;
             int menuStart=row;
             labels[row]=UiText.t("메뉴 배치");values[row]=menuPositionLabel();actions[row++]=SettingsPageRenderer.MENU_POSITION;
-            labels[row]=UiText.t("상단 메뉴 표시");values[row]=menuStyleLabel();actions[row++]=SettingsPageRenderer.MENU_STYLE;
             if(activeTheme.shell().left()){
                 labels[row]=UiText.t("왼쪽 메뉴 독");values[row]=menuDockLabel();actions[row++]=SettingsPageRenderer.MENU_DOCK;
+            }else{
+                labels[row]=UiText.t("상단 메뉴 모양");values[row]=menuShapeLabel();actions[row++]=SettingsPageRenderer.MENU_SHAPE;
+                labels[row]=UiText.t("상단 메뉴 표시");values[row]=menuStyleLabel();actions[row++]=SettingsPageRenderer.MENU_STYLE;
             }
             labels[row]=UiText.t("표시할 페이지");values[row]=pageMenu.count()+" / 5";actions[row++]=SettingsPageRenderer.PAGE_MENU;
             int mediaStart=row;
@@ -495,6 +500,8 @@ public final class DashboardView extends View implements Runnable {
         case SettingsPageRenderer.MENU_STYLE:
             title=UiText.t("상단 메뉴 표시");labels=tr("테마 기본값","텍스트","아이콘");
             int menuStyle=themeStore.menuStyleOverride(selectedTheme.id);selected=menuStyle<0?0:menuStyle+1;break;
+        case SettingsPageRenderer.MENU_SHAPE:
+            title=UiText.t("상단 메뉴 모양");labels=tr("버튼형","세그먼트형");selected=themeStore.menuShape(selectedTheme.id);break;
         case SettingsPageRenderer.PAGE_MENU:
             title=UiText.t("표시할 페이지");labels=new String[]{UiText.t("퍼포먼스"),UiText.t("전체 조망"),"F1",UiText.t("게이지"),UiText.t("그래프")};break;
         case SettingsPageRenderer.PEDAL_BAR:case SettingsPageRenderer.BRAKE_BAR:
@@ -622,6 +629,7 @@ public final class DashboardView extends View implements Runnable {
             ThemeSpec choice=themeCatalog.all().values().toArray(new ThemeSpec[0])[previewThemeIndex];
             final ThemePreviewController preview=new ThemePreviewController(activity,DATA.pdProfile(),DATA.jsProfile(),DATA.jsnProfile(),menuPosition,menuDock);
             preview.setMenuIcons(themeStore.menuIcons(choice.id,choice.shell().menuIcons()));
+            preview.setMenuSegmented(themeStore.menuShape(choice.id)==1);
             preview.setDraft(choice.withDisplayOptions(pedalBarStyle,brakeBarStyle,f1Order)
                     .withLiquidGlassOptions(themeStore.liquidGlassTransparency(),themeStore.liquidGlassBlur(),themeStore.liquidGlassHighlight())
                     .withAccent(com.veloster.dashboard.theme.ThemePalette.accentColor(choice,themeStore.accentPalette(choice.id))));
@@ -684,6 +692,8 @@ public final class DashboardView extends View implements Runnable {
             activity.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("page_menu_visible_mask",pageMenu.mask()).apply();break;
         case SettingsPageRenderer.MENU_STYLE:
             themeStore.saveMenuStyle(selectedTheme.id,selected-1);applyTheme(selectedTheme);break;
+        case SettingsPageRenderer.MENU_SHAPE:
+            themeStore.saveMenuShape(selectedTheme.id,selected);applyTheme(selectedTheme);break;
         case SettingsPageRenderer.PEDAL_BAR:pedalBarStyle=selected;saveDisplayOptions();break;
         case SettingsPageRenderer.BRAKE_BAR:brakeBarStyle=selected;saveDisplayOptions();break;
         case SettingsPageRenderer.F1_ORDER:f1Order=selected;saveDisplayOptions();break;

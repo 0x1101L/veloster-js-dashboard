@@ -5,6 +5,7 @@ import com.veloster.dashboard.vehicle.HscanProfile;
 import com.veloster.dashboard.vehicle.VehicleDataClient;
 
 import com.veloster.dashboard.debugger.JsHudProbe;
+import com.veloster.dashboard.debugger.DipoNavigationProbe;
 import com.veloster.dashboard.debugger.HudEventLog;
 import com.veloster.dashboard.debugger.CarPlayRawLog;
 import com.veloster.dashboard.debugger.CarPlayRuntimeProbe;
@@ -16,6 +17,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.wifi.WifiManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.view.Window;
 import android.view.WindowManager;
@@ -28,6 +31,7 @@ public final class DashboardActivity extends Activity {
     public static final int REQUEST_CARPLAY_CAPTURE=0x4350;
     private VehicleDataClient client;
     private JsHudProbe hudProbe;
+    private DipoNavigationProbe dipoProbe;
     private boolean wifiWatching,jsProfile;
     private final java.util.concurrent.atomic.AtomicBoolean bluetoothProbeRunning=new java.util.concurrent.atomic.AtomicBoolean();
     private android.os.HandlerThread hudLogThread;
@@ -60,9 +64,13 @@ public final class DashboardActivity extends Activity {
         DashboardView.attachStandalone(this);
         client=new VehicleDataClient(this);
         if(jsProfile)try{
-            hudProbe=new JsHudProbe(getApplicationContext(),new JsHudProbe.Sink(){
+            JsHudProbe.Sink diagnosticSink=new JsHudProbe.Sink(){
                 public void event(final String name,final String detail){DashboardView.diagEvent(name,detail);android.util.Log.i("JsHudProbe",name+" "+detail);
                     recordHudEvent(name,detail);}
+            };
+            hudProbe=new JsHudProbe(getApplicationContext(),diagnosticSink);
+            dipoProbe=new DipoNavigationProbe(getApplicationContext(),new DipoNavigationProbe.Sink(){
+                public void event(String name,String detail){diagnosticSink.event(name,detail);}
             });
             final JsHudProbe probe=hudProbe;
             new Thread(new Runnable(){public void run(){probe.inspect();}},"js-hud-inspect").start();
@@ -76,13 +84,17 @@ public final class DashboardActivity extends Activity {
             handler.post(new Runnable(){public void run(){if(!log.record(time,name,detail))android.util.Log.e("HudEventLog","Private event log write failed");}});
     }
     private void refreshWifi(){
-        int feature=-1,service=-1,state=-1;
+        int feature=-1,service=-1,state=-1,connection=-1;
         try{feature=getPackageManager().hasSystemFeature("android.hardware.wifi")?1:0;}catch(RuntimeException ignored){}
         try{Object value=getApplicationContext().getSystemService(Context.WIFI_SERVICE);
             service=value instanceof WifiManager?1:0;
             if(service==1)state=((WifiManager)value).getWifiState();
         }catch(SecurityException e){state=-2;}catch(RuntimeException ignored){}
-        DashboardView.diagWifi(feature,service,state,wifiWatching?1:0);
+        try{Object value=getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+            if(value instanceof ConnectivityManager){NetworkInfo info=((ConnectivityManager)value).getNetworkInfo(ConnectivityManager.TYPE_WIFI);connection=info==null?-1:info.isConnected()?1:0;}
+            else if(value!=null)connection=0;
+        }catch(SecurityException e){connection=-2;}catch(RuntimeException ignored){}
+        DashboardView.diagWifi(feature,service,state,wifiWatching?1:0,connection);
     }
     protected void onResume(){super.onResume();LanguageSettings.init(this);DashboardView.resumeStandalone(this);client.start();
         if(jsProfile&&carPlayRawLog!=null)DashboardView.carPlayRawStatus(carPlayRawLog.latestCaptureSummary());
@@ -91,7 +103,8 @@ public final class DashboardActivity extends Activity {
             DashboardView.carPlayRuntimeStatus(status.library,status.process);
         }},"carplay-runtime-probe").start();
         if(hudProbe!=null)hudProbe.startNavigationObservation();
-        if(jsProfile){try{registerReceiver(wifiReceiver,new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));wifiWatching=true;}catch(RuntimeException e){wifiWatching=false;}refreshWifi();probeBluetooth();}}
+        if(dipoProbe!=null)dipoProbe.start();
+        if(jsProfile){try{IntentFilter filter=new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION);filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);registerReceiver(wifiReceiver,filter);wifiWatching=true;}catch(RuntimeException e){wifiWatching=false;}refreshWifi();probeBluetooth();}}
     private void probeBluetooth(){
         if(!bluetoothProbeRunning.compareAndSet(false,true))return;
         new Thread(new Runnable(){public void run(){
@@ -101,8 +114,8 @@ public final class DashboardActivity extends Activity {
     }
     private void stopWifiObserver(){if(wifiWatching){try{unregisterReceiver(wifiReceiver);}catch(RuntimeException ignored){}wifiWatching=false;}}
     protected void onPause(){stopWifiObserver();
-        if(hudProbe!=null)hudProbe.close();client.stop();DashboardView.pauseStandalone(this);super.onPause();}
-    protected void onDestroy(){stopWifiObserver();if(hudProbe!=null)hudProbe.close();if(client!=null)client.stop();if(jsProfile){DashboardView.stopStandaloneMedia(this);DashboardView.setDiagnosticEventSink(null);}if(hudLogThread!=null){final android.os.HandlerThread thread=hudLogThread;
+        if(hudProbe!=null)hudProbe.close();if(dipoProbe!=null)dipoProbe.close();client.stop();DashboardView.pauseStandalone(this);super.onPause();}
+    protected void onDestroy(){stopWifiObserver();if(hudProbe!=null)hudProbe.close();if(dipoProbe!=null)dipoProbe.close();if(client!=null)client.stop();if(jsProfile){DashboardView.stopStandaloneMedia(this);DashboardView.setDiagnosticEventSink(null);}if(hudLogThread!=null){final android.os.HandlerThread thread=hudLogThread;
             if(hudLogHandler==null||!hudLogHandler.post(new Runnable(){public void run(){thread.quit();}}))thread.quit();
             hudLogThread=null;hudLogHandler=null;}super.onDestroy();}
     protected void onActivityResult(int requestCode,int resultCode,Intent data){

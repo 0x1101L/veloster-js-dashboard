@@ -106,10 +106,21 @@ public final class JsPitRenderer {
         surface.backdrop(c,theme,resources,width,height);
         if(!theme.shell().left()){
             c.save();c.clipRect(regions.topMenu.x,regions.topMenu.y,regions.topMenu.x+regions.topMenu.width,regions.topMenu.y+regions.topMenu.height);
-            float outerX=theme.layoutSpacing().horizontalPadding*regions.scale,outerY=theme.layoutSpacing().verticalPadding*regions.scale;
-            box(c,outerX,outerY,width-outerX,outerY+regions.headerHeight,theme.panel);box(c,outerX,outerY+regions.headerHeight-1,width-outerX,outerY+regions.headerHeight,theme.stroke);
+            if("original".equals(theme.id)){
+                box(c,0,0,width,regions.headerHeight,theme.panel);box(c,0,regions.headerHeight-1,width,regions.headerHeight,theme.stroke);
+            }else{
+                float outerX=theme.layoutSpacing().horizontalPadding*regions.scale,outerY=theme.layoutSpacing().verticalPadding*regions.scale;
+                box(c,outerX,outerY,width-outerX,outerY+regions.headerHeight,theme.panel);box(c,outerX,outerY+regions.headerHeight-1,width-outerX,outerY+regions.headerHeight,theme.stroke);
+            }
             c.scale(regions.scale,regions.scale);
             float navWidth=regions.logicalDisplayWidth;
+            if(pageMenu.segmented()){
+                DashboardPage.Bounds group=DashboardPage.topPageMenuBounds(theme,pageMenu,navWidth);
+                int current=settingsPage||diagnosticPage?-1:performancePage?DashboardPage.PERFORMANCE:
+                        cluster&&gaugeLayout==null&&graphLayout==null?DashboardPage.F1:
+                        gaugeLayout!=null?DashboardPage.GAUGES:graphLayout!=null?DashboardPage.GRAPHS:DashboardPage.OVERVIEW;
+                surface.tabs(c,theme,paint,group.x,group.y,group.width,group.height,pageMenu.count(),DashboardPage.menuIndex(pageMenu,current));
+            }
             menuButton(c,UiText.t("퍼포먼스"),DashboardPage.PERFORMANCE,performancePage,navWidth);
             menuButton(c,UiText.t("전체 조망"),DashboardPage.OVERVIEW,!settingsPage&&!diagnosticPage&&!performancePage&&!cluster&&gaugeLayout==null&&graphLayout==null,navWidth);
             menuButton(c,"F1",DashboardPage.F1,cluster&&gaugeLayout==null&&graphLayout==null,navWidth);
@@ -117,7 +128,7 @@ public final class JsPitRenderer {
             menuButton(c,UiText.t("그래프"),DashboardPage.GRAPHS,graphLayout!=null,navWidth);
             menuButton(c,UiText.t("설정"),DashboardPage.SETTINGS,settingsPage||diagnosticPage,navWidth);
             DashboardPage.Bounds topClock=DashboardPage.navigationBounds(theme,pageMenu,DashboardPage.CLOCK,navWidth);
-            surface.navigationClock(c,theme,resources,paint,clock(),topClock.x,topClock.y,topClock.width,topClock.height);
+            surface.navigationClock(c,theme,resources,paint,clock(),topClock.x,topClock.y,topClock.width,topClock.height,theme.shell().topMenuClockPosition);
             menuButton(c,UiText.t("돌아가기"),DashboardPage.BACK,false,navWidth);
             c.restore();
         }
@@ -175,8 +186,14 @@ public final class JsPitRenderer {
         DashboardPage.Bounds bounds=DashboardPage.navigationBounds(theme,pageMenu,id,layoutWidth);
         float x=bounds.x,y=bounds.y,w=bounds.width,h=bounds.height;
         boolean icons=pageMenu.icons();
-        surface.navigationButton(c,theme,resources,paint,icons?null:label,x,y,w,h,on,theme.accent);
-        if(icons)menuIcons.draw(c,id,x+w/2,y+h/2,on?theme.accent:theme.textSecondary);
+        float contentX=theme.shell().left()?x+w/2:DashboardPage.topMenuContentX(theme,bounds);
+        if(pageMenu.segmented()&&!theme.shell().left()&&id<=DashboardPage.PERFORMANCE){
+            if(icons)menuIcons.draw(c,id,contentX,y+h/2,on?theme.accent:theme.textSecondary);
+            else centered(c,label,contentX,y+h/2+5,14,on?theme.accent:theme.color(com.veloster.dashboard.theme.ThemeSpec.ColorRole.ON_SURFACE_VARIANT),true);
+            return;
+        }
+        surface.navigationButton(c,theme,resources,paint,icons?null:label,x,y,w,h,on,theme.accent,theme.shell().left()?"center":theme.shell().topMenuContentAlignment);
+        if(icons)menuIcons.draw(c,id,contentX,y+h/2,on?theme.accent:theme.textSecondary);
     }
     private void centered(Canvas c,String s,float x,float y,float size,int color,boolean bold){
         size=theme.textSize(s,size,bold);
