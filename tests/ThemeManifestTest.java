@@ -40,8 +40,8 @@ public final class ThemeManifestTest {
         check(f12!=null&&"Liquid Glass".equals(f12.displayName)&&f12.f1Grid()!=null&&f12.shell().left()&&
               f12.material.glass()&&f12.shell().menuIcons()&&f12.shell().dock(),"F1-2 Glass defaults to icon navigation in a dock");
         check(f12.shell().framePaddingHorizontal==16&&f12.shell().framePaddingVertical==16
-              &&f12.shell().frameGapHorizontal==16&&f12.shell().frameGapVertical==12
-              &&f12.shell().groupGap==8&&f12.shell().itemGap==0,
+              &&f12.shell().frameGapHorizontal==16&&f12.shell().frameGapVertical==16
+              &&f12.shell().groupGap==5&&f12.shell().itemGap==5,
               "F1-2 frame, menu group and menu item spacing load from their separate theme fields");
         check(f12.f1Grid().padding==14&&f12.f1Grid().gap==10,
               "F1-2 keeps inner card padding separate from the shared layout gap");
@@ -94,7 +94,7 @@ public final class ThemeManifestTest {
         ThemeSpec optics=bundled.find("f1_2_optics");
         check(optics!=null&&"Liquid Glass (Optics)".equals(optics.displayName)
               &&optics.shell().left()&&optics.shell().dock()&&optics.shell().width==64
-              &&f12.shell().width==64&&optics.shell().framePadding==16&&optics.shell().top==16&&optics.shell().bottom==16
+              &&f12.shell().width==64&&optics.shell().framePadding==16&&optics.shell().top==12&&optics.shell().bottom==12
               &&optics.mediaControls()==ThemeSpec.MediaControls.CONTAINER&&f12.usesLiquidGlass()
               &&!flat.usesLiquidGlass()&&optics.usesLiquidGlass(),
               "Optics is selectable with a left dock and retains its wide media container");

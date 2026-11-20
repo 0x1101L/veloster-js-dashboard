@@ -8,7 +8,7 @@
       },
       "gap": {
         "horizontal": 16,
-        "vertical": 12
+        "vertical": 16
       },
       "cornerShape": "circle",
       "cornerRadius": 0

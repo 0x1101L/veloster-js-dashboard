@@ -389,18 +389,35 @@ CHECK = '''
   DashboardView view=create(a);com.veloster.dashboard.theme.ThemeSpec theme=(com.veloster.dashboard.theme.ThemeSpec)field(view,"activeTheme");
   com.veloster.dashboard.view.DashboardPage.Regions regions=com.veloster.dashboard.view.DashboardPage.regions(800,480,theme);
   com.veloster.dashboard.view.DashboardPage.Content content=new com.veloster.dashboard.view.DashboardPage.Content(theme,"f1",regions,false);
-  com.veloster.dashboard.view.DashboardPage.Bounds dock=com.veloster.dashboard.view.DashboardPage.dockBounds(theme);
+  com.veloster.dashboard.view.DashboardPage.Bounds dock=com.veloster.dashboard.view.DashboardPage.leftMenuBounds(theme);
   check(theme.layoutSpacing().padding==16&&regions.content.x==16&&regions.content.y==16
-        &&theme.shell().width==64&&theme.shell().top==16&&theme.shell().bottom==16
+        &&theme.shell().width==64&&theme.shell().top==12&&theme.shell().bottom==12
         &&content.x==96&&content.y==16&&content.x+content.width==784&&content.y+content.height==464,
-        "Liquid Glass applies 16-unit outer layout padding and keeps dock inner inset");
+        "Liquid Glass applies 16-unit outer layout padding and keeps left-menu content inset");
   check(dock.x==16&&dock.y==16&&dock.width==64&&dock.height==448,
-        "Liquid Glass dock surface fills the padded layout area around its inner content");
+        "Liquid Glass left-menu surface fills its fixed padded layout region");
   check(com.veloster.dashboard.view.DashboardPage.navigationBounds(theme,
         (com.veloster.dashboard.view.DashboardPage.Menu)field(view,"pageMenu"),com.veloster.dashboard.view.DashboardPage.CLOCK).x==16,
         "Liquid Glass left navigation shares the outer layout inset");
   draw(view);com.veloster.dashboard.view.overview.OverviewLayout overview=(com.veloster.dashboard.view.overview.OverviewLayout)field(view,"overviewLayout");
-  check(overview.leftAt(0)==96&&overview.topAt(0)==16,"Liquid Glass Overview grid follows the padded dock");
+  check(overview.leftAt(0)==96&&overview.topAt(0)==16,"Liquid Glass Overview grid follows the padded dock and 16-unit region gap");
+  com.veloster.dashboard.theme.ThemeCatalog catalog=(com.veloster.dashboard.theme.ThemeCatalog)field(view,"themeCatalog");
+  com.veloster.dashboard.theme.ThemeSpec horizontalPadding=catalog.find("left_padding_dock");
+  check(horizontalPadding!=null,"left-padding dock fixture loads");
+  com.veloster.dashboard.view.DashboardPage.Bounds paddedMenu=com.veloster.dashboard.view.DashboardPage.leftMenuBounds(horizontalPadding);
+  com.veloster.dashboard.view.DashboardPage.Bounds paddedClock=com.veloster.dashboard.view.DashboardPage.navigationBounds(horizontalPadding,
+        (com.veloster.dashboard.view.DashboardPage.Menu)field(view,"pageMenu"),com.veloster.dashboard.view.DashboardPage.CLOCK);
+  check(horizontalPadding.shell().left==20&&horizontalPadding.shell().right==8
+        &&com.veloster.dashboard.view.DashboardPage.shellWidth(horizontalPadding)==36
+        &&paddedMenu.x==dock.x&&paddedMenu.y==dock.y&&paddedMenu.width==dock.width&&paddedMenu.height==dock.height
+        &&paddedClock.x==36&&paddedClock.width==36,
+        "increasing horizontal menu padding reduces content width but leaves the dock background full width");
+  a.getSharedPreferences("dashboard_theme",0).edit().putString("theme_id","left_padding_dock").apply();
+  android.graphics.Canvas dockFrame=draw(create(a));
+  a.getSharedPreferences("dashboard_theme",0).edit().putString("theme_id","left_padding_buttons").apply();
+  android.graphics.Canvas buttonFrame=draw(create(a));
+  check(dockFrame.pixel(18,200)!=buttonFrame.pixel(18,200),
+        "dock appearance paints the full left-menu background outside the padded content");
   a.getSharedPreferences("dashboard_theme",0).edit().putInt("menu_position",com.veloster.dashboard.theme.ThemeSpec.MENU_TOP).apply();
   view=create(a);theme=(com.veloster.dashboard.theme.ThemeSpec)field(view,"activeTheme");
   regions=com.veloster.dashboard.view.DashboardPage.regions(800,480,theme);
@@ -412,7 +429,7 @@ CHECK = '''
   fixture("received","js");Activity a=new Activity();LanguageSettings.save(a,"ko");
   a.getSharedPreferences("dashboard_theme",0).edit().putString("theme_id","f1_2_flat").apply();
   DashboardView view=create(a);com.veloster.dashboard.theme.ThemeSpec theme=(com.veloster.dashboard.theme.ThemeSpec)field(view,"activeTheme");
-  check(theme.shell().width==64&&theme.shell().left(),"F1-2 uses a 64px left menu");
+  check(theme.shell().width==64&&theme.shell().left(),"F1-2 uses the shared 64px left menu");
   com.veloster.dashboard.view.DashboardPage.Bounds bounds=com.veloster.dashboard.view.DashboardPage.navigationBounds(theme,
    (com.veloster.dashboard.view.DashboardPage.Menu)field(view,"pageMenu"),0);
   check(Math.abs(bounds.x+bounds.width/2-(theme.layoutSpacing().horizontalPadding+theme.shell().width/2))<.01&&Math.abs(bounds.width-bounds.height)<.01,
@@ -456,6 +473,10 @@ class ThemeV3ShellTests(unittest.TestCase):
                 'square_glass': {'frame': {'cornerRadius': 0}},
                 'circle_glass': {'frame': {'cornerShape': 'circle'}},
                 'alias_glass': {'frame': {'cornerShape': 'sqircle'}},
+                'left_padding_dock': {'frame': {'padding': {'horizontal': 16, 'vertical': 16}},
+                    'sideMenuBar': {'width': 64, 'padding': {'left': 20, 'right': 8, 'vertical': 12}, 'appearance': 'dock'}},
+                'left_padding_buttons': {'frame': {'padding': {'horizontal': 16, 'vertical': 16}},
+                    'sideMenuBar': {'width': 64, 'padding': {'left': 20, 'right': 8, 'vertical': 12}, 'appearance': 'buttons'}},
             }
             data['themeIds'].extend(['shell_test', *corner_controls])
             catalog.write_text(json.dumps(data))
