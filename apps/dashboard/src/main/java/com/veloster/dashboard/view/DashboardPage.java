@@ -136,12 +136,11 @@ public final class DashboardPage {
         return start+offset+slot*(side+s.itemGap);
     }
     public static float shellWidth(ThemeSpec theme){ThemeSpec.Shell s=theme.shell();return s.width-s.left-s.right;}
-    public static Bounds dockBounds(ThemeSpec theme){
+    /** Full left-navigation background bounds; sideMenuBar padding affects contents only. */
+    public static Bounds leftMenuBounds(ThemeSpec theme){
         ThemeSpec.Shell s=theme.shell();
         float horizontal=theme.layoutSpacing().horizontalPadding,vertical=theme.layoutSpacing().verticalPadding;
-        float inset=Math.min(6,Math.min(Math.min(s.left,s.right),Math.min(s.top,s.bottom)));
-        // Vertical shell insets position dock contents; the dock surface itself spans the available height.
-        return new Bounds(horizontal+s.left-inset,vertical-inset,shellWidth(theme)+2*inset,480-2*vertical+2*inset);
+        return new Bounds(horizontal,vertical,s.width,Math.max(0,480-2*vertical));
     }
     private static float sidebarSide(ThemeSpec theme){
         ThemeSpec.Shell s=theme.shell();

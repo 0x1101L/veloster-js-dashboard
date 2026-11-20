@@ -230,7 +230,12 @@ public final class ThemeSurface {
             caller.setColor(accent);c.drawRect(x+0,y,x+53,y+2,caller);
         }
     }
-    /** Navigation appearance; bounds and hit testing stay with DashboardPage. */
+    /** Draws the left menu's own surface. Dock changes the menu skin; it is not a second menu layer. */
+    public void navigationMenu(Canvas c,ThemeSpec theme,Paint caller,float x,float y,float w,float h){
+        if(theme==null||!theme.shell().left()||!theme.shell().dock())return;
+        drawWithLegacy(c,theme,SurfaceRole.NAVIGATION_DOCK,caller,x,y,w,h,theme.panel,theme.stroke);
+    }
+    /** Navigation button appearance; bounds and hit testing stay with DashboardPage. */
     public void navigationButton(Canvas c,ThemeSpec theme,ThemeResources resources,Paint caller,
                                  String label,float x,float y,float w,float h,boolean selected,int accent){
         if(theme.shell().dock()){

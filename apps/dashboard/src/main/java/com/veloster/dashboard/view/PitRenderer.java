@@ -107,11 +107,8 @@ public final class PitRenderer {
         c.translate(regions.left,regions.top);c.scale(regions.scale,regions.scale);
         surface.coordinates(regions.left,regions.top,regions.scale);
         if(theme.shell().left()){
-            if(theme.shell().dock()){
-                DashboardPage.Bounds dock=DashboardPage.dockBounds(theme);
-                surface.drawWithLegacy(c,theme,ThemeSpec.SurfaceRole.NAVIGATION_DOCK,paint,
-                        dock.x,dock.y,dock.width,dock.height,theme.panel,theme.stroke);
-            }
+            DashboardPage.Bounds menuSurface=DashboardPage.leftMenuBounds(theme);
+            surface.navigationMenu(c,theme,paint,menuSurface.x,menuSurface.y,menuSurface.width,menuSurface.height);
             menuButton(c,UiText.t("퍼포먼스"),DashboardPage.PERFORMANCE,performancePage);
             menuButton(c,UiText.t("전체 조망"),DashboardPage.OVERVIEW,!settingsPage&&!performancePage&&!cluster&&gaugeLayout==null&&graphLayout==null);
             menuButton(c,"F1",DashboardPage.F1,cluster&&gaugeLayout==null&&graphLayout==null);
