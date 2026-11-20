@@ -6,8 +6,10 @@ Preview preferences persist per checkout; OEM/media/system operations are unavai
 import hashlib
 import json
 import base64
+import queue
 import threading
 import subprocess
+import time
 from pathlib import Path
 
 from js_ui_preview import ROOT, VEHICLES, Renderer, display_label
@@ -46,6 +48,7 @@ def compile_runtime(folder):
                       ' public void blit(java.awt.Graphics target){target.drawImage(image,0,0,null);g.dispose();}\n}')
     sources.append(canvas)
     sources.append(ROOT / 'tools/DashboardPreviewUi.java')
+    sources.append(ROOT / 'tools/LayoutEditorUi.java')
     base = ROOT / 'apps/dashboard/src/main/java/com/veloster/dashboard'
     for name in ('DashboardView', 'gauge/GaugeEditor', 'graph/GraphEditor'):
         sources.append(base / 'view' / (name + '.java'))
@@ -63,10 +66,12 @@ def compile_runtime(folder):
     return java, classes
 
 
-def run():
+def run(asset_root=None, editor=False, editor_theme='f1_2', editor_themes=None, editor_handler=None):
     import tempfile
+    asset_root = Path(asset_root).resolve() if asset_root else ROOT / 'apps/dashboard/src/0x1101L/assets'
     with tempfile.TemporaryDirectory(prefix='dashboard-runtime-') as folder:
-        preference_scope = hashlib.sha256(str(ROOT.resolve()).encode('utf-8')).hexdigest()[:20]
+        scope_key = str(ROOT.resolve()) + (':layout-editor' if editor else ':preview')
+        preference_scope = hashlib.sha256(scope_key.encode('utf-8')).hexdigest()[:20]
         preference_dir = (Path.home() / 'Library/Application Support/JS Dashboard Preview/preferences'
                           / preference_scope)
         generation = 0
@@ -76,13 +81,22 @@ def run():
         java, classes = compile_runtime(generation_dir)
         while True:
             command = [java, '-Ddashboard.preferences.dir=' + str(preference_dir),
-                       '-Ddashboard.assets=' + str(ROOT / 'apps/dashboard/src/0x1101L/assets'),
+                       '-Ddashboard.assets=' + str(asset_root),
+                       '-Ddashboard.editor=' + str(bool(editor)).lower(),
+                       '-Ddashboard.editor.theme=' + editor_theme,
+                       '-Ddashboard.editor.themes=' + ','.join(editor_themes or ()),
                        '-cp', str(classes), 'DashboardDesktop']
             process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                        text=True, bufsize=1)
             spotify_stop = threading.Event()
             spotify_lock = threading.Lock()
             spotify_thread = None
+
+            def send_to_runtime(message):
+                with spotify_lock:
+                    if process.poll() is None:
+                        process.stdin.write(message + '\n')
+                        process.stdin.flush()
 
             def spotify_loop():
                 script = '''
@@ -131,10 +145,59 @@ end tell
                         pass
                     spotify_stop.wait(1)
 
+            def inspect_theme(theme_id):
+                nonlocal inspection_id
+                inspection_id += 1
+                prefix = f'LAYOUT_EDITOR_INSPECT_RESULT\t{inspection_id}\t'
+                send_to_runtime(f'LAYOUT_EDITOR_INSPECT\t{inspection_id}\t{theme_id}')
+                deadline = time.monotonic() + 8
+                while True:
+                    try:
+                        line = editor_output.get(timeout=max(0, deadline - time.monotonic()))
+                    except queue.Empty:
+                        raise ValueError("렌더러 검증 응답 시간이 초과되었습니다.") from None
+                    if line is None:
+                        editor_output.put(None)
+                        raise ValueError("렌더러가 검증 중 종료되었습니다.")
+                    if line.startswith(prefix):
+                        result = line[len(prefix):].rstrip('\r\n')
+                        if result == 'error':
+                            raise ValueError("렌더러가 이 값을 적용할 수 없습니다. 테마 규격과 화면 배치를 확인하세요.")
+                        return json.loads(result)
+                    if not line.startswith('LAYOUT_EDITOR_INSPECT_RESULT\t'):
+                        print(line, end='', flush=True)
+
+            inspection_id = 0
+            editor_output = queue.Queue()
+
+            # Inspection replies share stdout with UI commands. One reader keeps
+            # a bounded wait possible without racing the normal command loop.
+            def read_editor_output(stream, output):
+                try:
+                    for line in stream:
+                        output.put(line)
+                finally:
+                    output.put(None)
+
+            if editor:
+                threading.Thread(target=read_editor_output, args=(process.stdout, editor_output),
+                                 name='dashboard-editor-output', daemon=True).start()
+            lines = iter(editor_output.get, None) if editor else process.stdout
             reload_requested = False
-            for line in process.stdout:
+            for line in lines:
                 message = line.rstrip('\r\n')
-                if message.startswith('READY Dashboard') and spotify_thread is None:
+                if message.startswith('LAYOUT_EDITOR_INSPECT_RESULT\t'):
+                    continue
+                if editor and message.startswith('LAYOUT_EDITOR\t') and editor_handler is not None:
+                    try:
+                        response = editor_handler(message, inspect_theme)
+                        if response:
+                            send_to_runtime(response)
+                    except Exception as error:
+                        detail = str(error).replace('\n', ' ')[:1800]
+                        send_to_runtime('LAYOUT_EDITOR_STATUS\t0\t' + __import__('base64').b64encode(detail.encode('utf-8')).decode('ascii'))
+                    continue
+                if not editor and message.startswith('READY Dashboard') and spotify_thread is None:
                     spotify_thread = threading.Thread(target=spotify_loop, name='spotify-preview-bridge', daemon=True)
                     spotify_thread.start()
                 if message != 'DASHBOARD_PREVIEW_RELOAD':
@@ -181,11 +244,51 @@ end tell
 
 
 STUBS = {
+    'android/graphics/Typeface.java': '''package android.graphics;
+import android.content.res.AssetManager;
+import java.awt.Font;
+import java.io.InputStream;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+public final class Typeface {
+ public static final int BOLD=1;
+ public static final Typeface DEFAULT=new Typeface(new Font("Dialog",Font.PLAIN,12));
+ public static final Typeface DEFAULT_BOLD=create(DEFAULT,BOLD);
+ private static final Map<String,Typeface> editorFonts=new LinkedHashMap<String,Typeface>(16,.75f,true){
+  @Override protected boolean removeEldestEntry(Map.Entry<String,Typeface> entry){return size()>24;}
+ };
+ final Font face;
+ private Typeface(Font face){this.face=face;}
+ public static Typeface create(Typeface source,int style){return new Typeface(source.face.deriveFont(style));}
+ public static synchronized Typeface createFromAsset(AssetManager assets,String path){
+  try(InputStream input=assets.open(path)){
+   String asset=AssetManager.editorAssetKey(input);
+   Typeface cached=asset==null?null:editorFonts.get(asset);
+   if(cached!=null)return cached;
+   Typeface loaded=new Typeface(Font.createFont(Font.TRUETYPE_FONT,input));
+   if(asset!=null)editorFonts.put(asset,loaded);
+   return loaded;
+  }catch(Exception error){throw new IllegalArgumentException(error);}
+ }
+}''',
     'android/graphics/BitmapFactory.java': '''package android.graphics;
+import android.content.res.AssetManager;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public final class BitmapFactory {
+ private static final Map<String,Bitmap> editorImages=new LinkedHashMap<String,Bitmap>(8,.75f,true){
+  @Override protected boolean removeEldestEntry(Map.Entry<String,Bitmap> entry){return size()>4;}
+ };
  public static class Options {public boolean inJustDecodeBounds;public int outWidth,outHeight,inSampleSize=1;}
  public static Bitmap decodeStream(java.io.InputStream input){return decodeStream(input,null,null);}
  public static Bitmap decodeStream(java.io.InputStream input,Object padding,Options options){try{
+  String asset=options==null?AssetManager.editorAssetKey(input):null;
+  if(asset!=null)synchronized(editorImages){
+   Bitmap cached=editorImages.get(asset);
+   if(cached!=null)return cached;
+  }
   java.awt.image.BufferedImage image=javax.imageio.ImageIO.read(input);if(image==null)return null;
   if(options!=null){
    options.outWidth=image.getWidth();options.outHeight=image.getHeight();
@@ -196,7 +299,11 @@ public final class BitmapFactory {
     g.drawImage(image,0,0,sampled.getWidth(),sampled.getHeight(),null);g.dispose();return sampled;
    }
   }
-  Bitmap bitmap=new Bitmap(image.getWidth(),image.getHeight());bitmap.image=image;return bitmap;
+  Bitmap bitmap=new Bitmap(image.getWidth(),image.getHeight());bitmap.image=image;
+  if(asset!=null&&(long)image.getWidth()*image.getHeight()<=4000000)synchronized(editorImages){
+   editorImages.put(asset,bitmap);
+  }
+  return bitmap;
  }catch(Exception error){return null;}}
 }''',
 
@@ -246,6 +353,9 @@ public class AlertDialog implements DialogInterface {
  }
 }''',
     'DashboardDesktop.java': '''import java.lang.reflect.*;
+import com.veloster.dashboard.theme.ThemeCatalog;
+import com.veloster.dashboard.theme.ThemeSpec;
+import com.veloster.dashboard.theme.ThemeSettingsStore;
 import javax.swing.*;
 import android.app.*;
 import android.view.*;
@@ -256,6 +366,7 @@ import com.veloster.i18n.LanguageSettings;
 import com.veloster.i18n.UiText;
 
 public class DashboardDesktop {
+ static LayoutEditorUi layoutEditorUi;
  static Object field(Object target,String name)throws Exception{Field f=(target instanceof Class?(Class<?>)target:target.getClass()).getDeclaredField(name);f.setAccessible(true);return f.get(target instanceof Class?null:target);}
  static void copy(Object from,Object to)throws Exception{for(Field f:from.getClass().getDeclaredFields())if(!Modifier.isStatic(f.getModifiers())){f.setAccessible(true);f.set(to,f.get(from));}}
  static void fixture(String state,String vehicle)throws Exception{
@@ -277,6 +388,52 @@ public class DashboardDesktop {
  static DashboardView create(Activity a,PreviewProfile profile)throws Exception{
   a.content.removeAll();DashboardView.attachStandalone(a);
   DashboardView view=(DashboardView)a.content.getComponent(0);view.setSize(profile.width,profile.height);return view;
+ }
+ static void previewMenuTheme(DashboardView view)throws Exception{
+  for(String name:new String[]{"menuPosition","menuDock"}){
+   Field setting=DashboardView.class.getDeclaredField(name);setting.setAccessible(true);
+   setting.setInt(view,name.equals("menuPosition")?com.veloster.dashboard.theme.ThemeSpec.MENU_THEME:com.veloster.dashboard.theme.ThemeSpec.DOCK_THEME);
+  }
+  Method apply=DashboardView.class.getDeclaredMethod("applyTheme",com.veloster.dashboard.theme.ThemeSpec.class);apply.setAccessible(true);
+  apply.invoke(view,field(view,"selectedTheme"));
+ }
+ static String refreshEditorTheme(Activity activity, DashboardView view, ThemeCatalog catalog,
+                                  String themeId, boolean followTheme, String role)throws Exception{
+  ThemeSettingsStore store=new ThemeSettingsStore(activity);
+  ThemeCatalog currentCatalog=(ThemeCatalog)field(view,"themeCatalog");
+  if(catalog==null)catalog=currentCatalog;
+  int position=followTheme?ThemeSpec.MENU_THEME:store.menuPosition();
+  int dock=followTheme?ThemeSpec.DOCK_THEME:store.menuDock();
+  ThemeSpec selected=(ThemeSpec)field(view,"selectedTheme");
+  if(catalog!=currentCatalog||!themeId.equals(selected.id)
+          ||position!=(Integer)field(view,"menuPosition")||dock!=(Integer)field(view,"menuDock")){
+   Method apply=DashboardView.class.getDeclaredMethod("reloadTheme",ThemeCatalog.class,String.class,int.class,int.class);
+   apply.setAccessible(true);
+   apply.invoke(view,catalog,themeId,position,dock);
+  }
+  editorPage(view,role);
+  return editorCanvasStatus(view);
+ }
+ static void editorPage(DashboardView view,String role)throws Exception{
+  int index=java.util.Arrays.asList("overview","f1","gauges","graphs","performance").indexOf(role);
+  if(index>=0){
+   Method select=DashboardView.class.getDeclaredMethod("selectMenuTarget",int.class);select.setAccessible(true);select.invoke(view,index);
+  }else if(role.equals("settings"))openSettingsRoot(view);
+  else if(role.equals("diagnostics"))openSettingsPage(view,(Integer)field(com.veloster.dashboard.view.SettingsPageRenderer.class,"DIAGNOSTICS"));
+ }
+ static void openThemeSettings(DashboardView view)throws Exception{
+  openSettingsPage(view,(Integer)field(com.veloster.dashboard.view.SettingsPageRenderer.class,"THEME_SETTINGS"));
+ }
+ static void openSettingsRoot(DashboardView view)throws Exception{
+  Field visible=DashboardView.class.getDeclaredField("settingsVisible");visible.setAccessible(true);visible.setBoolean(view,true);
+  Method root=DashboardView.class.getDeclaredMethod("settingsRoot");root.setAccessible(true);root.invoke(view);view.invalidate();
+ }
+ static String editorCanvasStatus(DashboardView view)throws Exception{
+  com.veloster.dashboard.theme.ThemeSpec displayed=(com.veloster.dashboard.theme.ThemeSpec)field(view,"activeTheme");
+  com.veloster.dashboard.theme.ThemeSpec.Shell active=displayed.shell();
+  com.veloster.dashboard.theme.ThemeSpec.Shell base=((com.veloster.dashboard.theme.ThemeSpec)field(view,"selectedTheme")).shell();
+  return displayed.displayName+"  ·  "+view.getWidth()+" × "+view.getHeight()+"  ·  "+(active.left()?"왼쪽 메뉴 "+active.width+" px":"상단 메뉴")
+         +((active.position.equals(base.position)&&active.dock()==base.dock())?"":"  ·  앱 메뉴 설정 적용 중");
  }
  static void waitForTimers(){java.awt.SecondaryLoop loop=java.awt.Toolkit.getDefaultToolkit().getSystemEventQueue().createSecondaryLoop();javax.swing.Timer timer=new javax.swing.Timer(700,e->loop.exit());timer.setRepeats(false);timer.start();loop.enter();}
  static void touch(DashboardView view,int action,float x,float y){int id=action==0?java.awt.event.MouseEvent.MOUSE_PRESSED:action==1?java.awt.event.MouseEvent.MOUSE_RELEASED:java.awt.event.MouseEvent.MOUSE_DRAGGED;view.dispatchEvent(new java.awt.event.MouseEvent(view,id,System.currentTimeMillis(),0,(int)x,(int)y,1,false));}
@@ -531,7 +688,18 @@ public class DashboardDesktop {
   check(a.getSharedPreferences("dashboard_theme",0).getString("theme_id","").equals("aurora_focus"),"desktop theme tool uses canvas apply callback");
   System.out.println("PASS actual DashboardView: navigation, drag rejection, settings, language save, theme cancel/apply, gauge toggle, long press, canvas editor, input isolation, scaled input and "+PreviewProfile.ALL.length+" vehicle presets at native resolutions");
  }
+ static ThemeCatalog validateEditorCatalog(Activity activity,String themeId,String themeIds){
+  ThemeCatalog catalog=ThemeCatalog.load(activity);
+  if(!catalog.all().keySet().equals(new java.util.HashSet<String>(java.util.Arrays.asList(themeIds.split(","))))
+      ||catalog.find(themeId)==null)
+   throw new IllegalArgumentException("Renderer rejected the theme catalog");
+  return catalog;
+ }
  public static void main(String[] args)throws Exception{
+  if(args.length==3&&args[0].equals("--inspect-theme")){
+   System.out.println(LayoutEditorUi.inspect(validateEditorCatalog(new Activity(),args[1],args[2]).find(args[1])));
+   return;
+  }
   if(args.length>0&&(args[0].equals("--prefs-write")||args[0].equals("--prefs-read"))){
    SwingUtilities.invokeAndWait(()->{try{persistenceCheck(args[0]);}catch(Exception e){throw new RuntimeException(e);}});return;
   }
@@ -539,7 +707,9 @@ public class DashboardDesktop {
   DashboardPreviewUi.installLookAndFeel();
   SwingUtilities.invokeLater(()->{try{
    Activity activity=new Activity();LanguageSettings.init(activity);
-   JFrame frame=new JFrame("JS Dashboard Preview");activity.window=frame;frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+   boolean editorMode=Boolean.parseBoolean(System.getProperty("dashboard.editor","false"));
+   JFrame frame=new JFrame(editorMode?"Dashboard Theme & Layout Studio":"JS Dashboard Preview");activity.window=frame;frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+   if(editorMode)new com.veloster.dashboard.theme.ThemeSettingsStore(activity).save(System.getProperty("dashboard.editor.theme","f1_2"));
    PreviewProfile[] vehicles=PreviewProfile.ALL;
    String[] sampleStates={"received","waiting","invalid","held","expired"};
    android.content.SharedPreferences desktopPrefs=activity.getSharedPreferences("desktop_preview",0);
@@ -571,16 +741,40 @@ public class DashboardDesktop {
     PreviewProfile profile=vehicles[car.getSelectedIndex()];current[0].removeCallbacks((Runnable)field(current[0],"editHold"));
     desktopPrefs.edit().putString("vehicle",profile.id).apply();
     String sample=(String)state.getSelectedItem();fixture(sample,profile.fixture);current[0]=create(activity,profile);
+    if(editorMode&&layoutEditorUi!=null&&layoutEditorUi.followsTheme())previewMenuTheme(current[0]);
     mediaFixture(current[0],sample,profile);screen.setView(current[0]);car.setToolTipText(profile.display);sync.run();
    }catch(Exception error){throw new RuntimeException(error);}});
    state.addActionListener(e->{desktopPrefs.edit().putString("sample_state",(String)state.getSelectedItem()).apply();data.run();});
-   JPanel root=DashboardPreviewUi.shell(DashboardPreviewUi.contextBar(car,language,theme),screen,DashboardPreviewUi.actionBar(state,DashboardDesktop::requestReload,()->capture(frame,current[0])));
+   JPanel editorRoot=null;
+   final ThemeCatalog[] acceptedEditorCatalog={null};
+   String themeIds=System.getProperty("dashboard.editor.themes","original,f1_2,aurora_focus,material_auto_cowork");
+   if(editorMode){
+    layoutEditorUi=new LayoutEditorUi(screen,car,state,()->language.doClick(),()->{
+     try{openThemeSettings(current[0]);screen.repaint();}catch(Exception e){throw new RuntimeException(e);}
+    },()->capture(frame,current[0]),
+     activity.getSharedPreferences("layout_editor_panels",0),(themeId,followTheme,previewRole)->{try{
+     String detail=refreshEditorTheme(activity,current[0],acceptedEditorCatalog[0],themeId,followTheme,previewRole);
+     screen.repaint();sync.run();
+     return detail;
+    }catch(Exception error){throw new RuntimeException(error);}});
+    layoutEditorUi.setThemes(java.util.Arrays.asList(themeIds.split(",")),
+        com.veloster.dashboard.theme.ThemeCatalog.load(activity).all());
+    editorRoot=layoutEditorUi.panel();
+    frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    frame.addWindowListener(new java.awt.event.WindowAdapter(){
+     public void windowClosing(java.awt.event.WindowEvent event){if(layoutEditorUi.canClose())frame.dispose();}
+    });
+   }else editorRoot=DashboardPreviewUi.shell(DashboardPreviewUi.contextBar(car,language,theme),screen,DashboardPreviewUi.actionBar(state,DashboardDesktop::requestReload,()->capture(frame,current[0])));
+   JPanel root=editorRoot;
    root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("R"),"reload");
-   root.getActionMap().put("reload",new AbstractAction(){public void actionPerformed(java.awt.event.ActionEvent event){requestReload();}});
-   frame.setContentPane(root);frame.pack();frame.setMinimumSize(new java.awt.Dimension(720,480));frame.setLocationByPlatform(true);frame.setVisible(true);
-   listenForReloadMessages(frame,current);
+   root.getActionMap().put("reload",new AbstractAction(){public void actionPerformed(java.awt.event.ActionEvent event){if(editorMode)layoutEditorUi.requestCurrent();else requestReload();}});
+   frame.setContentPane(root);frame.pack();frame.setMinimumSize(editorMode?new java.awt.Dimension(1040,640):new java.awt.Dimension(720,480));frame.setLocationByPlatform(true);frame.setVisible(true);
+   listenForReloadMessages(frame,current,activity,themeIds,acceptedEditorCatalog);
+   if(editorMode)layoutEditorUi.requestCurrent();
    System.out.println("READY Dashboard Java touch runtime: showing="+frame.isShowing()+", canvas="+current[0].getWidth()+"x"+current[0].getHeight());
-   javax.swing.Timer timer=new javax.swing.Timer(100,e->{screen.repaint();sync.run();});timer.start();
+   javax.swing.Timer timer=new javax.swing.Timer(100,e->{screen.repaint();sync.run();
+    if(editorMode)try{layoutEditorUi.setCanvasStatus(editorCanvasStatus(current[0]));}catch(Exception error){throw new RuntimeException(error);}
+   });timer.start();
    frame.addWindowListener(new java.awt.event.WindowAdapter(){public void windowClosed(java.awt.event.WindowEvent e){timer.stop();}});
   }catch(Exception error){error.printStackTrace();JOptionPane.showMessageDialog(null,error.toString());}});
  }
@@ -590,10 +784,32 @@ public class DashboardDesktop {
   java.lang.reflect.Field sources=com.veloster.dashboard.vehicle.MediaState.class.getDeclaredField("SOURCES");sources.setAccessible(true);
   ((String[])sources.get(null))[3]="Spotify";
  }
- static void listenForReloadMessages(JFrame frame,DashboardView[] current){Thread listener=new Thread(()->{try{
+ static void listenForReloadMessages(JFrame frame,DashboardView[] current,Activity activity,
+                                    String themeIds,ThemeCatalog[] acceptedCatalog){Thread listener=new Thread(()->{try{
   java.io.BufferedReader input=new java.io.BufferedReader(new java.io.InputStreamReader(System.in,"UTF-8"));
+  ThemeCatalog candidate=null;
   for(String message;(message=input.readLine())!=null;){
-   if(message.startsWith("RELOAD_FAILED\\t")){
+   if(message.startsWith("LAYOUT_EDITOR_INSPECT\\t")&&layoutEditorUi!=null){
+    String[] request=message.split("\\\\t",3);
+    if(request.length!=3)continue;
+    String result="error";
+    candidate=null;
+    try{
+     ThemeCatalog catalog=validateEditorCatalog(activity,request[2],themeIds);
+     result=LayoutEditorUi.inspect(catalog.find(request[2]));
+     candidate=catalog;
+    }catch(Exception error){error.printStackTrace();}
+    System.out.println("LAYOUT_EDITOR_INSPECT_RESULT\\t"+request[1]+"\\t"+result);
+    System.out.flush();
+   }else if((message.startsWith("LAYOUT_EDITOR_DOC\\t")||message.startsWith("LAYOUT_EDITOR_STATUS\\t"))&&layoutEditorUi!=null){
+    // Python can still reject and roll back a draft after inspection.
+    if(candidate!=null&&message.startsWith("LAYOUT_EDITOR_DOC\\t")){
+     ThemeCatalog validated=candidate;
+     SwingUtilities.invokeLater(()->acceptedCatalog[0]=validated);
+    }
+    candidate=null;
+    layoutEditorUi.handle(message);
+   }else if(message.startsWith("RELOAD_FAILED\\t")){
     String detail=message.substring("RELOAD_FAILED\\t".length());SwingUtilities.invokeLater(()->JOptionPane.showMessageDialog(frame,"Java 또는 테마 파일을 다시 컴파일하지 못했습니다. 현재 프리뷰는 이전 버전으로 유지합니다.\\n\\n"+detail,"새로고침 실패",JOptionPane.ERROR_MESSAGE));
    }else if(message.equals("SPOTIFY_STOP"))SwingUtilities.invokeLater(()->{try{
     com.veloster.dashboard.vehicle.MediaState media=(com.veloster.dashboard.vehicle.MediaState)field(current[0],"mediaState");
@@ -673,9 +889,33 @@ public class Context {
  }
 }''',
     'android/content/res/AssetManager.java': '''package android.content.res;
-public class AssetManager {public java.io.InputStream open(String name)throws java.io.IOException{
- return java.nio.file.Files.newInputStream(java.nio.file.Paths.get(System.getProperty("dashboard.assets"),name));
-}}''',
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
+
+public class AssetManager {
+ public InputStream open(String name)throws IOException{
+  Path path=Paths.get(System.getProperty("dashboard.assets"),name);
+  InputStream input=Files.newInputStream(path);
+  return Boolean.getBoolean("dashboard.editor")?new EditorAsset(input,path):input;
+ }
+ public static String editorAssetKey(InputStream input){
+  if(!(input instanceof EditorAsset))return null;
+  Path path=((EditorAsset)input).path;
+  try{
+   BasicFileAttributes version=Files.readAttributes(path,BasicFileAttributes.class);
+   return path+"|"+version.fileKey()+"|"+version.lastModifiedTime()+"|"+version.size();
+  }catch(IOException unavailable){return null;}
+ }
+ private static final class EditorAsset extends FilterInputStream {
+  final Path path;
+  EditorAsset(InputStream stream,Path path){super(stream);this.path=path;}
+ }
+}''',
     'android/content/Intent.java': '''package android.content;
 public class Intent {public static final String ACTION_GET_CONTENT="get-content";public Intent(){}public Intent(String a){}
  public boolean getBooleanExtra(String n,boolean d){return d;}public void removeExtra(String n){}

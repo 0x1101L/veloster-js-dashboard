@@ -54,7 +54,7 @@ public final class DashboardView extends View implements Runnable {
     private final GraphEditor graphEditor;
     private final OverviewLayout overviewLayout=new OverviewLayout();
     private boolean settingsVisible;
-    private final ThemeCatalog themeCatalog;
+    private ThemeCatalog themeCatalog;
     private final ThemeSettingsStore themeStore;
     private ThemeSpec selectedTheme,activeTheme;
     private int menuPosition,menuDock,pedalBarStyle,brakeBarStyle,f1Order;
@@ -333,6 +333,23 @@ public final class DashboardView extends View implements Runnable {
         }
         activeThemeResources=com.veloster.dashboard.theme.ThemeResources.load(activity,activeTheme,selected);
         overviewLayout.theme(activeTheme);renderer.setTheme(activeTheme,activeThemeResources);jsRenderer.setTheme(activeTheme,activeThemeResources);invalidate();
+    }
+    /** Refresh the standalone desktop editor's theme while retaining the live view. */
+    void reloadTheme(ThemeCatalog catalog, String themeId, int position, int dock) {
+        ThemeSpec next = new ThemeRepository(catalog).load(themeId, ThemeRepository.SUPPORTED_SCHEMA_VERSION);
+        if (!themeId.equals(themeStore.selectedId())) themeStore.save(themeId);
+        themeCatalog = catalog;
+        menuPosition = position;
+        menuDock = dock;
+        applyTheme(next);
+        if (!settingsVisible) return;
+        int screen = settingsEditor.screen;
+        if (screen == SettingsPageRenderer.UI_GROUP || screen == SettingsPageRenderer.THEME_SETTINGS
+                || screen == SettingsPageRenderer.THEME || screen == SettingsPageRenderer.WALLPAPER) {
+            float scroll = settingsEditor.pageScrollY;
+            openSettingsPage(screen);
+            settingsEditor.pageScrollY = scroll;
+        }
     }
     private String languageLabel(){String selected=LanguageSettings.selection(activity);return "auto".equals(selected)?UiText.t("시스템 설정 따름"):"ko".equals(selected)?"한국어":"English";}
     private static String[] tr(String... values){String[] result=values.clone();for(int i=0;i<result.length;i++)result[i]=UiText.t(result[i]);return result;}
