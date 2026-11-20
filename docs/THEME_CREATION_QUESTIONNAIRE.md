@@ -44,14 +44,15 @@
 | 화면 | 어떤 화면을 설계하는가? | Overview, F1, 게이지, 그래프, 퍼포먼스, 설정, 진단 중 대상 | 각 화면별 JSON 역할 및 schema 확인 |
 | Overview | 20개 항목을 어떤 우선순위로 보여줄까? | 카드 ID/source, 배치 순서, span, 생략할 항목 | 5×4 단일 화면 고정. 4×3·페이지 이동 금지 |
 | 메뉴 필요성 | 항상 보이는 페이지 메뉴가 필요한가? | 필요 여부, 표시할 실제 페이지, 보조 진입점 | 메뉴 기능과 hit area는 기존 동작 유지 |
-| 메뉴 위치·폭 | 상단과 왼쪽 중 어디에 둘까? 왼쪽이면 폭과 여백은? | 위치, 폭, 정렬, 상하좌우 padding, 선택 상태 | shell의 position·width·alignment·padding. 지원 범위와 화면 공간 검사 |
-| 메뉴 외형 | 버튼형인가, 공통 배경의 dock형인가? | buttons/dock, 공통 배경·버튼 배경, 밑줄/선택 강조 | dock은 왼쪽 메뉴에만 지원. navigationAppearance·surfaceStyles·fills·decorations |
+| 메뉴 위치·폭 | 상단 메뉴와 왼쪽 메뉴 중 어디에 둘까? 왼쪽이면 폭과 안쪽 여백은? | 위치, 폭, 정렬, 세로 padding, 선택 상태 | `shell.navigationPosition`, `sideMenuBar.width/alignment/padding`. 화면 바깥 margin은 두지 않음 |
+| 메뉴 간격 | 시계·메뉴·돌아가기 묶음과 메뉴 버튼 사이를 얼마나 띄울까? | 그룹 간 gap, 버튼 간 itemGap, 논리 단위 | `sideMenuBar.gap`은 그룹 사이, `sideMenuBar.itemGap`은 메뉴 버튼 사이 |
+| 메뉴 외형 | 버튼형인가, 공통 배경의 dock형인가? | buttons/dock, 공통 배경·버튼 배경, 밑줄/선택 강조 | dock은 왼쪽 메뉴에만 지원. `sideMenuBar.appearance`·surfaceStyles·fills·decorations |
 | 메뉴 요소 | 시계·페이지 아이콘·설정·돌아가기를 어떻게 보일까? | 실제 기능이 있는 요소, 순서, 아이콘 굵기/크기/선택 표시 | 런처·마이크·알림 등 미지원 동작을 가짜로 표현하지 않음. 아이콘별 자산 설정 지원 여부 확인 |
 | 색상 | 바탕·표면·전경·강조·상태색은 무엇인가? | 역할별 색상, 주야간 대비, 선택·비활성·경고·위험·미수신 예 | colors schema의 의미 토큰 사용. 상태 의미는 데이터·렌더러 계약 보존 |
 | 배경 | 단색·그라데이션·무늬·이미지 중 무엇을 쓸까? 기본 배경은 포인트 컬러에 연동할까? | 기본 배경, 이미지/썸네일, 색상별 변형, 자르기 의도, 수동 선택 우선순위, 텍스트 가독성 | backdrop·assets.background·wallpapers. 엔진별 accent-linked default는 명시적 palette key로 연결하고 사용자 지정 배경은 우선 보존한다. 파일 형식과 경로 schema 준수 |
 | 표면 재질 | 카드·메뉴·패널마다 어떤 면 처리를 쓸까? | flat/glass/legacy 역할 매핑, 투명도·블러·하이라이트 | material·surfaceStyles·surfaceBlur. Glass 설정이 없는 역할에는 효과를 가정하지 않음 |
-| 모서리와 테두리 | 카드·메뉴·버튼·화면 외곽의 radius와 테두리는 어떤 스타일인가? | 곡선(circle/squircle), 반경, 외곽선 색/존재, 각 표면의 예시 | shell의 screenCorner/screenCornerRadius, material.radius, F1 전용 radius, colors.stroke 확인. 독립 border 두께·요소별 radius가 schema/runtime에 없으면 엔진 확장 필요 |
-| 간격·치수 | 버튼 크기, 카드 padding, grid gap과 본문 여백은? | 논리 단위 값, 사용 화면 크기, 밀집/여유의 우선순위 | spacing 및 화면별 layout schema 범위 안에서 지정 |
+| 모서리와 테두리 | 카드·메뉴·버튼·화면 외곽의 radius와 테두리는 어떤 스타일인가? | 곡선(circle/squircle), 반경, 외곽선 색/존재, 각 표면의 예시 | `shell.frame.cornerShape/cornerRadius`, material.radius, F1 전용 radius, colors.stroke 확인 |
+| 간격·치수 | 프레임과 영역 사이 간격, 각 영역 안쪽 padding, 버튼 크기, 카드 padding과 grid gap은? | 논리 단위 값, 사용 화면 크기, 밀집/여유의 우선순위 | 큰 영역은 `shell.frame.gap`, 프레임 안쪽 가로·세로 여백은 `shell.frame.padding.horizontal/vertical`, 각 영역 안쪽은 해당 영역 `padding`, 반복 항목은 영역별 `itemGap`. `layout.padding`은 사용하지 않음 |
 | 타이포그래피·글꼴 | 본문·숫자·디스플레이에 같은 글꼴을 쓸까? 가변 폰트가 있으면 사용할까? | 역할별 글꼴 파일/출처/라이선스, variable/static 여부, 한글·숫자·단위 글리프와 fallback | `fonts.body/numeric/display`, `fallbackWeights`. 가변 폰트와 API 17용 정적 굵기 파일 지원 |
 | 타이포그래피·굵기 | 각 역할의 일반 텍스트와 강조 텍스트를 어느 굵기로 표시할까? | body/numeric/display별 normal·emphasis. Regular 400, Medium 500, Semibold 600, Bold 700 중 선택 | `fontStyles`가 역할별 400/500/600/700 지원. `weights`는 기존 auto/regular/bold 호환용. Thin/Light는 선택값으로 쓰지 않음 |
 | 타이포그래피·크기 | 본문·숫자·강조 표시를 기준 크기 대비 어느 정도 키우거나 줄일까? 기어 숫자는 별도 크기 조정이 필요한가? | body/numeric/display 배율(%), gearSize/combinedGearSize(%), 작게 보이는 핵심 텍스트와 최소 가독성 검수 기준 | `typography` JSON에 배율 지정 가능. 본문·숫자·디스플레이 60–140%, 기어 64–220%, 결합 기어 64–160%. 기준 글자 크기 자체(px/pt), 행간·자간은 직접 지정 불가(엔진 확장 필요) |
