@@ -2,7 +2,10 @@
   "shell": {
     "navigationPosition": "left",
     "frame": {
-      "padding": 0,
+      "padding": {
+        "horizontal": 16,
+        "vertical": 16
+      },
       "gap": {
         "horizontal": 12,
         "vertical": 10
