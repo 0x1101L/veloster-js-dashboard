@@ -582,8 +582,8 @@ public class DashboardDesktop {
   check(com.veloster.dashboard.view.MediaBar.regionHit(wide.media,1534,654)==com.veloster.dashboard.view.MediaBar.PREVIOUS&&
         com.veloster.dashboard.view.MediaBar.regionHit(wide.media,1642,654)==com.veloster.dashboard.view.MediaBar.PLAY&&
         com.veloster.dashboard.view.MediaBar.regionHit(wide.media,1750,654)==com.veloster.dashboard.view.MediaBar.NEXT&&
-        com.veloster.dashboard.view.MediaBar.regionHit(wide.media,1573,654)==com.veloster.dashboard.view.MediaBar.NONE&&
-        com.veloster.dashboard.view.MediaBar.regionHit(wide.media,1710,654)==com.veloster.dashboard.view.MediaBar.NONE&&
+        com.veloster.dashboard.view.MediaBar.regionHit(wide.media,wide.media.atX(.5f)-54,654)==com.veloster.dashboard.view.MediaBar.NONE&&
+        com.veloster.dashboard.view.MediaBar.regionHit(wide.media,wide.media.atX(.5f)+54,654)==com.veloster.dashboard.view.MediaBar.NONE&&
         com.veloster.dashboard.view.MediaBar.regionHit(wide.media,1642,530)==com.veloster.dashboard.view.MediaBar.NONE,
         "wide media transport hit regions exclude gaps and metadata");
   fixture("received","js");Activity wideActivity=new Activity();LanguageSettings.save(wideActivity,"ko");
