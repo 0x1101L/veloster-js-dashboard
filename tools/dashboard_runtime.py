@@ -5,6 +5,8 @@ Preview preferences persist per checkout; OEM/media/system operations are unavai
 """
 import hashlib
 import json
+import base64
+import threading
 import subprocess
 from pathlib import Path
 
@@ -78,9 +80,64 @@ def run():
                        '-cp', str(classes), 'DashboardDesktop']
             process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                        text=True, bufsize=1)
+            spotify_stop = threading.Event()
+            spotify_lock = threading.Lock()
+            spotify_thread = None
+
+            def spotify_loop():
+                script = '''
+if not (running of application "Spotify") then return "STOPPED"
+tell application "Spotify"
+ set t to current track
+ set stateText to player state as text
+ set trackName to name of t
+ set artistName to artist of t
+ set trackDuration to duration of t
+ set trackPosition to player position
+ set coverUrl to artwork url of t
+ return stateText & (character id 31) & trackName & (character id 31) & artistName & (character id 31) & trackDuration & (character id 31) & trackPosition & (character id 31) & coverUrl
+end tell
+'''
+                previous = None
+                while not spotify_stop.is_set():
+                    try:
+                        result = subprocess.run(['osascript', '-e', script], capture_output=True,
+                                                text=True, timeout=3)
+                        value = result.stdout.rstrip('\r\n') if result.returncode == 0 else 'STOPPED'
+                        if value == 'STOPPED':
+                            message = 'SPOTIFY_STOP'
+                        else:
+                            fields = value.split('\x1f')
+                            if len(fields) != 6:
+                                message = 'SPOTIFY_STOP'
+                            else:
+                                state, title, artist, duration, position, artwork = fields
+                                state_code = '1' if state == 'playing' else '0' if state == 'paused' else '-1'
+                                try:
+                                    position_ms = max(0, int(float(position) * 1000))
+                                    duration_ms = max(0, int(duration))
+                                except ValueError:
+                                    position_ms, duration_ms = -1, -1
+                                encode = lambda text: base64.b64encode(text.encode('utf-8')).decode('ascii')
+                                message = '\t'.join(('SPOTIFY', state_code, str(position_ms), str(duration_ms),
+                                                     encode(title), encode(artist), encode(artwork)))
+                        if message != previous:
+                            with spotify_lock:
+                                if process.poll() is None:
+                                    process.stdin.write(message + '\n')
+                                    process.stdin.flush()
+                            previous = message
+                    except (OSError, subprocess.SubprocessError, BrokenPipeError):
+                        pass
+                    spotify_stop.wait(1)
+
             reload_requested = False
             for line in process.stdout:
-                if line.rstrip('\r\n') != 'DASHBOARD_PREVIEW_RELOAD':
+                message = line.rstrip('\r\n')
+                if message.startswith('READY Dashboard') and spotify_thread is None:
+                    spotify_thread = threading.Thread(target=spotify_loop, name='spotify-preview-bridge', daemon=True)
+                    spotify_thread.start()
+                if message != 'DASHBOARD_PREVIEW_RELOAD':
                     print(line, end='', flush=True)
                     continue
                 reload_attempt += 1
@@ -92,13 +149,17 @@ def run():
                     message = str(error).replace('\n', ' ')[:1800]
                     print('Dashboard preview reload failed: ' + message, flush=True)
                     try:
-                        process.stdin.write('RELOAD_FAILED\t' + message + '\n')
-                        process.stdin.flush()
+                        with spotify_lock:
+                            process.stdin.write('RELOAD_FAILED\t' + message + '\n')
+                            process.stdin.flush()
                     except (BrokenPipeError, OSError):
                         pass
                     continue
                 if process.poll() is not None:
                     break
+                spotify_stop.set()
+                if spotify_thread is not None:
+                    spotify_thread.join(timeout=1)
                 process.terminate()
                 process.wait(timeout=5)
                 process.stdin.close()
@@ -106,6 +167,9 @@ def run():
                 generation += 1
                 reload_requested = True
                 break
+            spotify_stop.set()
+            if spotify_thread is not None:
+                spotify_thread.join(timeout=1)
             if process.stdout:
                 process.stdout.close()
             if reload_requested:
@@ -281,9 +345,16 @@ public class DashboardDesktop {
  }
  static void tapSettings(DashboardView view,float x,float y)throws Exception{
   Object l=settingsLayout(view);
-  String part=y<109?(x<170?"back":x<640?"previewButton":"apply"):y>=133?"list":"preview";
+  String part=y<109?(x<170?"back":x<640?"previewButton":"apply"):y>=133?"viewport":"preview";
   com.veloster.dashboard.view.DashboardPage.Bounds b=(com.veloster.dashboard.view.DashboardPage.Bounds)field(l,part);
-  if(part.equals("list"))tapLogical(view,b.atX(.25f),b.y+((int)((y-133)/50)+.5f)*(Float)field(l,"rowHeight"));
+  if(part.equals("viewport")&&settingsScreen(view)!=14){
+   int index=Math.max(0,(int)((y-133)/50));
+   if(index<((String[])field(field(view,"settingsEditor"),"labels")).length){
+    java.lang.reflect.Method row=l.getClass().getDeclaredMethod("rowBounds",int.class);row.setAccessible(true);
+    com.veloster.dashboard.view.DashboardPage.Bounds item=(com.veloster.dashboard.view.DashboardPage.Bounds)row.invoke(l,index);
+    tapLogical(view,b.atX(.25f),item.atY(.5f));
+   }else tapLogical(view,b.atX(.25f),b.atY(.5f));
+  }
   else tapLogical(view,b.atX(.5f),b.atY(.5f));
  }
  static int settingsScreen(DashboardView view)throws Exception{return (Integer)field(field(view,"settingsEditor"),"screen");}
@@ -291,14 +362,13 @@ public class DashboardDesktop {
   int local=index-(Integer)field(layout,"offset");
   if(settingsScreen(view)==14){
    java.lang.reflect.Method tile=layout.getClass().getDeclaredMethod("wallpaperTile",int.class);tile.setAccessible(true);
-   return (com.veloster.dashboard.view.DashboardPage.Bounds)tile.invoke(layout,local);
+   return (com.veloster.dashboard.view.DashboardPage.Bounds)tile.invoke(layout,index);
   }
-  com.veloster.dashboard.view.DashboardPage.Bounds b=(com.veloster.dashboard.view.DashboardPage.Bounds)field(layout,"list");
-  float rowHeight=(Float)field(layout,"rowHeight");
-  return new com.veloster.dashboard.view.DashboardPage.Bounds(b.x,(Float)field(layout,"firstRowY")+local*rowHeight,b.width,rowHeight);
+  java.lang.reflect.Method row=layout.getClass().getDeclaredMethod("rowBounds",int.class);row.setAccessible(true);
+  return (com.veloster.dashboard.view.DashboardPage.Bounds)row.invoke(layout,index);
  }
- static void dragSettingsList(DashboardView view,float start,float end)throws Exception{
-  com.veloster.dashboard.view.DashboardPage.Bounds b=(com.veloster.dashboard.view.DashboardPage.Bounds)field(settingsLayout(view),"list");
+ static void dragSettingsPage(DashboardView view,float start,float end)throws Exception{
+  com.veloster.dashboard.view.DashboardPage.Bounds b=(com.veloster.dashboard.view.DashboardPage.Bounds)field(settingsLayout(view),"viewport");
   com.veloster.dashboard.view.DashboardPage.Regions r=viewRegions(view);
   float x=r.left+b.atX(.25f)*r.scale,y=r.top+b.atY(start)*r.scale,to=r.top+b.atY(end)*r.scale;
   touch(view,0,x,y);touch(view,2,x,to);touch(view,1,x,to);
@@ -308,16 +378,16 @@ public class DashboardDesktop {
    Object layout=settingsLayout(view);
    int offset=(Integer)field(layout,"offset"),count=(Integer)field(layout,"count");
    if(index>=offset&&index<offset+count){
-    com.veloster.dashboard.view.DashboardPage.Bounds list=(com.veloster.dashboard.view.DashboardPage.Bounds)field(layout,"list");
+    com.veloster.dashboard.view.DashboardPage.Bounds list=(com.veloster.dashboard.view.DashboardPage.Bounds)field(layout,"viewport");
     com.veloster.dashboard.view.DashboardPage.Bounds item=settingsItemBounds(view,layout,index);
     if(item.atY(.5f)>=list.y&&item.atY(.5f)<list.bottom()){
      tapLogical(view,item.atX(settingsScreen(view)==14?.5f:.25f),item.atY(.5f));return;
     }
    }
-   boolean up=index<offset||(index<offset+count&&settingsItemBounds(view,layout,index).atY(.5f)<((com.veloster.dashboard.view.DashboardPage.Bounds)field(layout,"list")).y);
-   float before=(Float)field(layout,"scrollY");
-   dragSettingsList(view,up?.2f:.8f,up?.8f:.2f);
-   check((Float)field(settingsLayout(view),"scrollY")!=before,"settings index reachable by scrolling: "+index);
+   boolean up=index<offset||(index<offset+count&&settingsItemBounds(view,layout,index).atY(.5f)<((com.veloster.dashboard.view.DashboardPage.Bounds)field(layout,"viewport")).y);
+   float before=(Float)field(layout,"pageScrollY");
+   dragSettingsPage(view,up?.2f:.8f,up?.8f:.2f);
+   check((Float)field(settingsLayout(view),"pageScrollY")!=before,"settings index reachable by scrolling: "+index);
   }
   throw new AssertionError("too many scroll gestures to reach settings index "+index);
  }
@@ -382,22 +452,27 @@ public class DashboardDesktop {
   android.graphics.Canvas diag=draw(view);
   check(diag.texts.contains(UiText.t("HUD · 내비"))&&diag.texts.contains(UiText.t("전체 조망")),"settings opens diagnostics and overview keeps its label");
   tapDrawnLabel(view,UiText.t("차량"));
-  tapDrawnLabel(view,UiText.t("변속기 설정"));
-  check(settingsScreen(view)==26,"diagnostic vehicle tab opens transmission editor");
+  check(!draw(view).texts.contains(UiText.t("변속기 설정")),"diagnostics no longer owns transmission settings");
+  tap(view,560,20);check(settingsScreen(view)==-1&&draw(view).texts.contains(UiText.t("차량 설정")),"settings button returns from diagnostics to settings root");
+  tapEditorLabel(view,UiText.t("차량 설정"));
+  check(settingsScreen(view)==40&&draw(view).texts.contains(UiText.t("차량 프로필"))&&draw(view).texts.contains("JS"),"vehicle settings shows profile details as menu rows");
+  tapEditorLabel(view,UiText.t("변속기 설정"));
+  check(settingsScreen(view)==26,"vehicle settings opens transmission editor");
   tapSettings(view,70,88);
-  check(draw(view).texts.contains(UiText.t("변속기 설정")),"transmission editor returns to the same diagnostic tab");
-  tap(view,560,20);check(settingsScreen(view)==-1&&draw(view).texts.contains(UiText.t("진단")),"settings button returns from diagnostics to settings root");
-  tapSettings(view,70,88);check(draw(view).texts.contains("PERFORMANCE"),"closing settings returns to the original dashboard page");
+  check(settingsScreen(view)==40&&draw(view).texts.contains(UiText.t("차량 프로필")),"transmission editor returns to vehicle settings");
+  tapSettings(view,70,88);check(settingsScreen(view)==-1&&draw(view).texts.contains(UiText.t("진단")),"vehicle settings back returns to settings root");
+  tap(view,560,20);check(draw(view).texts.contains("PERFORMANCE"),"closing settings returns to the original dashboard page");
   DashboardView reopened=create(a);check(draw(reopened).texts.contains("PERFORMANCE"),"diagnostics does not replace the last saved dashboard page");
   tap(view,560,20);
-  tapSettings(view,400,208);check(settingsScreen(view)==10,"root F1 row opens F1 settings");tapSettings(view,70,88);
-  tapSettings(view,400,158);check(settingsScreen(view)==9,"root UI row opens UI settings");
-  tapSettings(view,400,158);check(settingsScreen(view)==1,"UI theme row opens theme editor");
+  tapEditorLabel(view,UiText.t("페이지 설정"));check(settingsScreen(view)==31,"root page row opens page settings");tapSettings(view,70,88);
+  tapEditorLabel(view,UiText.t("UI 설정"));check(settingsScreen(view)==9,"root UI row opens UI settings");
+  tapEditorLabel(view,UiText.t("테마 설정"));check(settingsScreen(view)==32,"UI theme row opens theme settings");
+  tapEditorLabel(view,UiText.t("테마"));check(settingsScreen(view)==1,"theme settings opens theme editor");
   tapEditorLabel(view,"Aurora Focus");tapSettings(view,70,88);
   check(a.getSharedPreferences("dashboard_theme",0).getString("theme_id","original").equals("original"),"theme back cancels draft selection");
-  tapSettings(view,400,158);tapEditorLabel(view,"Aurora Focus");tapSettings(view,700,88);
+  tapEditorLabel(view,UiText.t("테마"));tapEditorLabel(view,"Aurora Focus");tapSettings(view,700,88);
   check(a.getSharedPreferences("dashboard_theme",0).getString("theme_id","").equals("aurora_focus"),"theme apply saves selected theme");
-  check(settingsScreen(view)==9&&draw(view).texts.contains("Aurora Focus"),"applied theme returns to updated UI settings");
+  check(settingsScreen(view)==32&&draw(view).texts.contains("Aurora Focus"),"applied theme returns to updated theme settings");
   tapSettings(view,70,88);tapSettings(view,400,158);tapSettings(view,400,158);tapEditorLabel(view,"Original");tapSettings(view,700,88);
   check(a.getSharedPreferences("dashboard_theme",0).getString("theme_id","").equals("original"),"theme editor saves restored default");
   tapSettings(view,70,88);tapSettings(view,400,258);check(settingsScreen(view)==0,"root Language row opens language editor");
@@ -503,17 +578,43 @@ public class DashboardDesktop {
    root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("R"),"reload");
    root.getActionMap().put("reload",new AbstractAction(){public void actionPerformed(java.awt.event.ActionEvent event){requestReload();}});
    frame.setContentPane(root);frame.pack();frame.setMinimumSize(new java.awt.Dimension(720,480));frame.setLocationByPlatform(true);frame.setVisible(true);
-   listenForReloadMessages(frame);
+   listenForReloadMessages(frame,current);
    System.out.println("READY Dashboard Java touch runtime: showing="+frame.isShowing()+", canvas="+current[0].getWidth()+"x"+current[0].getHeight());
    javax.swing.Timer timer=new javax.swing.Timer(100,e->{screen.repaint();sync.run();});timer.start();
    frame.addWindowListener(new java.awt.event.WindowAdapter(){public void windowClosed(java.awt.event.WindowEvent e){timer.stop();}});
   }catch(Exception error){error.printStackTrace();JOptionPane.showMessageDialog(null,error.toString());}});
  }
  static void requestReload(){System.out.println("DASHBOARD_PREVIEW_RELOAD");System.out.flush();}
- static void listenForReloadMessages(JFrame frame){Thread listener=new Thread(()->{try{
+ static String spotifyArtworkUrl="";
+ static void spotifySourceLabel()throws Exception{
+  java.lang.reflect.Field sources=com.veloster.dashboard.vehicle.MediaState.class.getDeclaredField("SOURCES");sources.setAccessible(true);
+  ((String[])sources.get(null))[3]="Spotify";
+ }
+ static void listenForReloadMessages(JFrame frame,DashboardView[] current){Thread listener=new Thread(()->{try{
   java.io.BufferedReader input=new java.io.BufferedReader(new java.io.InputStreamReader(System.in,"UTF-8"));
-  for(String message;(message=input.readLine())!=null;)if(message.startsWith("RELOAD_FAILED\\t")){
-   String detail=message.substring("RELOAD_FAILED\\t".length());SwingUtilities.invokeLater(()->JOptionPane.showMessageDialog(frame,"Java 또는 테마 파일을 다시 컴파일하지 못했습니다. 현재 프리뷰는 이전 버전으로 유지합니다.\\n\\n"+detail,"새로고침 실패",JOptionPane.ERROR_MESSAGE));
+  for(String message;(message=input.readLine())!=null;){
+   if(message.startsWith("RELOAD_FAILED\\t")){
+    String detail=message.substring("RELOAD_FAILED\\t".length());SwingUtilities.invokeLater(()->JOptionPane.showMessageDialog(frame,"Java 또는 테마 파일을 다시 컴파일하지 못했습니다. 현재 프리뷰는 이전 버전으로 유지합니다.\\n\\n"+detail,"새로고침 실패",JOptionPane.ERROR_MESSAGE));
+   }else if(message.equals("SPOTIFY_STOP"))SwingUtilities.invokeLater(()->{try{
+    com.veloster.dashboard.vehicle.MediaState media=(com.veloster.dashboard.vehicle.MediaState)field(current[0],"mediaState");
+    media.mode(-1);spotifyArtworkUrl="";current[0].invalidate();
+   }catch(Exception ignored){}
+   });
+   else if(message.startsWith("SPOTIFY\\t")){
+    String[] v=message.split("\\\\t",-1);if(v.length!=7)continue;
+    SwingUtilities.invokeLater(()->{try{
+     int state=Integer.parseInt(v[1]);long position=Long.parseLong(v[2]),duration=Long.parseLong(v[3]);
+     java.util.Base64.Decoder decoder=java.util.Base64.getDecoder();
+     String title=new String(decoder.decode(v[4]),java.nio.charset.StandardCharsets.UTF_8);
+     String artist=new String(decoder.decode(v[5]),java.nio.charset.StandardCharsets.UTF_8);
+     String artwork=new String(decoder.decode(v[6]),java.nio.charset.StandardCharsets.UTF_8);
+     com.veloster.dashboard.vehicle.MediaState media=(com.veloster.dashboard.vehicle.MediaState)field(current[0],"mediaState");
+     spotifySourceLabel();media.mode(0x73);media.update(3,true,title,true,artist,true,position,true,duration,false,android.os.SystemClock.elapsedRealtime());
+     media.playback(3,state);
+     if(!artwork.equals(spotifyArtworkUrl)){spotifyArtworkUrl=artwork;media.artwork(3,true,artwork,null,false);}
+     current[0].invalidate();
+    }catch(Exception error){error.printStackTrace();}});
+   }
   }
  }catch(Exception ignored){}},"dashboard-preview-control");listener.setDaemon(true);listener.start();}
  static void persistenceCheck(String mode)throws Exception{
@@ -675,10 +776,15 @@ public class View extends javax.swing.JPanel {
 ''',
     'com/veloster/dashboard/view/ArtworkLoader.java': '''package com.veloster.dashboard.view;
 final class ArtworkLoader {ArtworkLoader(android.content.Context c,android.view.View v){}void open(){}void close(){}
- private android.graphics.Bitmap bitmap;
+ private android.graphics.Bitmap bitmap;private long revision=-1;
  void request(com.veloster.dashboard.vehicle.MediaState.Snapshot s){
-  if(!"preview:cover".equals(s.artworkUri))bitmap=null;
-  else if(bitmap==null)bitmap=new android.graphics.Bitmap(480,480);
+  if(revision==s.artworkRevision)return;revision=s.artworkRevision;
+  if("preview:cover".equals(s.artworkUri)){if(bitmap==null)bitmap=new android.graphics.Bitmap(480,480);}
+  else if(s.artworkUri.startsWith("https://")){bitmap=null;final String url=s.artworkUri;final long requested=revision;new Thread(()->{try{
+   java.net.URLConnection connection=new java.net.URL(url).openConnection();connection.setConnectTimeout(2500);connection.setReadTimeout(2500);
+   android.graphics.Bitmap loaded=android.graphics.BitmapFactory.decodeStream(connection.getInputStream());if(loaded!=null&&requested==revision)bitmap=loaded;
+  }catch(Exception ignored){}},"spotify-preview-artwork").start();}
+  else bitmap=null;
  }
  android.graphics.Bitmap bitmap(){return bitmap;}}
 ''',
@@ -686,8 +792,14 @@ final class ArtworkLoader {ArtworkLoader(android.content.Context c,android.view.
 public class MediaReceiver {public MediaReceiver(MediaState s){}public void start(android.content.Context c){}public void stop(){}}
 ''',
     'com/veloster/dashboard/vehicle/MediaControl.java': '''package com.veloster.dashboard.vehicle;
-public class MediaControl {public static boolean toggle(android.content.Context c,int mode,int state){return false;}
- public static boolean step(android.content.Context c,boolean next,int mode){return false;}}
+public class MediaControl {
+ private static boolean send(String command){try{
+  Process p=new ProcessBuilder("osascript","-e","tell application \\\"Spotify\\\" to "+command).start();
+  if(!p.waitFor(2,java.util.concurrent.TimeUnit.SECONDS)){p.destroyForcibly();return false;}
+  return p.exitValue()==0;
+ }catch(Exception ignored){return false;}}
+ public static boolean toggle(android.content.Context c,int mode,int state){return mode==0x73&&(state==0||state==1)&&send("playpause");}
+ public static boolean step(android.content.Context c,boolean next,int mode){return mode==0x73&&send(next?"next track":"previous track");}}
 ''',
     'com/veloster/dashboard/vehicle/RegulationState.java': '''package com.veloster.dashboard.vehicle;
 public class RegulationState {public static int read(android.content.Context c){return 0;}}
