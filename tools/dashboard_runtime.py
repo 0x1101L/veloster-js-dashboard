@@ -259,7 +259,8 @@ public final class Typeface {
   @Override protected boolean removeEldestEntry(Map.Entry<String,Typeface> entry){return size()>24;}
  };
  final Font face;
- private Typeface(Font face){this.face=face;}
+ public final boolean bold;
+ private Typeface(Font face){this.face=face;this.bold=face.isBold();}
  public static Typeface create(Typeface source,int style){return new Typeface(source.face.deriveFont(style));}
  public static synchronized Typeface createFromAsset(AssetManager assets,String path){
   try(InputStream input=assets.open(path)){
@@ -564,6 +565,13 @@ public class DashboardDesktop {
   if(child instanceof android.widget.Button&&((android.widget.Button)child).button.getText().equals(label)){((android.widget.Button)child).performClick();return;}
   if(child instanceof java.awt.Container){try{button((java.awt.Container)child,label);return;}catch(IllegalArgumentException ignored){}}
  }throw new IllegalArgumentException(label);}
+ static ThemeCatalog validateEditorCatalog(Activity activity,String themeId,String themeIds){
+  ThemeCatalog catalog=ThemeCatalog.load(activity);
+  if(!catalog.all().keySet().equals(new java.util.HashSet<String>(java.util.Arrays.asList(themeIds.split(","))))
+      ||catalog.find(themeId)==null)
+   throw new IllegalArgumentException("Renderer rejected the theme catalog");
+  return catalog;
+ }
  static void selfCheck()throws Exception{
   com.veloster.dashboard.view.DashboardPage.Regions standard=com.veloster.dashboard.view.DashboardPage.regions(800,480);
   com.veloster.dashboard.view.DashboardPage.Regions wide=com.veloster.dashboard.view.DashboardPage.regions(1920,720);
@@ -630,21 +638,22 @@ public class DashboardDesktop {
   tapEditorLabel(view,UiText.t("테마"));tapEditorLabel(view,"Aurora Focus");tapSettings(view,700,88);
   check(a.getSharedPreferences("dashboard_theme",0).getString("theme_id","").equals("aurora_focus"),"theme apply saves selected theme");
   check(settingsScreen(view)==32&&draw(view).texts.contains("Aurora Focus"),"applied theme returns to updated theme settings");
-  tapSettings(view,70,88);tapSettings(view,400,158);tapSettings(view,400,158);tapEditorLabel(view,"Original");tapSettings(view,700,88);
+  tapEditorLabel(view,UiText.t("테마"));tapEditorLabel(view,"Original");tapSettings(view,700,88);
   check(a.getSharedPreferences("dashboard_theme",0).getString("theme_id","").equals("original"),"theme editor saves restored default");
-  tapSettings(view,70,88);tapSettings(view,400,258);check(settingsScreen(view)==0,"root Language row opens language editor");
+  tapSettings(view,70,88);tapSettings(view,70,88);
+  tapEditorLabel(view,UiText.t("언어"));check(settingsScreen(view)==0,"root Language row opens language editor");
   tapEditorLabel(view,"English");tapSettings(view,70,88);
   check(LanguageSettings.selection(a).equals("ko"),"language back cancels draft selection");
-  tapSettings(view,400,258);tapEditorLabel(view,"English");tapSettings(view,700,88);
+  tapEditorLabel(view,UiText.t("언어"));tapEditorLabel(view,"English");tapSettings(view,700,88);
   check(LanguageSettings.selection(a).equals("en"),"language apply saves selected language");
-  tapSettings(view,400,258);tapEditorLabel(view,"한국어");tapSettings(view,700,88);
+  tapEditorLabel(view,UiText.t("언어"));tapEditorLabel(view,"한국어");tapSettings(view,700,88);
   check(LanguageSettings.selection(a).equals("ko"),"language editor saves restored language");
   tapSettings(view,70,88);check(!(Boolean)field(view,"settingsVisible"),"settings root back returns to dashboard");
   tap(view,360,20);Object layout=field(view,"gaugeLayout");
   boolean before=((com.veloster.dashboard.view.gauge.GaugeLayout)layout).dense();tap(view,700,70);
   check(((com.veloster.dashboard.view.gauge.GaugeLayout)layout).dense()!=before,"real gauge grid toggle");
   touch(view,0,100,160);waitForTimers();check(settingsScreen(view)==20,"actual 600ms hold opens gauge settings page");int editedSlot=(Integer)field(view,"editingGaugeSlot");
-  tapSettings(view,400,208);check(settingsScreen(view)==22,"gauge style row opens shared canvas page");tapEditorLabel(view,"숫자");tapSettings(view,700,88);
+  tapEditorLabel(view,UiText.t("게이지 모양"));check(settingsScreen(view)==22,"gauge style row opens shared canvas page");tapEditorLabel(view,"숫자");tapSettings(view,700,88);
   check(((com.veloster.dashboard.view.gauge.GaugeLayout)layout).style(editedSlot)==2,"gauge style applies from canvas page: slot="+editedSlot+" actual="+((com.veloster.dashboard.view.gauge.GaugeLayout)layout).style(editedSlot));touch(view,1,100,160);
   touch(view,0,100,160);touch(view,2,140,160);waitForTimers();check(AlertDialog.last==null,"drag cancels the hold timer");touch(view,1,140,160);
   tap(view,560,20);before=((com.veloster.dashboard.view.gauge.GaugeLayout)layout).dense();tap(view,700,70);
@@ -687,13 +696,6 @@ public class DashboardDesktop {
   tapEditorLabel(view,"Aurora Focus");tapSettings(view,700,88);
   check(a.getSharedPreferences("dashboard_theme",0).getString("theme_id","").equals("aurora_focus"),"desktop theme tool uses canvas apply callback");
   System.out.println("PASS actual DashboardView: navigation, drag rejection, settings, language save, theme cancel/apply, gauge toggle, long press, canvas editor, input isolation, scaled input and "+PreviewProfile.ALL.length+" vehicle presets at native resolutions");
- }
- static ThemeCatalog validateEditorCatalog(Activity activity,String themeId,String themeIds){
-  ThemeCatalog catalog=ThemeCatalog.load(activity);
-  if(!catalog.all().keySet().equals(new java.util.HashSet<String>(java.util.Arrays.asList(themeIds.split(","))))
-      ||catalog.find(themeId)==null)
-   throw new IllegalArgumentException("Renderer rejected the theme catalog");
-  return catalog;
  }
  public static void main(String[] args)throws Exception{
   if(args.length==3&&args[0].equals("--inspect-theme")){
