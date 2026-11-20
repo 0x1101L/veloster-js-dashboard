@@ -3,14 +3,15 @@
     "navigationPosition": "left",
     "frame": {
       "padding": { "horizontal": 16, "vertical": 16 },
-      "gap": { "horizontal": 8, "vertical": 6 },
+      "gap": { "horizontal": 16, "vertical": 16 },
       "cornerShape": "squircle",
       "cornerRadius": 32
     },
     "sideMenuBar": {
-      "width": 80,
+      "width": 64,
       "alignment": "center",
       "buttonHeight": 40,
+      "padding": { "vertical": 12 },
       "gap": 5,
       "itemGap": 5,
       "appearance": "dock",

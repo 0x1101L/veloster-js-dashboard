@@ -1,10 +1,5 @@
 {
   "shell": {
-    "frame": { "padding": { "horizontal": 16, "vertical": 16 } },
-    "sideMenuBar": {
-      "width": 64,
-      "padding": { "vertical": 16 },
-      "appearance": "dock"
-    }
+    "frame": { "padding": { "horizontal": 16, "vertical": 16 } }
   }
 }
