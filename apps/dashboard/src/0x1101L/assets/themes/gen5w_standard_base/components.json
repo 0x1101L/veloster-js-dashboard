@@ -1,0 +1,38 @@
+{
+  "material": {
+    "style": "flat",
+    "radius": 12,
+    "topAlpha": 255,
+    "bottomAlpha": 255,
+    "highlight": "#FF53D6C6",
+    "shadow": "#80000000"
+  },
+  "assets": {
+    "background": ""
+  },
+  "mediaControls": "container",
+  "mediaFooter": {
+    "buttonBackground": false,
+    "containerVisible": true
+  },
+  "surfaceStyles": {
+    "navigationButton": "flat",
+    "controlButton": "flat",
+    "mediaButton": "flat",
+    "mediaContainer": "flat",
+    "navigationDock": "flat",
+    "dataCard": "flat",
+    "gearCard": "flat",
+    "panel": "flat",
+    "settingsGroup": "flat"
+  },
+  "fills": {
+    "navigation": "#FF0E2025",
+    "navigationSelected": "#FF163A3D",
+    "gaugeToggle": "#FF14282E"
+  },
+  "decorations": {
+    "overviewCardTopLine": false,
+    "navigationUnderline": "off"
+  }
+}

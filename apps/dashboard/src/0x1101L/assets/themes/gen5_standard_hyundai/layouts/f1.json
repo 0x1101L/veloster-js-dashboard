@@ -1,0 +1,64 @@
+{
+  "f1Grid": {
+    "columns": 6,
+    "rowWeights": [
+      12,
+      40,
+      20,
+      16
+    ],
+    "radius": 10,
+    "padding": 12,
+    "cells": {
+      "shift": {
+        "column": 0,
+        "row": 0,
+        "columnSpan": 6,
+        "rowSpan": 1
+      },
+      "rpm": {
+        "column": 0,
+        "row": 1,
+        "columnSpan": 2,
+        "rowSpan": 1
+      },
+      "gear": {
+        "column": 2,
+        "row": 1,
+        "columnSpan": 2,
+        "rowSpan": 2
+      },
+      "speed": {
+        "column": 4,
+        "row": 1,
+        "columnSpan": 2,
+        "rowSpan": 1
+      },
+      "temperatures": {
+        "column": 0,
+        "row": 2,
+        "columnSpan": 2,
+        "rowSpan": 1
+      },
+      "boost": {
+        "column": 4,
+        "row": 2,
+        "columnSpan": 2,
+        "rowSpan": 1
+      },
+      "pedal": {
+        "column": 0,
+        "row": 3,
+        "columnSpan": 3,
+        "rowSpan": 1
+      },
+      "brake": {
+        "column": 3,
+        "row": 3,
+        "columnSpan": 3,
+        "rowSpan": 1
+      }
+    },
+    "itemGap": 10
+  }
+}
