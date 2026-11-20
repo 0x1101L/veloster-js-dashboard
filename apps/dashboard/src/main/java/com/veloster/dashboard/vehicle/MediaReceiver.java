@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.SystemClock;
+import android.os.Bundle;
 
 /** Passive subscription to the same OEM broadcasts consumed by the home widget. */
 public final class MediaReceiver {
@@ -74,7 +75,13 @@ public final class MediaReceiver {
             }
             state.artwork(source,intent.hasExtra("artwork_uri"),intent.getStringExtra("artwork_uri"),
                 intent.getByteArrayExtra("artwork_raw_image"),intent.getBooleanExtra("default",false));
-            if(source==1&&intent.hasExtra("playing_state"))state.playback(source,intent.getBooleanExtra("playing_state",false)?1:0);
+            if(source==1&&intent.hasExtra("playing_state")){
+                // Some OEM builds publish this field as a Boolean, others as 0/1.
+                // Typed getBooleanExtra throws when the sender uses an integer Bundle value.
+                Bundle extras=intent.getExtras();Object value=extras==null?null:extras.get("playing_state");
+                if(value instanceof Boolean)state.playback(source,((Boolean)value).booleanValue()?1:0);
+                else if(value instanceof Number){int status=((Number)value).intValue();state.playback(source,status==1?1:status==0?0:-1);}
+            }
             else if(source==4&&intent.hasExtra("state")){
                 int status=intent.getIntExtra("state",0);state.playback(source,status==2?1:status==1?0:-1);
             }else if(source!=1&&source!=4&&intent.hasExtra("playstate")){

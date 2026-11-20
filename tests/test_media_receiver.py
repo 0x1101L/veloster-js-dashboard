@@ -9,7 +9,8 @@ ROOT = Path(__file__).resolve().parents[1]
 STUBS = {
 'android/content/BroadcastReceiver.java': '''package android.content; public abstract class BroadcastReceiver {public abstract void onReceive(Context c,Intent i);}''',
 'android/content/IntentFilter.java': '''package android.content; public class IntentFilter {public void addAction(String a){}}''',
-'android/content/Intent.java': '''package android.content; public class Intent {String action; public boolean malformed, carplayPlayback; public Intent(String a){action=a;} public String getAction(){return action;} public boolean hasExtra(String n){return "filename".equals(n)||(carplayPlayback&&"playstate".equals(n));} public String getStringExtra(String n){if(malformed)throw new IllegalArgumentException();return "track";} public long getLongExtra(String n,long d){return d;} public boolean getBooleanExtra(String n,boolean d){return d;} public int getIntExtra(String n,int d){return carplayPlayback&&"playstate".equals(n)?1:d;} public byte[] getByteArrayExtra(String n){return null;}}''',
+'android/os/Bundle.java': '''package android.os; public class Bundle {public java.util.Map<String,Object> values=new java.util.HashMap<String,Object>();public Object get(String key){return values.get(key);}}''',
+'android/content/Intent.java': '''package android.content; public class Intent {String action; public boolean malformed, carplayPlayback; public Intent(String a){action=a;} public String getAction(){return action;} public boolean hasExtra(String n){return "filename".equals(n)||(carplayPlayback&&"playstate".equals(n));} public String getStringExtra(String n){if(malformed)throw new IllegalArgumentException();return "track";} public long getLongExtra(String n,long d){return d;} public boolean getBooleanExtra(String n,boolean d){return d;} public int getIntExtra(String n,int d){return carplayPlayback&&"playstate".equals(n)?1:d;} public byte[] getByteArrayExtra(String n){return null;} public android.os.Bundle getExtras(){android.os.Bundle b=new android.os.Bundle();return b;}}''',
 'android/content/Context.java': '''package android.content; public class Context {public BroadcastReceiver current;public int adds,removes;public boolean deny,failRemove;public Intent registerReceiver(BroadcastReceiver r,IntentFilter f){adds++;if(deny)throw new SecurityException();current=r;return null;}public void unregisterReceiver(BroadcastReceiver r){removes++;if(failRemove)throw new IllegalStateException();}}''',
 'android/os/SystemClock.java': '''package android.os;public class SystemClock {public static long elapsedRealtime(){return 1000;}}''',
 'android/util/Log.java': '''package android.util;public class Log {public static int i(String a,String b){return 0;}public static int e(String a,String b,Throwable e){return 0;}}''',
@@ -38,7 +39,7 @@ MAPPING_INTENT = '''package android.content;
 public class Intent {
  String action;java.util.Map<String,Object> extras=new java.util.HashMap<String,Object>();
  public Intent(String a){action=a;}public Intent put(String key,Object value){extras.put(key,value);return this;}
- public String getAction(){return action;}public boolean hasExtra(String n){return extras.containsKey(n);}
+ public String getAction(){return action;}public boolean hasExtra(String n){return extras.containsKey(n);}public android.os.Bundle getExtras(){android.os.Bundle b=new android.os.Bundle();b.values.putAll(extras);return b;}
  public String getStringExtra(String n){return (String)extras.get(n);}
  public long getLongExtra(String n,long d){return extras.containsKey(n)?((Number)extras.get(n)).longValue():d;}
  public int getIntExtra(String n,int d){return extras.containsKey(n)?((Number)extras.get(n)).intValue():d;}
@@ -62,6 +63,12 @@ public class MediaMappingHarness {
     check(state.snapshot(1000).playState==status,"source playback mapping: "+source+"/"+status);
     context.current.onReceive(context,new Intent(MediaState.ACTIONS[source]).put("artist","Partial"));
     check(state.snapshot(1000).playState==status,"partial update retains explicit state: "+source);
+   }
+   if(source==1){
+    context.current.onReceive(context,new Intent(MediaState.ACTIONS[source]).put("playing_state",Integer.valueOf(1)));
+    check(state.snapshot(1000).playState==1,"Bluetooth integer playing_state is accepted");
+    context.current.onReceive(context,new Intent(MediaState.ACTIONS[source]).put("playing_state",Integer.valueOf(0)));
+    check(state.snapshot(1000).playState==0,"Bluetooth integer pause state is accepted");
    }
    if(source==4){
     context.current.onReceive(context,new Intent(MediaState.ACTIONS[source]).put("state",0));check(state.snapshot(1000).playState==-1,"AA stopped is not playing");
