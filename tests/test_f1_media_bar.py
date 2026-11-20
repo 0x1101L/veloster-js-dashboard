@@ -44,14 +44,14 @@ CHECK = r'''
   return (com.veloster.dashboard.view.DashboardPage.Bounds)field(settingsLayout(view),part);
  }
  static void rpmDrag(DashboardView view,float start,float end)throws Exception{
-  com.veloster.dashboard.view.DashboardPage.Bounds list=settingsBounds(view,"list");
+  com.veloster.dashboard.view.DashboardPage.Bounds list=settingsBounds(view,"viewport");
   float x=list.atX(.5f),y=list.atY(start),to=list.atY(end);
   rpmTouch(view,android.view.MotionEvent.ACTION_DOWN,x,y);
   rpmTouch(view,android.view.MotionEvent.ACTION_MOVE,x,(y+to)*.5f);
   rpmTouch(view,android.view.MotionEvent.ACTION_UP,x,to);
  }
  static android.graphics.Canvas.TextDraw rpmRow(DashboardView view,String label)throws Exception{
-  com.veloster.dashboard.view.DashboardPage.Bounds list=settingsBounds(view,"list");
+  com.veloster.dashboard.view.DashboardPage.Bounds list=settingsBounds(view,"viewport");
   return draw(view).commands.stream().filter(t->t.text.equals(label)&&t.y>=list.y&&t.y<list.bottom()).findFirst().orElse(null);
  }
  static void policy(DashboardView view,int value,boolean apply)throws Exception{
@@ -69,7 +69,11 @@ CHECK = r'''
   }
   check(!((java.util.concurrent.atomic.AtomicBoolean)field(view,"mediaPending")).get(),"media boundary completed");
  }
- static boolean footer(DashboardView view){return draw(view).texts.contains(UiText.t("이전"));}
+ static boolean footer(DashboardView view){
+  try{com.veloster.dashboard.vehicle.MediaState state=(com.veloster.dashboard.vehicle.MediaState)field(view,"mediaState");
+   return com.veloster.dashboard.view.MediaBar.footerVisible(viewRegions(view),(Integer)field(view,"mediaBarPolicy"),state.snapshot(android.os.SystemClock.elapsedRealtime()));
+  }catch(Exception e){throw new RuntimeException(e);}
+ }
  static void screenshot(DashboardView view,String name)throws Exception{
   java.nio.file.Path folder=java.nio.file.Paths.get(System.getProperty("f1.output"));java.nio.file.Files.createDirectories(folder);
   javax.imageio.ImageIO.write(draw(view).image(),"png",folder.resolve(name+".png").toFile());
@@ -111,15 +115,17 @@ CHECK = r'''
  static void alignmentCheck(DashboardView view)throws Exception{
   com.veloster.dashboard.theme.ThemeSpec theme=currentTheme(view);
   com.veloster.dashboard.view.DashboardPage.Content area=new com.veloster.dashboard.view.DashboardPage.Content(theme,"f1");
+  java.lang.reflect.Field style=DashboardView.class.getDeclaredField("mediaButtonStyle");style.setAccessible(true);int originalStyle=style.getInt(view);style.setInt(view,1);
   int found=0;
   for(android.graphics.Canvas.TextDraw text:draw(view).commands){
-   int action=text.text.equals("♪")?2:text.text.equals(UiText.t("이전"))?-1:text.text.equals(UiText.t("다음"))?1:text.text.startsWith("▶")?0:-10;
+   int action=text.text.equals("♪")?2:text.text.equals(UiText.t("이전"))||text.text.equals("‹")?-1:text.text.equals(UiText.t("다음"))||text.text.equals("›")?1:text.text.equals(UiText.t("재생"))||text.text.equals(UiText.t("일시정지"))||text.text.startsWith("▶")||text.text.equals("Ⅱ")?0:-10;
    if(action==-10)continue;
    com.veloster.dashboard.view.DashboardPage.Bounds b=area.footer(action);float cx=b.atX(.5f),cy=b.atY(.5f);
    android.graphics.Paint p=new android.graphics.Paint(1);p.setTypeface(text.type);p.setTextSize(text.size);android.graphics.Paint.FontMetrics metrics=p.getFontMetrics();
    check(Math.abs(text.x+text.width/2-cx)<0.01,"media label horizontally centered: "+text.text);
    check(Math.abs(text.y+(metrics.ascent+metrics.descent)/2-cy)<0.01,"media label vertically centered: "+text.text);found++;
   }
+  style.setInt(view,originalStyle);
   check(found==4,"all footer controls checked for alignment");
  }
  static void widePlayerCheck()throws Exception{
@@ -199,6 +205,16 @@ CHECK = r'''
   tapEditorIndex(view,enabled?0:1);tapSettings(view,apply?700:70,88);
   navigation(view,1);
  }
+ static void chooseMediaButtons(DashboardView view,boolean enabled)throws Exception{
+  navigation(view,6);tapEditorLabel(view,UiText.t("UI 설정"));
+  check(java.util.Arrays.asList((String[])field(field(view,"settingsEditor"),"labels")).contains(UiText.t("미디어 버튼")),"UI settings expose media controls");
+  tapEditorLabel(view,UiText.t("미디어 버튼"));tapEditorIndex(view,enabled?0:1);tapSettings(view,700,88);navigation(view,1);
+ }
+ static void chooseMediaButtonStyle(DashboardView view,int style)throws Exception{
+  navigation(view,6);tapEditorLabel(view,UiText.t("UI 설정"));
+  check(java.util.Arrays.asList((String[])field(field(view,"settingsEditor"),"labels")).contains(UiText.t("미디어 버튼 표시 방식")),"UI settings expose media control style");
+  tapEditorLabel(view,UiText.t("미디어 버튼 표시 방식"));tapEditorIndex(view,style);tapSettings(view,700,88);navigation(view,1);
+ }
  static void selectPage(DashboardView view,int page,String name)throws Exception{
   if(page==5){navigation(view,6);tapEditorLabel(view,UiText.t("진단"));}
   else navigation(view,page);
@@ -208,6 +224,7 @@ CHECK = r'''
  }
  static void commonMediaCheck()throws Exception{
   fixture("received","js");Activity a=new Activity();LanguageSettings.save(a,"ko");
+  a.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("f1_media_bar_policy",com.veloster.dashboard.view.MediaBar.ALWAYS).putInt("media_button_style",1).apply();
   DashboardView view=create(a);
   String[] names={"overview","f1","gauges","graphs","performance","diagnostics","settings"};
   com.veloster.dashboard.vehicle.MediaState state=(com.veloster.dashboard.vehicle.MediaState)field(view,"mediaState");
@@ -216,7 +233,8 @@ CHECK = r'''
   for(int page=0;page<names.length;page++){
    selectPage(view,page,names[page]);
    android.graphics.Canvas frame=draw(view);
-   check(footer(view)&&java.util.Collections.frequency(frame.texts,"Common media track")==1,"one footer and no duplicate notice on "+names[page]);
+   int trackLabels=java.util.Collections.frequency(frame.texts,"Common media track");
+   check(footer(view)&&trackLabels==1,"one footer and no duplicate notice on "+names[page]+" (footer="+footer(view)+", trackLabels="+trackLabels+")");
    com.veloster.dashboard.view.DashboardPage.Content area=new com.veloster.dashboard.view.DashboardPage.Content(currentTheme(view),names[page],800,480,true);
    com.veloster.dashboard.view.DashboardPage.Bounds play=area.footer(0);
    if(page!=1)check(area.y+area.height<play.y,"body ends before footer on "+names[page]);
@@ -231,7 +249,8 @@ CHECK = r'''
    com.veloster.dashboard.view.DashboardPage.Regions split=viewRegions(view);
    com.veloster.dashboard.view.DashboardPage.Regions full=com.veloster.dashboard.view.DashboardPage.regions(split.displayWidth,split.displayHeight,currentTheme(view));
    float fixedNav=currentTheme(view).shell().left()?currentTheme(view).shell().width*split.scale:0;
-   float expectedContent=fixedNav+(split.displayWidth-fixedNav)*5f/7f;
+   float framePadding=currentTheme(view).layoutSpacing().horizontalPadding*split.scale;
+   float expectedContent=framePadding+fixedNav+(split.displayWidth-2*framePadding-fixedNav-(split.media.x-split.contentWidth))*5f/7f;
    check(split.mediaPanelVisible&&!split.mediaEnabled&&split.contentWidth<split.displayWidth&&split.scale==full.scale
          &&split.logicalContentWidth<full.logicalContentWidth&&Math.abs(split.contentWidth-expectedContent)<.01f&&footer(view),
          "compact player keeps fixed navigation then splits remaining width 5:2 on "+names[page]);
@@ -285,8 +304,13 @@ CHECK = r'''
   check(settingsScreen(view)==9,"wide resize exits inapplicable editor");
   check(!java.util.Arrays.asList((String[])field(field(view,"settingsEditor"),"labels")).contains(UiText.t("하단 미디어 바"))&&
         !java.util.Arrays.asList((String[])field(field(view,"settingsEditor"),"labels")).contains(UiText.t("미디어 알림")),"wide UI settings omit both media rows");
-  check(!footer(view)&&wide.commands.stream().filter(t->t.text.equals("Notice candidate")).allMatch(t->t.x>1920*5f/7f)
-        &&wide.texts.contains("Notice candidate"),"wide resize keeps only right player");
+  check(java.util.Arrays.asList((String[])field(field(view,"settingsEditor"),"labels")).contains(UiText.t("미디어 버튼"))&&
+        java.util.Arrays.asList((String[])field(field(view,"settingsEditor"),"labels")).contains(UiText.t("미디어 버튼 표시 방식")),"wide UI settings retain media control options");
+  float mediaLeft=viewRegions(view).media.x;
+  double noticeX=wide.commands.stream().filter(t->t.text.equals("Notice candidate")).mapToDouble(t->t.deviceX).min().orElse(-1);
+  boolean wideFooter=com.veloster.dashboard.view.MediaBar.footerVisible(viewRegions(view),(Integer)field(view,"mediaBarPolicy"),state.snapshot(android.os.SystemClock.elapsedRealtime()));
+  check(!wideFooter&&wide.commands.stream().filter(t->t.text.equals("Notice candidate")).allMatch(t->t.deviceX>=mediaLeft)
+        &&wide.texts.contains("Notice candidate"),"wide resize keeps only right player (footer="+footer(view)+", mediaLeft="+mediaLeft+", noticeX="+noticeX+")");
   view.setSize(800,480);draw(view);
   java.util.List<String> compactLabels=java.util.Arrays.asList((String[])field(field(view,"settingsEditor"),"labels"));
   check(compactLabels.contains(UiText.t("하단 미디어 바"))&&compactLabels.contains(UiText.t("미디어 알림"))&&(Integer)field(view,"mediaBarPolicy")==1,
@@ -303,19 +327,52 @@ CHECK = r'''
    Object settings=field(view,"settingsEditor");
    check((Integer)field(settings,"screen")==-1,"settings opens on root");
    String[] rootLabels=(String[])field(settings,"labels");int[] rootActions=(int[])field(settings,"actions");
-   check(rootLabels.length==(vehicle.equals("js")?4:3)&&rootLabels[0].equals(UiText.t("UI 설정"))&&rootLabels[1].equals(UiText.t("F1 설정"))&&rootLabels[2].equals(UiText.t("언어")),"root contains UI, F1 and language");
-   check(rootActions[0]==9&&rootActions[1]==10&&rootActions[2]==0,"root routes to UI, F1 and language selectors");
+   check(rootLabels.length==(vehicle.equals("js")?5:3)&&rootLabels[0].equals(UiText.t("UI 설정"))&&rootLabels[1].equals(UiText.t("페이지 설정"))&&rootLabels[vehicle.equals("js")?3:2].equals(UiText.t("언어")),"root contains UI, page settings, vehicle settings, language and diagnostics where supported");
+   check(rootActions[0]==9&&rootActions[1]==31&&rootActions[vehicle.equals("js")?2:2]==(vehicle.equals("js")?40:0)&&rootActions[vehicle.equals("js")?3:2]==(vehicle.equals("js")?0:0),"root routes to UI, pages, vehicle settings and language selectors");
+   openSettingsPage(view,31);settings=field(view,"settingsEditor");
+   check(((String[])field(settings,"labels")).length==2&&((String[])field(settings,"labels"))[0].equals("F1")&&((String[])field(settings,"labels"))[1].equals(UiText.t("전체 조망")),"page settings contains the F1 and overview pages");
    openSettingsPage(view,10);settings=field(view,"settingsEditor");
    check(((String[])field(settings,"labels")).length==4,"F1 group contains only F1 settings");
+   if(vehicle.equals("js")&&id.equals("original")&&language.equals("ko")){
+    openSettingsPage(view,36);settings=field(view,"settingsEditor");
+    check(((String[])field(settings,"labels")).length==3,"overview settings expose signal selection, order and reset");
+    com.veloster.dashboard.view.overview.OverviewLayout overview=(com.veloster.dashboard.view.overview.OverviewLayout)field(view,"overviewLayout");
+    int defaultOverviewCount=overview.count();openSettingsPage(view,37);settings=field(view,"settingsEditor");
+    boolean[] overviewChecks=(boolean[])field(settings,"checked");check(overviewChecks.length>defaultOverviewCount&&overviewChecks[0],"overview picker checks supported defaults and offers vehicle signals");
+    overviewChecks[0]=false;java.lang.reflect.Method applyOverview=DashboardView.class.getDeclaredMethod("applySettingsPage");applyOverview.setAccessible(true);applyOverview.invoke(view);
+    check(overview.count()==defaultOverviewCount-1,"overview selection removes a card from the live grid");
+    java.lang.reflect.Method preferenceKey=DashboardView.class.getDeclaredMethod("overviewPreferenceKey");preferenceKey.setAccessible(true);
+    String storedOverview=a.getSharedPreferences("pit_vehicle_ui",0).getString((String)preferenceKey.invoke(view),"");
+    check(storedOverview.split(",").length==overview.count(),"overview selection persists the vehicle-specific card list");
+    int secondSignal=overview.signalAt(1);openSettingsPage(view,38);tapEditorIndex(view,1);
+    check(overview.signalAt(0)==secondSignal,"overview order moves the chosen card one slot up");
+    openSettingsPage(view,39);check(overview.count()==defaultOverviewCount&&overview.signalAt(0)==overview.defaultSignals()[0],"overview reset restores vehicle defaults");
+   }
    navigation(view,1);
    check((Integer)field(view,"shiftTarget")==6300,"existing RPM preserved");
    check(currentTheme(view).id.equals(id),"test theme actually loaded: "+id);
    check((Integer)field(view,"mediaBarPolicy")==0,"backward compatible default");
+   check((Integer)field(view,"mediaButtonStyle")==0,"media button style defaults to icons");
    check(footer(view)&&draw(view).texts.contains(UiText.t("미디어 데이터 없음")),"default always shows empty footer");
+   if(vehicle.equals("js")&&id.equals("original")&&language.equals("ko")){
+    chooseMediaButtons(view,false);check(!(Boolean)field(view,"mediaButtons")&&a.getSharedPreferences("pit_vehicle_ui",0).getInt("media_buttons",1)==0,"media controls setting persists hidden state");
+    int calls=com.veloster.dashboard.vehicle.MediaControl.calls.get();footerTap(view,com.veloster.dashboard.view.MediaBar.PLAY);drainMedia(view);
+    check(com.veloster.dashboard.vehicle.MediaControl.calls.get()==calls,"hidden media control has no touch action");
+    chooseMediaButtons(view,true);check((Boolean)field(view,"mediaButtons"),"media controls can be restored");
+    chooseMediaButtonStyle(view,1);
+    com.veloster.dashboard.vehicle.MediaState styleState=(com.veloster.dashboard.vehicle.MediaState)field(view,"mediaState");
+    styleState.mode(0x73);styleState.update(3,true,"Style fixture",true,"Artist",false,0,false,0,false,1000);styleState.playback(3,1);
+    check(draw(view).texts.contains("이전")&&draw(view).texts.contains("일시정지")&&draw(view).texts.contains("다음"),"text style labels footer controls");
+    footerTap(view,com.veloster.dashboard.view.MediaBar.TOGGLE);
+    check(draw(view).texts.contains("이전")&&draw(view).texts.contains("일시정지")&&draw(view).texts.contains("다음"),"text style labels expanded player controls");
+    footerTap(view,com.veloster.dashboard.view.MediaBar.TOGGLE);
+    check(a.getSharedPreferences("pit_vehicle_ui",0).getInt("media_button_style",-1)==1,"media button style persists");
+    chooseMediaButtonStyle(view,0);check((Integer)field(view,"mediaButtonStyle")==0,"icon style can be restored");
+   }
    check(!draw(view).texts.contains("+")&&!draw(view).texts.contains("−"),"RPM controls moved out of F1");
    alignmentCheck(view);
    if(id.equals("original")&&language.equals("en"))view.setSize(400,240);
-   navigation(view,6);tapEditorLabel(view,UiText.t("F1 설정"));tapEditorLabel(view,UiText.t("F1 목표 RPM"));
+   navigation(view,6);tapEditorLabel(view,UiText.t("페이지 설정"));tapEditorLabel(view,"F1");tapEditorLabel(view,UiText.t("F1 목표 RPM"));
    Object rpm=field(view,"settingsEditor");check((Integer)field(rpm,"screen")==2,"real RPM editor opens from F1 settings");
    String[] rpmOptions=(String[])field(rpm,"labels");
    int min=vehicle.equals("js_n")?6000:3000;
@@ -323,7 +380,7 @@ CHECK = r'''
    android.graphics.Canvas.TextDraw saved=rpmRow(view,"6300 rpm");
    check(saved!=null,"RPM opens with saved value visible");
    check(!draw(view).texts.contains("‹ "+UiText.t("이전"))&&!draw(view).texts.contains(UiText.t("다음")+" ›"),"RPM has no pager");
-   com.veloster.dashboard.view.DashboardPage.Bounds list=settingsBounds(view,"list"),apply=settingsBounds(view,"apply");
+   com.veloster.dashboard.view.DashboardPage.Bounds list=settingsBounds(view,"viewport"),apply=settingsBounds(view,"apply");
    float x=list.atX(.5f),y=list.atY(.5f);
    rpmTouch(view,android.view.MotionEvent.ACTION_DOWN,x,y);
    rpmTouch(view,android.view.MotionEvent.ACTION_MOVE,x,y+25);
@@ -414,9 +471,9 @@ class MediaBarTests(unittest.TestCase):
             draft = assets / 'themes/left_media_test'
             (draft / 'layouts').mkdir(parents=True)
             (draft / 'manifest.json').write_text(json.dumps({'schemaVersion': 3, 'id': 'left_media_test', 'displayName': 'Left media test', 'extends': 'original', 'files': {'shell': 'layouts/shell.json', 'settings': 'layouts/settings.json', 'f1': 'layouts/f1.json'}}))
-            (draft / 'layouts/shell.json').write_text(json.dumps({'shell': {'position': 'left', 'alignment': 'center', 'width': 160, 'padding': {'top': 10, 'right': 12, 'bottom': 20, 'left': 8}, 'gap': 5, 'buttonHeight': 40}}))
+            (draft / 'layouts/shell.json').write_text(json.dumps({'shell': {'navigationPosition': 'left', 'sideMenuBar': {'alignment': 'center', 'width': 160, 'gap': 5, 'itemGap': 5, 'buttonHeight': 40}}}))
             for page in ('settings', 'f1'):
-                document = {'viewport': {'padding': {'top': 10, 'right': 24, 'bottom': 16, 'left': 20}, 'alignment': 'end'}}
+                document = {'viewport': {'alignment': 'end'}}
                 if page == 'f1':
                     document.update(json.loads((ROOT / 'theme/themes/f1-2/layouts/f1.json').read_text()))
                 (draft / ('layouts/'+page+'.json')).write_text(json.dumps(document))

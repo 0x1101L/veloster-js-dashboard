@@ -10,6 +10,7 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.Typeface;
 import com.veloster.dashboard.theme.ThemeResources;
+import com.veloster.dashboard.theme.ThemePalette;
 import com.veloster.dashboard.theme.ThemeSpec;
 import com.veloster.dashboard.theme.ThemeSpec.SurfaceRole;
 import com.veloster.dashboard.theme.ThemeSurface;
@@ -23,8 +24,12 @@ public final class MediaBar {
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path transportIcon=new Path();
     private final ThemeSurface surface;
+    private boolean controlsVisible=true;
+    private boolean buttonIcons=true;
     public MediaBar(){this(new ThemeSurface());}
     public MediaBar(ThemeSurface surface){this.surface=surface;}
+    public void setControlsVisible(boolean visible){controlsVisible=visible;}
+    public void setButtonIcons(boolean icons){buttonIcons=icons;}
 
     public static int normalize(int value){return value>=ALWAYS&&value<=PLAYING?value:DEFAULT;}
     public static String label(int value){return UiText.t(normalize(value)==HIDDEN?"항상 숨기기":normalize(value)==PLAYING?"미디어 재생 중에만":"항상 보기");}
@@ -46,6 +51,10 @@ public final class MediaBar {
         if(content.footer(NEXT).contains(x,y))return NEXT;
         return NONE;
     }
+    public static int hit(DashboardPage.Content content,float x,float y,boolean controlsVisible){
+        if(!controlsVisible)return content.footer(TOGGLE).contains(x,y)?TOGGLE:NONE;
+        return hit(content,x,y);
+    }
     public static int regionHit(DashboardPage.Bounds region,float x,float y){
         return regionHit(null,region,x,y);
     }
@@ -59,6 +68,9 @@ public final class MediaBar {
         if(layout.play.contains(x,y))return PLAY;
         if(layout.next.contains(x,y))return NEXT;
         return NONE;
+    }
+    public static int regionHit(ThemeSpec theme,DashboardPage.Bounds region,float x,float y,boolean wide,boolean controlsVisible){
+        return controlsVisible?regionHit(theme,region,x,y,wide):NONE;
     }
     private static final class Values {
         final float padding,cardRadius,coverGap,coverMax,coverInset,sourceHeight,titleHeight,titleSize,detailsGap,detailsHeight;
@@ -91,9 +103,7 @@ public final class MediaBar {
         final DashboardPage.Bounds card,cover,source,title,details,times,previous,play,next;
         RegionLayout(ThemeSpec theme,DashboardPage.Bounds region,boolean controls,boolean wide){
             values=wide?WIDE:NORMAL;
-            int padding=theme==null?-1:theme.shell().mediaPadding;
-            float inset=wide&&padding>=0?padding:values.padding;
-            card=region.inset(inset);
+            card=region;
             float controlsHeight=Math.max(values.playHeight,values.sideHeight);
             float stackBelowCover=values.coverGap+values.sourceHeight+values.sourceGap+values.titleHeight+values.detailsGap+values.detailsHeight+values.progressGap
                     +values.progressHeight+values.timeGap+values.timeHeight+(controls?values.controlsGap+controlsHeight:0);
@@ -161,9 +171,11 @@ public final class MediaBar {
             regionText(c,theme,resources,MediaState.time(track.durationMs),l.times,v.timeSize,theme.textSecondary,false,true);
         }
         if(controls){
-            drawPanelTransport(c,theme,l.previous,PREVIOUS,false,v);
-            drawPanelTransport(c,theme,l.play,PLAY,track!=null&&track.playState==1,v);
-            drawPanelTransport(c,theme,l.next,NEXT,false,v);
+            if(controlsVisible){
+                drawPanelTransport(c,theme,resources,l.previous,PREVIOUS,false,v);
+                drawPanelTransport(c,theme,resources,l.play,PLAY,track!=null&&track.playState==1,v);
+                drawPanelTransport(c,theme,resources,l.next,NEXT,false,v);
+            }
         }
     }
     /** Fit the full image inside a themed square; round only its visible outer corners. */
@@ -185,30 +197,37 @@ public final class MediaBar {
         else surface.roundRect(c,theme,new RectF(left,top,left+w,top+h),rx,rx,image);
     }
     private void drawTransport(Canvas c,ThemeSpec theme,DashboardPage.Bounds b,int action,boolean playing,float unit){
-        if(!hasButtons(theme)){transportIcon(c,b,action,playing,unit,theme.textPrimary);return;}
         boolean primary=action==PLAY;
-        float radius=16*unit;
-        boolean styled=surface.draw(c,theme,SurfaceRole.MEDIA_BUTTON,b.x,b.y,b.width,b.height,
+        boolean styled=hasButtons(theme)&&surface.draw(c,theme,SurfaceRole.MEDIA_BUTTON,b.x,b.y,b.width,b.height,
                 theme.panelRaised,primary?theme.accent:theme.stroke);
-        if(!styled){
+        if(hasButtons(theme)&&!styled){
+            float radius=16*unit;
             if(primary){
                 paint.setColor(theme.accent);
                 surface.roundRect(c,theme,new RectF(b.x,b.y,b.right(),b.bottom()),radius,radius,paint);
             }else surface.legacyCard(c,theme,b.x,b.y,b.width,b.height,radius,theme.panelRaised);
         }
-        transportIcon(c,b,action,playing,unit,primary?(styled?theme.accent:onAccent(theme.accent)):theme.textPrimary);
+        int ink=mediaIconColor(theme);
+        if(buttonIcons)transportIcon(c,b,action,playing,unit,ink);
+        else centeredText(c,theme,null,buttonLabel(action,playing),b.x,b.y,b.width,b.height,unit>=1?18:11,ink);
     }
-    private void drawPanelTransport(Canvas c,ThemeSpec theme,DashboardPage.Bounds b,int action,boolean playing,Values v){
-        if(!hasButtons(theme)){panelTransportIcon(c,b,action,playing,v,theme.textPrimary);return;}
+    private void drawPanelTransport(Canvas c,ThemeSpec theme,ThemeResources resources,DashboardPage.Bounds b,int action,boolean playing,Values v){
         boolean primary=action==PLAY;
-        boolean styled=surface.draw(c,theme,SurfaceRole.MEDIA_BUTTON,b.x,b.y,b.width,b.height,
+        boolean styled=hasButtons(theme)&&surface.draw(c,theme,SurfaceRole.MEDIA_BUTTON,b.x,b.y,b.width,b.height,
                 theme.panelRaised,primary?theme.accent:theme.stroke);
-        if(!styled){
+        if(hasButtons(theme)&&!styled){
             if(primary){paint.setColor(theme.accent);surface.roundRect(c,theme,new RectF(b.x,b.y,b.right(),b.bottom()),v.buttonRadius,v.buttonRadius,paint);}
             else surface.legacyCard(c,theme,b.x,b.y,b.width,b.height,v.buttonRadius,theme.panelRaised);
         }
-        panelTransportIcon(c,b,action,playing,v,primary?(styled?theme.accent:onAccent(theme.accent)):theme.textPrimary);
+        int ink=mediaIconColor(theme);
+        if(buttonIcons)panelTransportIcon(c,b,action,playing,v,ink);
+        else centeredText(c,theme,resources,buttonLabel(action,playing),b.x,b.y,b.width,b.height,v.sideWidth>=72?18:12,ink);
     }
+    private static String buttonLabel(int action,boolean playing){
+        return action==PREVIOUS?UiText.t("이전"):action==NEXT?UiText.t("다음")
+                :UiText.t(playing?"일시정지":"재생");
+    }
+    private static int mediaIconColor(ThemeSpec theme){return ThemePalette.primary(theme,0xffffffff);}
     private void panelTransportIcon(Canvas c,DashboardPage.Bounds b,int action,boolean playing,Values v,int ink){
         paint.setColor(ink);
         float x=b.atX(.5f),y=b.atY(.5f),bar=v.iconHalfWidth*.3f;
@@ -295,6 +314,7 @@ public final class MediaBar {
             rect(c,strip,theme.panel);
         }
         for(int action:new int[]{TOGGLE,PREVIOUS,PLAY,NEXT}){
+            if(!controlsVisible&&action!=TOGGLE)continue;
             DashboardPage.Bounds b=content.footer(action);
             boolean selected=action==TOGGLE&&expanded;
             DashboardPage.Bounds area=b;
@@ -302,9 +322,11 @@ public final class MediaBar {
                     selected?theme.panelRaised:theme.panel,selected?theme.accent:theme.stroke)){
                 rect(c,b,selected?theme.panelRaised:theme.panel);
             }
-            if(action!=TOGGLE&&theme.footerUsesLegacyIcons())transportIcon(c,b,action,action==PLAY&&track!=null&&track.playState==1,.63f,theme.textPrimary);
-            else if(action!=TOGGLE){String value=action==PREVIOUS?UiText.t("이전"):action==NEXT?UiText.t("다음"):track!=null&&track.playState==1?"Ⅱ":"▶";
-                centeredText(c,theme,resources,value,b.x,b.y,b.width,b.height,14,theme.textPrimary);}
+            if(action!=TOGGLE){
+                boolean playing=action==PLAY&&track!=null&&track.playState==1;
+                if(buttonIcons)panelTransportIcon(c,b,action,playing,NORMAL,mediaIconColor(theme));
+                else centeredText(c,theme,resources,buttonLabel(action,playing),b.x,b.y,b.width,b.height,11,mediaIconColor(theme));
+            }
         }
         DashboardPage.Bounds art=content.footer(TOGGLE);
         if(artwork==null)centeredText(c,theme,resources,"♪",art.x,art.y,art.width,art.height,24,theme.accent);

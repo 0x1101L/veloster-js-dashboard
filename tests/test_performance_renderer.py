@@ -84,19 +84,22 @@ public class PerformancePreview {
   t.jsDctTemperatureReply(reply,1000);
   t.jsDctTemperatureReply(new byte[]{0x62,1,(byte)0xa4},1200);
   UiText.configure("ko","ko");Canvas ko=new Canvas(800,425);new JsPitRenderer().draw(ko,800,425,false,t,1500);
-  check(ko.texts.contains("DCT 온도")&&ko.texts.contains("홀수단")&&ko.texts.contains("짝수단"),"Korean DCT overview");
+  check(ko.texts.contains("DCT 온도")&&!ko.texts.contains("홀수단")&&!ko.texts.contains("짝수단")
+      &&ko.texts.contains("L 96 | R 58"),"Korean DCT overview uses one combined reading without graph headers");
   ko.write(folder+"/js-dct-ko.png");UiText.configure("en","en");
   for(String state:new String[]{"received","one-missing","stale"}){
    if(state.equals("one-missing")){reply[34]=(byte)0xff;reply[35]=(byte)0xff;t.jsDctTemperatureReply(reply,1500);}
    Canvas c=new Canvas(800,480);new JsPitRenderer().draw(c,800,480,false,t,state.equals("stale")?6500:1500);
-   check(c.texts.contains("DCT temperature")&&c.texts.contains("Odd")&&c.texts.contains("Even")&&!c.texts.contains("Oil temperature"),"DCT replaces only JS overview oil card");
-   check(c.texts.contains("96 °C")==!state.equals("stale")&&c.texts.contains("58 °C")==state.equals("received"),"DCT reply, independent invalid channel and expiry: "+state);
+   check(c.texts.contains("DCT temperature")&&!c.texts.contains("Odd")&&!c.texts.contains("Even")&&!c.texts.contains("L")&&!c.texts.contains("R")&&!c.texts.contains("Oil temperature"),"DCT replaces only JS overview oil card without graph labels");
+   String expected=state.equals("received")?"L 96 | R 58":state.equals("one-missing")?"L 96 | R —":"L — | R —";
+   check(c.texts.contains(expected),"DCT combined reading, independent invalid channel and expiry: "+state);
    c.write(folder+"/js-dct-"+state+".png");
   }
   t.clear();check(Float.isNaN(t.dctTemperatures(1600).oddC),"no DCT values across ignition reset");
   byte[] frame=new byte[8];frame[4]=100;t.jsTcu11Frame(0x111,frame,1700);
   Canvas single=new Canvas(800,480);new JsPitRenderer().draw(single,800,480,false,t,1800);
-  check(single.texts.contains("Temp")&&single.texts.contains("60 °C")&&!single.texts.contains("Odd")&&!single.texts.contains("Even")&&!single.texts.contains("R"),"single TCU11 value displays only on the left");
+  check(single.texts.contains("60")&&!single.texts.contains("Temp")&&!single.texts.contains("Odd")&&!single.texts.contains("Even")
+      &&!single.texts.contains("L")&&!single.texts.contains("R"),"single TCU11 value is numeric only and has no graph headers");
   Telemetry pd=new Telemetry();pd.profile(true,false,false);pd.jsDctTemperatureReply(reply,1000);
   check(Float.isNaN(pd.dctTemperatures(1000).oddC),"PD does not accept JS DCT reply");
  }
@@ -208,7 +211,7 @@ public class PerformancePreview {
   jsDctOverview(args[0]);focusOverview(args[0]);
   UiText.configure("ko","ko");
   Canvas settings=new Canvas(800,480);new SettingsPageRenderer().draw(settings,ThemeSpec.original(),new com.veloster.dashboard.theme.ThemeResources(),"한국어",true,new com.veloster.dashboard.view.DashboardPage.Content(ThemeSpec.original(),"settings"));
-  check(settings.texts.contains("설정")&&settings.texts.contains("언어")&&settings.texts.contains("UI 설정")&&settings.texts.contains("F1 설정"),"localized settings rows rendered");
+  check(settings.texts.contains("설정")&&settings.texts.contains("언어")&&settings.texts.contains("UI 설정")&&settings.texts.contains("페이지 설정"),"localized settings rows rendered");
   UiText.configure("en","en");Canvas englishSettings=new Canvas(800,480);new SettingsPageRenderer().draw(englishSettings,ThemeSpec.original(),new com.veloster.dashboard.theme.ThemeResources(),"English",true,new com.veloster.dashboard.view.DashboardPage.Content(ThemeSpec.original(),"settings"));
   check(englishSettings.texts.contains("Language")&&englishSettings.texts.contains("UI settings")&&!englishSettings.texts.contains("언어"),"English settings labels rendered");
   jsTransmissionTrial();themedPages();

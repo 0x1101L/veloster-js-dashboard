@@ -1,0 +1,28 @@
+{
+  "shell": {
+    "navigationPosition": "top",
+    "frame": {
+      "padding": 0,
+      "gap": {
+        "horizontal": 8,
+        "vertical": 7
+      },
+      "cornerShape": "squircle",
+      "cornerRadius": 24
+    },
+    "sideMenuBar": {
+      "width": 80,
+      "alignment": "center",
+      "buttonHeight": 40,
+      "gap": 6,
+      "itemGap": 6,
+      "appearance": "buttons",
+      "presentation": "icons"
+    },
+    "topMenuBar": {
+      "buttonHeight": 40,
+      "itemGap": 6,
+      "presentation": "icons"
+    }
+  }
+}

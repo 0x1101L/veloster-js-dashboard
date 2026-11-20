@@ -31,8 +31,8 @@ public final class JsOverviewRenderer {
             if(OverviewLayout.dctCard(i,js)){
                 cards.dctTemperature(c,layout,slot,dct,dctValue(dct.oddC),dctValue(dct.evenC));
             }else if(js&&i==Telemetry.CLUSTER_FUEL){
-                cards.fuelEconomy(c,layout,slot,Float.isNaN(trial)?"—":String.format(Locale.US,"%.1f km/L",trial),
-                    fuelValue(samples[Telemetry.CLUSTER_FUEL],"%.1f km/L"),fuelValue(samples[Telemetry.CLUSTER_RANGE],"%.0f km"));
+                cards.fuelEconomy(c,layout,slot,fuelValue(samples[Telemetry.CLUSTER_FUEL],"%.1f km/L"),
+                    fuelValue(samples[Telemetry.CLUSTER_RANGE],"%.0f km"));
             }else if(i==Telemetry.TPMS_FL){
                 cards.tirePressure(c,layout,slot,new String[]{value(samples,i),value(samples,i+1),value(samples,i+2),value(samples,i+3)},false);
             }else if(i==Telemetry.TCS||i==Telemetry.PD_TCS_ENABLED){
@@ -69,6 +69,6 @@ public final class JsOverviewRenderer {
         return sample.hasDisplayValue()?String.format(Locale.US,format,sample.value):"—";
     }
     private static String dctValue(float temperature){
-        return Float.isNaN(temperature)?"—":String.format(Locale.US,"%.0f °C",temperature);
+        return Float.isNaN(temperature)?"—":String.format(Locale.US,"%.0f",temperature);
     }
 }

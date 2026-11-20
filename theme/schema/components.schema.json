@@ -3,52 +3,6 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "spacing": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "buttonPadding": {
-          "type": "integer",
-          "minimum": 4,
-          "maximum": 24
-        },
-        "cardPadding": {
-          "type": "integer",
-          "minimum": 4,
-          "maximum": 24
-        },
-        "settingsPadding": {
-          "type": "integer",
-          "minimum": 8,
-          "maximum": 40
-        },
-        "pedalPadding": {
-          "type": "integer",
-          "minimum": 8,
-          "maximum": 28
-        },
-        "f1SidePadding": {
-          "type": "integer",
-          "minimum": 4,
-          "maximum": 24
-        },
-        "gearPadding": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 24
-        },
-        "gridGapX": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 24
-        },
-        "gridGapY": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 24
-        }
-      }
-    },
     "material": {
       "type": "object",
       "additionalProperties": false,
@@ -105,9 +59,15 @@
         "mediaButton": {
           "$ref": "#/properties/material/properties/style"
         },
-        "mediaContainer": {"$ref": "#/properties/material/properties/style"},
-        "navigationDock": {"$ref": "#/properties/material/properties/style"},
-        "gearCard": {"$ref": "#/properties/material/properties/style"},
+        "mediaContainer": {
+          "$ref": "#/properties/material/properties/style"
+        },
+        "navigationDock": {
+          "$ref": "#/properties/material/properties/style"
+        },
+        "gearCard": {
+          "$ref": "#/properties/material/properties/style"
+        },
         "dataCard": {
           "$ref": "#/properties/material/properties/style"
         },
@@ -124,15 +84,29 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "dataCard": {"$ref": "#/$defs/blurStrength"},
-        "gearCard": {"$ref": "#/$defs/blurStrength"},
-        "settingsGroup": {"$ref": "#/$defs/blurStrength"},
-        "mediaContainer": {"$ref": "#/$defs/blurStrength"},
-        "navigationDock": {"$ref": "#/$defs/blurStrength"}
+        "dataCard": {
+          "$ref": "#/$defs/blurStrength"
+        },
+        "gearCard": {
+          "$ref": "#/$defs/blurStrength"
+        },
+        "settingsGroup": {
+          "$ref": "#/$defs/blurStrength"
+        },
+        "mediaContainer": {
+          "$ref": "#/$defs/blurStrength"
+        },
+        "navigationDock": {
+          "$ref": "#/$defs/blurStrength"
+        }
       }
     },
     "mediaControls": {
-      "enum": ["both", "container", "buttons"],
+      "enum": [
+        "both",
+        "container",
+        "buttons"
+      ],
       "default": "both"
     },
     "mediaFooter": {
@@ -140,9 +114,22 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "buttonBackground": {"type": "boolean", "description": "Draw an individual surface behind each of the four media controls."},
-        "controls": {"enum": ["text", "buttons"], "deprecated": true, "description": "Legacy alias for buttonBackground; the boolean takes precedence."},
-        "containerVisible": {"type": "boolean", "description": "Whether to draw the separate shared bar backdrop."}
+        "buttonBackground": {
+          "type": "boolean",
+          "description": "Draw an individual surface behind each of the four media controls."
+        },
+        "controls": {
+          "enum": [
+            "text",
+            "buttons"
+          ],
+          "deprecated": true,
+          "description": "Legacy alias for buttonBackground; the boolean takes precedence."
+        },
+        "containerVisible": {
+          "type": "boolean",
+          "description": "Whether to draw the separate shared bar backdrop."
+        }
       }
     },
     "decorations": {
@@ -195,19 +182,44 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "name", "asset", "thumbnail", "default"],
+        "required": [
+          "id",
+          "name",
+          "asset",
+          "thumbnail",
+          "default"
+        ],
         "properties": {
-          "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$"},
-          "name": {"type": "string", "minLength": 1, "maxLength": 32},
-          "asset": {"type": "string", "pattern": "^backgrounds/(?:[A-Za-z0-9_-][A-Za-z0-9_.-]*/)?[A-Za-z0-9_.-]+\\.(png|jpg|jpeg)$"},
-          "thumbnail": {"type": "string", "pattern": "^backgrounds/(?:[A-Za-z0-9_-][A-Za-z0-9_.-]*/)?[A-Za-z0-9_.-]+\\.(png|jpg|jpeg)$"},
-          "default": {"type": "boolean"}
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,63}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          "asset": {
+            "type": "string",
+            "pattern": "^backgrounds/(?:[A-Za-z0-9_-][A-Za-z0-9_.-]*/)?[A-Za-z0-9_.-]+\\.(png|jpg|jpeg)$"
+          },
+          "thumbnail": {
+            "type": "string",
+            "pattern": "^backgrounds/(?:[A-Za-z0-9_-][A-Za-z0-9_.-]*/)?[A-Za-z0-9_.-]+\\.(png|jpg|jpeg)$"
+          },
+          "default": {
+            "type": "boolean"
+          }
         }
       }
     }
   },
   "$defs": {
-    "blurStrength": {"type": "integer", "minimum": 0, "maximum": 36},
+    "blurStrength": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 36
+    },
     "fill": {
       "type": "string",
       "pattern": "^(token|#[0-9A-Fa-f]{8})$"

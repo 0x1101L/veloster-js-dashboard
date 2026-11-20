@@ -122,7 +122,7 @@ public final class GlassOpticsProbe extends DashboardDesktop {
   ThemeSpec t=theme(v);
   DashboardPage.Bounds region=viewRegions(v).media;
   float u=Math.min(region.width/548f,region.height/642f);
-  DashboardPage.Bounds card=region.inset(t.shell().mediaPadding*u);
+  DashboardPage.Bounds card=region;
   Canvas player=new Canvas(v.getWidth(),v.getHeight()),background=new Canvas(v.getWidth(),v.getHeight());
   player.drawColor(0xff406080);background.drawColor(0xff406080);
   new MediaBar().drawRegion(player,t,null,null,null,region);
@@ -165,9 +165,20 @@ public final class GlassOpticsProbe extends DashboardDesktop {
   output=Paths.get(args[0]);
   javax.swing.SwingUtilities.invokeAndWait(()->{try{
    PreviewProfile normal=PreviewProfile.ALL[0],wide=PreviewProfile.ALL[3];
+   if(args.length>1&&"layout-padding".equals(args[1])){
+    DashboardView v=view(TRIAL,normal);save(draw(v),"liquid-glass-padding16-f1-800x480");
+    menu(v,DashboardPage.OVERVIEW);save(draw(v),"liquid-glass-padding16-overview-800x480");
+    return;
+   }
+   if(args.length>1&&"layout-trial".equals(args[1])){
+    DashboardView v=view(TRIAL,wide);menu(v,DashboardPage.OVERVIEW);
+    save(draw(v),"liquid-glass-menu64-innerpadding16-overview-1920x720");
+    return;
+   }
    if(args.length>1&&"settings-ui".equals(args[1])){
     DashboardView v=view("f1_2_optics",normal);
     openSettingsPage(v,9);save(draw(v),"settings-ui-group");
+    tapEditorLabel(v,"테마 설정");save(draw(v),"settings-theme-group");
     tapEditorLabel(v,"Liquid Glass");save(draw(v),"settings-liquid-glass");
     openSettingsPage(v,18);save(draw(v),"settings-transparency");
     openSettingsPage(v,19);save(draw(v),"settings-blur");
@@ -291,6 +302,14 @@ def main():
             components.write_text(json.dumps(config))
         command = [java, "-Djava.awt.headless=true", "-Ddashboard.assets=" + str(assets),
                    "-cp", str(classes), "GlassOpticsProbe", str(output)]
+        if len(sys.argv)>1 and sys.argv[1]=="--layout-padding":
+            subprocess.run([*command,"layout-padding"],check=True)
+            print("PASS Liquid Glass 16-unit outer layout padding rendered. Images:",output)
+            return
+        if len(sys.argv)>1 and sys.argv[1]=="--layout-trial":
+            subprocess.run([*command,"layout-trial"],check=True)
+            print("PASS Liquid Glass sidebar width and inner vertical padding rendered. Images:",output)
+            return
         if len(sys.argv)>1 and sys.argv[1]=="--glass-settings-ui":
             subprocess.run([command[0],"-Djava.awt.headless=true","-Ddashboard.assets="+str(assets),
                             "-Dpreview.language=ko","-cp",str(classes),"GlassOpticsProbe",str(output),"settings-ui"],check=True)

@@ -41,7 +41,7 @@ CHECK=r'''
   check(renderedClock,"clock still renders as text");
   if(left)check(menuBounds(v,DashboardPage.PERFORMANCE).y-clock.y-clock.height>=12,"sidebar separates clock from the first button");
  }
- static void paddingCheck()throws Exception{
+ static void layoutSpacingCheck()throws Exception{
   for(String id:new String[]{"original","aurora_focus","f1_2","f1_2_flat","f1_2_optics"}){
    com.veloster.dashboard.theme.ThemeSpec base=new com.veloster.dashboard.theme.ThemeRepository(com.veloster.dashboard.theme.ThemeCatalog.load(new Activity())).load(id,com.veloster.dashboard.theme.ThemeRepository.SUPPORTED_SCHEMA_VERSION);
    for(boolean left:new boolean[]{false,true})for(boolean wide:new boolean[]{false,true}){
@@ -51,14 +51,13 @@ CHECK=r'''
     check(regions.mediaEnabled==wide,"wide region state");
     DashboardPage.Content common=new DashboardPage.Content(theme,"gauges",regions,false);
     DashboardPage.Bounds page=common.padded(theme);
-    float outer=theme.spacing.cardPadding;
-    check(Math.abs(page.x-common.x-outer*(left?.5f:1))<.02f,"common left edge "+id+left+wide);
-    check(Math.abs(common.x+common.width-page.right()-outer*(wide?.5f:1))<.02f,"common right edge "+id+left+wide);
+    check(Math.abs(page.x-common.x)<.02f&&Math.abs(page.y-common.y)<.02f&&
+          Math.abs(page.width-common.width)<.02f&&Math.abs(page.height-common.height)<.02f,
+          "content adds no outer padding "+id+left+wide);
     DashboardPage.Content f1=new DashboardPage.Content(theme,"f1",regions,!wide);
     DashboardPage.Bounds shift=f1.f1(theme,"shift");
-    float inset=f1.f1Grid==null?theme.spacing.f1SidePadding:f1.f1Grid.inset;
-    check(Math.abs(shift.x-f1.x-inset*(left?.5f:1))<.02f,"F1 left edge "+id+left+wide);
-    check(Math.abs(f1.x+f1.width-shift.right()-inset*(wide?.5f:1))<.02f,"F1 right edge "+id+left+wide);
+    check(Math.abs(shift.x-f1.x)<.02f,"F1 starts at content edge "+id+left+wide);
+    check(Math.abs(f1.x+f1.width-shift.right())<.02f,"F1 ends at content edge "+id+left+wide);
     if(!wide){
      DashboardPage.Bounds footer=f1.footer(-10);
      DashboardPage.Content other=new DashboardPage.Content(theme,"gauges",regions,true);
@@ -77,27 +76,31 @@ CHECK=r'''
   }
  }
  static DashboardView menuCheck(DashboardView v,Activity a,boolean left)throws Exception{
+  new com.veloster.dashboard.theme.ThemeSettingsStore(a).saveMenuStyle("f1_2",-1);v=create(a);
   choose(v,5,left?2:1,true);
   menuTap(v,1);
   android.graphics.Canvas labels=draw(v);
-  check(labels.texts.contains("F1"),"menu names are the default");
-  menuTap(v,6);tapEditorLabel(v,UiText.t("UI 설정"));tapEditorLabel(v,UiText.t("메뉴 표시 방식"));
+  check(!labels.texts.contains("F1")&&labels.texts.contains("ENGINE"),"F1-2 theme defaults to icon navigation");
+  menuGeometry(v,labels,left);
+  menuTap(v,6);tapEditorLabel(v,UiText.t("UI 설정"));tapEditorLabel(v,UiText.t("상단 메뉴 표시"));
   check((Integer)field(field(v,"settingsEditor"),"screen")==12,"UI group opens menu display editor");
-  check(draw(v).texts.contains(UiText.t("아이콘"))&&draw(v).texts.contains(UiText.t("이름")),"localized menu display choices");
-  settingTap(v,200,208);settingTap(v,70,88);menuTap(v,1);
-  check(draw(v).texts.contains("F1"),"cancel leaves menu names");
-  menuTap(v,6);tapEditorLabel(v,UiText.t("UI 설정"));tapEditorLabel(v,UiText.t("메뉴 표시 방식"));
-  settingTap(v,200,208);settingTap(v,700,88);menuTap(v,1);
-  android.graphics.Canvas icons=draw(v);
-  check(!icons.texts.contains("F1")&&icons.texts.contains("ENGINE"),"real menu tap works in icon mode");
-  com.veloster.dashboard.theme.ThemeSpec t=(com.veloster.dashboard.theme.ThemeSpec)field(v,"activeTheme");
-  menuGeometry(v,icons,left);
-  DashboardPage.Bounds f1=menuBounds(v,DashboardPage.F1);
-  int cx=(int)(f1.x+f1.width/2),cy=(int)(f1.y+f1.height/2);
-  boolean selectedFlag=false;for(int dx=-7;dx<=7;dx++)for(int dy=-8;dy<=7;dy++)if(icons.pixel(cx+dx,cy+dy)==t.accent)selectedFlag=true;
-  check(selectedFlag&&labels.pixel(cx-8,cy)!=t.accent,"scaled vector flag is rendered in the selected tab");
-  v=create(a);
-  check(!draw(v).texts.contains("F1"),"view recreation restores icons");
+  String[] menuChoices=(String[])field(field(v,"settingsEditor"),"labels");
+  check(menuChoices.length==3&&menuChoices[0].equals(UiText.t("테마 기본값"))&&draw(v).texts.contains(UiText.t("아이콘"))&&draw(v).texts.contains(UiText.t("텍스트")),"localized theme-default and override choices");
+  tapEditorIndex(v,1);settingTap(v,70,88);menuTap(v,1);
+  check(!draw(v).texts.contains("F1"),"cancel leaves theme-default icons");
+  menuTap(v,6);tapEditorLabel(v,UiText.t("UI 설정"));tapEditorLabel(v,UiText.t("상단 메뉴 표시"));
+  tapEditorIndex(v,1);settingTap(v,700,88);menuTap(v,1);
+  android.graphics.Canvas names=draw(v);
+  check(left?!names.texts.contains("F1")&&names.texts.contains("ENGINE"):names.texts.contains("F1"),
+        left?"left navigation forces icons despite a theme-specific name override":"theme-specific name override applies");
+  if(left){
+   new com.veloster.dashboard.theme.ThemeSettingsStore(a).saveMenuPosition(com.veloster.dashboard.theme.ThemeSpec.MENU_TOP);v=create(a);
+   check(draw(v).texts.contains("F1"),"top navigation restores the saved name override");
+   new com.veloster.dashboard.theme.ThemeSettingsStore(a).saveMenuPosition(com.veloster.dashboard.theme.ThemeSpec.MENU_LEFT);v=create(a);
+  }else{
+   v=create(a);
+   check(draw(v).texts.contains("F1"),"view recreation restores the theme-specific name override");
+  }
   Activity exit=new Activity();
   exit.getSharedPreferences("dashboard_theme",0).edit().putString("theme_id","f1_2").putInt("menu_position",left?2:1).apply();
   exit.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("menu_icon_mode",1).apply();
@@ -107,9 +110,17 @@ CHECK=r'''
   check(!exit.isFinishing(),"space beside the back button is not clickable");
   menuTap(exitView,DashboardPage.BACK);
   check(exit.isFinishing(),"back button remains clickable");
-  menuTap(v,6);tapEditorLabel(v,UiText.t("UI 설정"));tapEditorLabel(v,UiText.t("메뉴 표시 방식"));
-  settingTap(v,200,158);settingTap(v,700,88);menuTap(v,1);
-  check(draw(v).texts.contains("F1"),"switching to names restores labels");
+  menuTap(v,6);tapEditorLabel(v,UiText.t("UI 설정"));tapEditorLabel(v,UiText.t("상단 메뉴 표시"));
+  tapEditorIndex(v,2);settingTap(v,700,88);menuTap(v,1);
+  check(!draw(v).texts.contains("F1")&&draw(v).texts.contains("ENGINE"),"explicit icon override draws and activates icons");
+  menuGeometry(v,draw(v),left);
+  menuTap(v,6);tapEditorLabel(v,UiText.t("UI 설정"));tapEditorLabel(v,UiText.t("상단 메뉴 표시"));tapEditorIndex(v,1);settingTap(v,700,88);menuTap(v,1);
+  if(left){
+   check(!draw(v).texts.contains("F1")&&draw(v).texts.contains("ENGINE"),"left navigation stays in icon mode after selecting names");
+   choose(v,5,1,true);menuTap(v,1);
+   check(draw(v).texts.contains("F1"),"switching to top navigation restores the saved name mode");
+   choose(v,5,2,true);menuTap(v,1);
+  }else check(draw(v).texts.contains("F1"),"switching to names restores labels");
   return v;
  }
  static android.graphics.Bitmap activeBackground(DashboardView view)throws Exception{
@@ -126,7 +137,7 @@ CHECK=r'''
   Activity activity=new Activity();LanguageSettings.save(activity,"ko");
   DashboardView view=create(activity);draw(view);
   check(activeBackground(view)==null,"Original uses its color backdrop with no wallpaper override");
-  menuTap(view,6);tapEditorLabel(view,"UI 설정");tapEditorLabel(view,"배경화면");
+  menuTap(view,6);tapEditorLabel(view,"UI 설정");tapEditorLabel(view,"테마 설정");tapEditorLabel(view,"배경화면");
   check(settingsScreen(view)==14,"settings opens the wallpaper grid");
   Object editor=field(view,"settingsEditor");
   String[] labels=(String[])field(editor,"labels");
@@ -172,7 +183,7 @@ CHECK=r'''
   DashboardView view=create(a);
   android.graphics.Canvas standardFrame=draw(view);
   check(((com.veloster.dashboard.theme.ThemeSpec)field(view,"activeTheme")).usesLiquidGlass(),"Optics activates the dedicated material engine");
-  openPage(view,9);
+  openPage(view,32);
   check(java.util.Arrays.asList((String[])field(field(view,"settingsEditor"),"labels")).contains("Liquid Glass"),
         "Liquid Glass settings appear while its engine is active");
   tapEditorLabel(view,"Liquid Glass");
@@ -206,7 +217,7 @@ CHECK=r'''
         "Liquid Glass settings are hidden when the engine is inactive");
  }
  static void displayCheck()throws Exception{
-  paddingCheck();
+  layoutSpacingCheck();
   wallpaperCheck();
   liquidGlassSettingsCheck();
   for(String vehicle:new String[]{"js","js_n","pd"})for(String themeId:new String[]{"original","aurora_focus","f1_2","f1_2_flat","f1_2_optics"}){
@@ -226,7 +237,7 @@ CHECK=r'''
     String[][] orders={{"speed","gear","rpm"},{"rpm","gear","speed"},{"gear","speed","rpm"},{"gear","rpm","speed"},{"speed","rpm","gear"},{"rpm","speed","gear"}};
     com.veloster.dashboard.view.DashboardPage.Content c=new com.veloster.dashboard.view.DashboardPage.Content(t,"f1");
     for(boolean footer:new boolean[]{false,true}){
-     float gapX=c.f1Grid==null?t.spacing.gridGapX:c.f1Grid.gap,gapY=c.f1Grid==null?t.spacing.gridGapY:c.f1Grid.gap;
+     float gapX=c.f1Grid==null?t.layoutSpacing().gap:c.f1Grid.gap,gapY=c.f1Grid==null?t.layoutSpacing().gap:c.f1Grid.gap;
      com.veloster.dashboard.view.DashboardPage.Content layout=footer?new com.veloster.dashboard.view.DashboardPage.Content(t,"f1",800,480,true):c;
      com.veloster.dashboard.view.DashboardPage.Bounds shift=layout.f1(t,"shift");
      float columnWidth=(shift.width-2*gapX)/3,edge=shift.x;
@@ -284,7 +295,7 @@ CHECK=r'''
     check(wallpaperPixel(activeBackground(v))==wallpaperPixel("f1_2/backgrounds/blue.png"),
           "theme default reloads the bundled Blue background");
    }
-   choose(v,12,1,true);
+   choose(v,12,2,true);
    openPage(v,1);settingTap(v,180,208);
    String saved=a.getSharedPreferences("dashboard_theme",0).getString("theme_id","");
    settingTap(v,520,88);check((Integer)field(field(v,"settingsEditor"),"screen")==11,"theme preview is a page");
@@ -292,8 +303,8 @@ CHECK=r'''
    check(a.getSharedPreferences("dashboard_theme",0).getString("theme_id","").equals(saved),"preview leaves saved theme intact");
    settingTap(v,70,88);check((Integer)field(field(v,"settingsEditor"),"selected")==1,"preview back retains draft selection");
    settingTap(v,700,88);
-   check((Integer)field(v,"f1Order")==5&&(Integer)field(v,"pedalBarStyle")==1&&
-         ((com.veloster.dashboard.view.DashboardPage.Menu)field(v,"pageMenu")).icons(),"theme switch retains common preferences");
+   check((Integer)field(v,"f1Order")==5&&(Integer)field(v,"pedalBarStyle")==1,
+         "theme switch retains common F1 preferences");
    if(themeId.equals("original")){
     openPage(v,1);
     android.graphics.Canvas picker=draw(v);
@@ -318,7 +329,7 @@ CHECK=r'''
   surface.levelBar(segmented,paint,0,0,200,10,.5f,0xffffffff,0xff222222,1);
   check(continuous.image().getRGB(8,4)==0xffffffff&&segmented.image().getRGB(8,4)!=0xffffffff,"segmented gaps differ from continuous fill");
   Activity corrupt=new Activity();corrupt.getSharedPreferences("pit_vehicle_ui",0).edit().putInt("f1_order",99).putString("pedal_bar_style","bad").putInt("menu_icon_mode",99).apply();
-  com.veloster.dashboard.theme.ThemeSettingsStore store=new com.veloster.dashboard.theme.ThemeSettingsStore(corrupt);check(store.f1Order()==0&&store.pedalBarStyle()==0&&!store.menuIcons(),"invalid saved values reset");
+  com.veloster.dashboard.theme.ThemeSettingsStore store=new com.veloster.dashboard.theme.ThemeSettingsStore(corrupt);check(store.f1Order()==0&&store.pedalBarStyle()==0&&!store.menuIcons("original",false),"invalid saved values reset");
   System.out.println("PASS five bundled themes: common display options, menu input, and cross-theme wallpaper selection, restoration and fallback");
  }
 '''
@@ -329,10 +340,10 @@ class DisplayTests(unittest.TestCase):
    source='import com.veloster.dashboard.view.DashboardPage;\n'+runtime.STUBS['DashboardDesktop.java'];start=source.index(' static void selfCheck()throws Exception{');end=source.index(' public static void main(',start)
    probe=tmp/'DashboardDesktop.java';probe.write_text(source[:start]+CHECK+''' static void accentPaletteCheck()throws Exception{
   fixture("received","js");Activity a=new Activity();LanguageSettings.save(a,"ko");
-  DashboardView v=create(a);openPage(v,9);
+  DashboardView v=create(a);openPage(v,32);
   check(!java.util.Arrays.asList((String[])field(field(v,"settingsEditor"),"labels")).contains("포인트 컬러"),"Original does not expose accent palettes");
   a.getSharedPreferences("dashboard_theme",0).edit().putString("theme_id","material_auto_cowork").apply();v=create(a);
-  openPage(v,9);Object editor=field(v,"settingsEditor");String[] labels=(String[])field(editor,"labels");int[] actions=(int[])field(editor,"actions");
+  openPage(v,32);Object editor=field(v,"settingsEditor");String[] labels=(String[])field(editor,"labels");int[] actions=(int[])field(editor,"actions");
   int paletteRow=java.util.Arrays.asList(labels).indexOf("포인트 컬러");
   check(paletteRow>=0&&actions[paletteRow]==28,"Material Auto exposes the accent palette in UI settings");
   openPage(v,28);editor=field(v,"settingsEditor");
@@ -346,7 +357,7 @@ class DisplayTests(unittest.TestCase):
   active=(com.veloster.dashboard.theme.ThemeSpec)field(v,"activeTheme");
   check(active.accent==0xff48c9b0,"back discards the unsaved palette choice");
   Activity glassActivity=new Activity();glassActivity.getSharedPreferences("dashboard_theme",0).edit().putString("theme_id","f1_2").apply();
-  DashboardView glass=create(glassActivity);openPage(glass,9);
+  DashboardView glass=create(glassActivity);openPage(glass,32);
   check(java.util.Arrays.asList((String[])field(field(glass,"settingsEditor"),"labels")).contains("포인트 컬러"),"Liquid Glass exposes its own accent setting");
   openPage(glass,28);editor=field(glass,"settingsEditor");String[] glassLabels=(String[])field(editor,"labels");int[] glassSwatches=(int[])field(editor,"swatches");
   check("인디고".equals(glassLabels[2])&&"보라".equals(glassLabels[3])&&"핑크".equals(glassLabels[4])&&glassSwatches[2]==0xff6155f5,

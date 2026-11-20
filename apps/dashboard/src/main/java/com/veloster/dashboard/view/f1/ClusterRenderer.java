@@ -83,7 +83,7 @@ public final class ClusterRenderer {
         rawText(c,s,x-paint.measureText(s)/2,y,size,color,bold);
     }
     private void centeredFit(Canvas c,String s,float x,float y,float size,float width,int color,boolean bold){
-        if(theme.materialFor(SurfaceRole.DATA_CARD).legacy()&&theme.spacing.gearPadding==0){centered(c,s,x,y,size,color,bold);return;}
+        if(theme.materialFor(SurfaceRole.DATA_CARD).legacy()&&0==0){centered(c,s,x,y,size,color,bold);return;}
         size=nodeSize(s,size,bold);
         paint.setTypeface(nodeFace(s,bold));paint.setTextSize(size);
         float measured=paint.measureText(s);if(measured>width){size*=width/measured;paint.setTextSize(size);}
@@ -110,7 +110,7 @@ public final class ClusterRenderer {
     }
     public void drawMedia(Canvas c,com.veloster.dashboard.view.DashboardPage.Bounds b){
         float top=MediaBar.noticeBounds(b,music==null?0:music.noticeAgeMs).y;
-        float pad=theme.spacing.cardPadding;
+        float pad=0;
         panel(c,b.x,top,b.width,b.height,(theme.materialFor(SurfaceRole.PANEL).legacy()?0xff12212a:theme.panelRaised),theme.accent);
         float art=Math.max(1,b.height-2*pad);
         cover(c,b.x+pad,top+pad,art);
@@ -138,10 +138,10 @@ public final class ClusterRenderer {
     private void pedal(Canvas c,String label,String prefix,String unit,int x,int color,float maximum){
         surface.drawWithLegacy(c,theme,SurfaceRole.DATA_CARD,paint,x,377,376,57,
                 theme.materialFor(SurfaceRole.DATA_CARD).legacy()?0xff111516:theme.panel,ThemePalette.stroke(theme,0xff303638));
-        text(c,label,x+theme.spacing.pedalPadding,396,10,ThemePalette.secondary(theme,0xff91a5ae),true);
+        text(c,label,x+0,396,10,ThemePalette.secondary(theme,0xff91a5ae),true);
         String v=value(prefix);
-        fitted(c,v,x+theme.spacing.pedalPadding,423,25,99-theme.spacing.pedalPadding,ThemePalette.primary(theme,0xffe1edf2));
-        text(c,unit,x+91+theme.spacing.pedalPadding,422,11,ThemePalette.secondary(theme,0xff91a5ae),false);
+        fitted(c,v,x+0,423,25,99-0,ThemePalette.primary(theme,0xffe1edf2));
+        text(c,unit,x+91+0,422,11,ThemePalette.secondary(theme,0xff91a5ae),false);
         float fraction=Math.max(0,Math.min(1,numeric(prefix)/maximum));
         surface.levelBar(c,paint,x+148,403,208.4f,18,fraction,color,ThemePalette.stroke(theme,0xff303638),barStyle(prefix));
     }
@@ -174,30 +174,30 @@ public final class ClusterRenderer {
             box(c,294,120,506,367,gearFill);
         centered(c,gearTitle(pdProfile||jsProfile?"G E A R":"E M S  G E A R"),400,148,15,ThemePalette.background(theme,0xff040506),true);
         String gear=value("현재 기어");
-        centeredFit(c,gear,400,321,theme.typography.gearSize,212-2*theme.spacing.gearPadding,ThemePalette.background(theme,0xff040506),true);
+        centeredFit(c,gear,400,321,theme.typography.gearSize,212-2*0,ThemePalette.background(theme,0xff040506),true);
         centered(c,vehicleName(),400,350,14,ThemePalette.background(theme,0xff040506),true);
         f1End(c);
         f1Start(c,"speed",18,120,258,158);
-        text(c,"SPEED",18+theme.spacing.f1SidePadding,148,14,ThemePalette.secondary(theme,0xff91a5ae),true);
-        text(c,"km/h",233-theme.spacing.f1SidePadding,148,12,ThemePalette.secondary(theme,0xff91a5ae),false);
+        text(c,"SPEED",18+0,148,14,ThemePalette.secondary(theme,0xff91a5ae),true);
+        text(c,"km/h",233-0,148,12,ThemePalette.secondary(theme,0xff91a5ae),false);
         centered(c,value("속도 km/h"),150,253,88,ThemePalette.primary(theme,0xffe1edf2),true);
         box(c,18,276,276,278,ThemePalette.stroke(theme,0xff303638));
         f1End(c);
         f1Start(c,"boost",18,278,258,89);
-        text(c,"OIL TEMP",18+theme.spacing.f1SidePadding,307,11,ThemePalette.secondary(theme,0xff91a5ae),true);
+        text(c,"OIL TEMP",18+0,307,11,ThemePalette.secondary(theme,0xff91a5ae),true);
         temperature(c,value("오일 온도"),175,310,72);
-        text(c,"°C",254-theme.spacing.f1SidePadding,310,11,ThemePalette.secondary(theme,0xff91a5ae),false);
+        text(c,"°C",254-0,310,11,ThemePalette.secondary(theme,0xff91a5ae),false);
         f1End(c);
         f1Start(c,"rpm",522,120,260,158);
-        text(c,"ENGINE",522+theme.spacing.f1SidePadding,148,14,ThemePalette.secondary(theme,0xff91a5ae),true);
-        text(c,"rpm",753-theme.spacing.f1SidePadding,148,12,ThemePalette.secondary(theme,0xff91a5ae),false);
+        text(c,"ENGINE",522+0,148,14,ThemePalette.secondary(theme,0xff91a5ae),true);
+        text(c,"rpm",753-0,148,12,ThemePalette.secondary(theme,0xff91a5ae),false);
         centered(c,value("엔진 RPM"),653,247,69,ThemePalette.primary(theme,0xffe1edf2),true);
         box(c,524,276,782,278,ThemePalette.stroke(theme,0xff303638));
         f1End(c);
         f1Start(c,"temperatures",524,278,258,89);
-        text(c,"COOLANT",524+theme.spacing.f1SidePadding,307,11,ThemePalette.secondary(theme,0xff91a5ae),true);
+        text(c,"COOLANT",524+0,307,11,ThemePalette.secondary(theme,0xff91a5ae),true);
         temperature(c,value("냉각수 온도"),685,310,72);
-        text(c,"°C",764-theme.spacing.f1SidePadding,310,11,ThemePalette.secondary(theme,0xff91a5ae),false);
+        text(c,"°C",764-0,310,11,ThemePalette.secondary(theme,0xff91a5ae),false);
         f1End(c);
         c.save();if(!mediaBarVisible)c.translate(0,480-(theme.hasF1()?theme.f1("pedal").y+theme.f1("pedal").height:434));
         f1Start(c,"pedal",18,377,376,57);
@@ -243,10 +243,10 @@ public final class ClusterRenderer {
             boolean middle=id.equals(com.veloster.dashboard.view.DashboardPage.f1OrderNode(theme.f1Order(),1));
             int primary=theme.textPrimary,secondary=theme.textSecondary;
             if("shift".equals(id)){
-                adaptiveText(c,cue.shift?"SHIFT ↑":"SHIFT / LED",b,0.22f,11,secondary,true,false,0.4f);
+                adaptiveText(c,cue.shift?"SHIFT ↑":"SHIFT / LED",b,0.36f,11,secondary,true,false,0.4f);
                 String target=shiftTarget+" rpm";
                 com.veloster.dashboard.view.DashboardPage.Bounds right=new com.veloster.dashboard.view.DashboardPage.Bounds(b.x+b.width*0.72f,b.y,b.width*0.28f,b.height);
-                adaptiveText(c,target,right,0.22f,11,secondary,false,true,1,grid);
+                adaptiveText(c,target,right,0.36f,11,secondary,false,true,1,grid);
                 float radius=Math.min(7,b.width/42);
                 for(int i=0;i<15;i++){
                     boolean lit=cue.shift?(frameTime/250)%2==0:i<cue.leds;
@@ -291,8 +291,8 @@ public final class ClusterRenderer {
     private com.veloster.dashboard.view.DashboardPage.Bounds adaptiveBody(com.veloster.dashboard.view.DashboardPage.Content content,
             com.veloster.dashboard.view.DashboardPage.Bounds outer,String id,boolean grid){
         ThemeSpec.Rect node=theme.f1(id);
-        float px=grid?content.f1Grid.padding:Math.min(theme.spacing.cardPadding,outer.width*0.08f);
-        float py=grid?Math.min(content.f1Grid.padding,outer.height*0.18f):Math.min(theme.spacing.cardPadding,outer.height*0.10f);
+        float px=grid?Math.min(content.f1Grid.padding,outer.width*0.08f):0;
+        float py=grid?Math.min(content.f1Grid.padding,outer.height*0.18f):0;
         if(grid&&"shift".equals(id)){px=0;py=0;}
         int left=node==null?0:node.left,top=node==null?0:node.top;
         int right=node==null?0:node.right,bottom=node==null?0:node.bottom;

@@ -141,6 +141,7 @@ public final class UiText {
         EN.put("기기 페어링","Pair device");
         EN.put("기기 페어링 상태를 확인할 수 없습니다.","The pairing state could not be verified.");
         EN.put("기본 배치로 복원","Reset layout");
+        EN.put("기본값 복원","Restore defaults");
         EN.put("기어","Gear");
         EN.put("기존 AP 설정 복원 요청 실패. 백업 보존.","Could not request restoration of the original AP settings. Backup retained.");
         EN.put("기존 AP 설정 읽기 검증 실패. 백업 보존.","Could not verify the restored AP settings. Backup retained.");
@@ -199,8 +200,8 @@ public final class UiText {
         EN.put("만료","Expired");
         EN.put("매우 높음","Very high");
         EN.put("매우 투명하게","Very transparent");
-        EN.put("메뉴 위치","Menu location");
-        EN.put("메뉴 표시 방식","Menu display");
+        EN.put("메뉴 배치","Menu layout");
+        EN.put("메뉴","Menu");
         EN.put("메서드 확인","Method found");
         EN.put("모든 게이지의 항목과 모양을 초기화합니다.","Reset all gauge signals and styles to their defaults.");
         EN.put("목록 편집","Edit app list");
@@ -273,6 +274,7 @@ public final class UiText {
         EN.put("사용자 확인","User confirmed");
         EN.put("사용함","On");
         EN.put("상단","Top");
+        EN.put("상단 메뉴 표시","Top menu display");
         EN.put("상태","State");
         EN.put("상태 새로 확인","Refresh status");
         EN.put("상태 확인 실패: ","Status check failed: ");
@@ -284,6 +286,7 @@ public final class UiText {
         EN.put("선언 안 됨","Not declared");
         EN.put("선언됨","Declared");
         EN.put("선택된 HCD","Selected HCD");
+        EN.put("선택한 카드가 화면 칸 수보다 많습니다","Selected cards exceed the available grid slots");
         EN.put("설명 / Help","Help");
         EN.put("설정","Settings");
         EN.put("설정 복원 확인. 백업 표시 삭제 실패로 다음 실행 때 재확인 필요.","Settings restoration verified, but the backup marker could not be cleared. Check again next time.");
@@ -383,7 +386,6 @@ public final class UiText {
         EN.put("이 기기에서 재시작 기능을 사용할 수 없습니다.","Restart is unavailable on this device.");
         EN.put("이 시스템에서 바로가기 서비스를 시작할 수 없습니다.","This system cannot start the shortcut service.");
         EN.put("이 화면에서 시작한 검색을 종료했습니다.","Stopped discovery started from this screen.");
-        EN.put("이름","Labels");
         EN.put("이름 없는 기기","Unnamed device");
         EN.put("이미 기기를 검색 중입니다.","Discovery is already running.");
         EN.put("이미 내비게이션 재시작을 요청했습니다.","A head-unit restart has already been requested.");
@@ -412,6 +414,7 @@ public final class UiText {
         EN.put("전체 시간","Duration");
         EN.put("전체 조망","Overview");
         EN.put("전체 조망 · 진단","Overview · Diagnostics");
+        EN.put("전체 조망 설정","Overview settings");
         EN.put("정수 수신 횟수","Integer receptions");
         EN.put("정수 조회 횟수","Integer reads");
         EN.put("정차 상태에서 확인하세요. 이 화면을 여는 것만으로 무선 설정은 바뀌지 않습니다.","Check while parked. Opening this screen alone does not change wireless settings.");
@@ -435,12 +438,16 @@ public final class UiText {
         EN.put("진단 화면의 탭 전환은 차량 요청이나 송신을 실행하지 않습니다.","Switching diagnostic tabs does not send vehicle requests or messages.");
         EN.put("짝수단","Even");
         EN.put("차량","Vehicle");
+        EN.put("차량 설정","Vehicle settings");
+        EN.put("차량 프로필","Vehicle profile");
+        EN.put("차종","Model");
         EN.put("차량 속도","Vehicle speed");
         EN.put("차량 수신 경로","Vehicle data path");
         EN.put("차량 신호","Vehicle signals");
         EN.put("차량 연결","Vehicle connections");
         EN.put("차량 정보","Vehicle information");
         EN.put("차량 표시 상태를 확인하지 못했습니다. N 계기판 버튼으로 다시 열어주세요.","Could not confirm vehicle display status. Try the N Dashboard button again.");
+        EN.put("차종 기본값","Vehicle defaults");
         EN.put("차체 · 조명 (실험)","Body · lights (test)");
         EN.put("처리 실패: ","Operation failed: ");
         EN.put("처리 중입니다. 완료될 때까지 기다려 주세요.","Working. Please wait until this finishes.");
@@ -458,6 +465,9 @@ public final class UiText {
         EN.put("취소 / Cancel","Cancel");
         EN.put("칩 판별","Controller identification");
         EN.put("칩 판별 기록 없음","No controller identification record");
+        EN.put("카드 순서","Card order");
+        EN.put("카드는 하나 이상 선택해야 합니다","Select at least one card");
+        EN.put("카드를 누르면 한 칸 위로 이동","Tap a card to move it up one place");
         EN.put("카메라 정보","Camera information");
         EN.put("캡처 파일 가져오기","Import capture file");
         EN.put("컨트롤러","Controller");
@@ -474,6 +484,8 @@ public final class UiText {
         EN.put("테마","Theme");
         EN.put("테마 기본값","Theme default");
         EN.put("테마 미리보기","Theme preview");
+        EN.put("테마 설정","Theme settings");
+        EN.put("텍스트","Text");
         EN.put("토크 (계산)","Torque (calc.)");
         EN.put("투명도","Transparency");
         EN.put("투명도 감소","Reduce transparency");
@@ -493,10 +505,11 @@ public final class UiText {
         EN.put("페어링된 기기가 없습니다.","No paired devices.");
         EN.put("페어링됨","Paired");
         EN.put("페어링을 요청했습니다. PIN 확인 창이 나타나면 차량 화면에서 확인하세요.","Pairing requested. Confirm the PIN on the head-unit screen if prompted.");
-        EN.put("페이지 메뉴","Page menu");
+        EN.put("페이지 설정","Page settings");
         EN.put("포인트 컬러","Accent color");
-        EN.put("표시 항목","Signal");
+        EN.put("표시 항목","Visible cards");
         EN.put("표시할 설치 앱이 없습니다. 앱 설치 뒤 다시 열거나 목록 편집에서 선택하세요.","No installed apps to show. Reopen after installing an app or select one in Edit app list.");
+        EN.put("표시할 페이지","Visible pages");
         EN.put("표준","Standard");
         EN.put("프로세스 로드","Process mapping");
         EN.put("프로세스 목록 접근 제한 · 미확인","Process list restricted · Unknown");

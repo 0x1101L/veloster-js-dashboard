@@ -42,8 +42,8 @@ CHECK = '''
    used.add(b);
   }
   com.veloster.dashboard.view.DashboardPage.Bounds bottom=c.f1(t,"brake",visible,combined);
-  float end=visible?c.footer(-10).y-c.f1Grid.gap:c.y+c.height-c.f1Grid.inset;
-  check(Math.abs(bottom.y+bottom.height-end)<.01f,"bottom inset and footer gap");
+  float end=visible?c.footer(-10).y-c.f1Grid.gap:c.y+c.height;
+  check(Math.abs(bottom.y+bottom.height-end)<.01f,"content edge and footer gap");
   if(combined){
    com.veloster.dashboard.view.DashboardPage.Bounds media=c.mediaPanel(visible);
    check(Math.abs(bottom.x+bottom.width+c.f1Grid.gap-media.x)<.01f,"media joins at the grid gap");

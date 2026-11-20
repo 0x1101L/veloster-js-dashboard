@@ -1,0 +1,18 @@
+{
+  "tokens": {
+    "background": "#FF061014",
+    "panel": "#FF0D1B20",
+    "panelRaised": "#FF14282E",
+    "stroke": "#FF25444B",
+    "textPrimary": "#FFF0F8F7",
+    "textSecondary": "#FFA4BBB9",
+    "accent": "#FF53D6C6",
+    "warning": "#FFFFC65A",
+    "critical": "#FFFF626B",
+    "unavailable": "#FF758C89",
+    "cutPanels": false
+  },
+  "backdrop": {
+    "style": "solid"
+  }
+}

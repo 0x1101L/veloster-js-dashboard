@@ -58,9 +58,7 @@ def main():
                    "com.veloster.dashboard.theme." if test.stem == "ThemeResourcesTest" else "") + test.stem
             command=[str(java), "-ea", "-cp", temporary, cls]
             if test.stem=="ThemeManifestTest":
-                command += [str(ROOT/"tests/fixtures/theme_v2/catalog.json"),
-                            str(ROOT/"apps/dashboard/src/0x1101L/assets/themes"),
-                            str(ROOT/"tests/fixtures/theme_v2")]
+                command += [str(ROOT/"apps/dashboard/src/0x1101L/assets/themes")]
             subprocess.run(command, check=True)
     print("PASS: " + str(len(tests)) + " synthetic host test programs. Vehicle operation is outside this scope.")
 

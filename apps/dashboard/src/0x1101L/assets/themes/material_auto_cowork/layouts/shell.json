@@ -1,25 +1,23 @@
 {
   "shell": {
-    "position": "left",
-    "alignment": "center",
-    "width": 80,
-    "padding": {
-      "top": 14,
-      "right": 10,
-      "bottom": 14,
-      "left": 10
+    "navigationPosition": "left",
+    "frame": {
+      "padding": 0,
+      "gap": {
+        "horizontal": 12,
+        "vertical": 10
+      },
+      "cornerShape": "squircle",
+      "cornerRadius": 28
     },
-    "topPadding": {
-      "top": 8,
-      "right": 14,
-      "bottom": 8,
-      "left": 14
-    },
-    "mediaPadding": 12,
-    "navigationAppearance": "dock",
-    "screenCorner": "squircle",
-    "screenCornerRadius": 28,
-    "gap": 6,
-    "buttonHeight": 40
+    "sideMenuBar": {
+      "width": 80,
+      "alignment": "center",
+      "buttonHeight": 40,
+      "gap": 6,
+      "itemGap": 6,
+      "appearance": "dock",
+      "presentation": "icons"
+    }
   }
 }

@@ -10,29 +10,46 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class ThemeManifestTest {
     private static void check(boolean value,String message){if(!value)throw new AssertionError(message);}
     private static String read(String path)throws Exception{return new String(Files.readAllBytes(Paths.get(path)),Charset.forName("UTF-8"));}
     private static Map<String,String> docs(String root)throws Exception{
         Map<String,String> result=new LinkedHashMap<String,String>();
-        result.put("original",read(root+"/original/manifest.json"));
-        result.put("aurora_focus",read(root+"/aurora_focus/manifest.json"));
-        result.put("carplay_glass_light",read(root+"/carplay_glass_light/manifest.json"));
-        result.put("carplay_glass_dark",read(root+"/carplay_glass_dark/manifest.json"));return result;
+        for(String id:new String[]{"original","aurora_focus","f1_2","f1_2_flat","f1_2_optics","material_auto_cowork"}){
+            String manifest=read(root+"/"+id+"/manifest.json");result.put(id,manifest);
+            Matcher files=Pattern.compile("\\\"[a-zA-Z0-9_]+\\\"\\s*:\\s*\\\"([^\\\"]+\\.json)\\\"").matcher(
+                manifest.substring(manifest.indexOf("\"files\"")+7));
+            while(files.find())result.put(id+"/"+files.group(1),read(root+"/"+id+"/"+files.group(1)));
+        }
+        return result;
     }
     private static ThemeCatalog load(String catalog,Map<String,String> manifests){return ThemeCatalog.fromJsonDocuments(catalog,manifests);}
     public static void main(String[] args)throws Exception{
-        String catalogJson=read(args[0]);Map<String,String> manifests=docs(args[2]);
+        check("body".equals(ThemeSpec.textRole("F1",false))&&"body".equals(ThemeSpec.textRole("F1 설정",false)),"F1 labels use the body typography role");
+        final String assetRoot=args[0];
+        String catalogJson=read(assetRoot+"/catalog.json");Map<String,String> manifests=docs(assetRoot);
         ThemeCatalog catalog=load(catalogJson,manifests);
-        final String assetRoot=args[1];
         android.content.Context bundledContext=new android.content.Context(){public android.content.res.AssetManager getAssets(){return new android.content.res.AssetManager(){public java.io.InputStream open(String path)throws java.io.IOException{return Files.newInputStream(Paths.get(assetRoot).getParent().resolve(path));}};}};
         ThemeCatalog bundled=ThemeCatalog.load(bundledContext);
         check(bundled.size()==6,"v3 bundle contains six selectable themes");
         check("original".equals(bundled.resolve(null).id),"Original remains the default theme");
         ThemeSpec f12=bundled.find("f1_2");
         check(f12!=null&&"Liquid Glass".equals(f12.displayName)&&f12.f1Grid()!=null&&f12.shell().left()&&
-              f12.material.glass(),"F1-2 Glass is the parent theme");
+              f12.material.glass()&&f12.shell().menuIcons()&&f12.shell().dock(),"F1-2 Glass defaults to icon navigation in a dock");
+        check(f12.shell().framePaddingHorizontal==16&&f12.shell().framePaddingVertical==16
+              &&f12.shell().frameGapHorizontal==16&&f12.shell().frameGapVertical==12
+              &&f12.shell().groupGap==8&&f12.shell().itemGap==0,
+              "F1-2 frame, menu group and menu item spacing load from their separate theme fields");
+        check(f12.f1Grid().padding==14&&f12.f1Grid().gap==10,
+              "F1-2 keeps inner card padding separate from the shared layout gap");
+        ThemeSpec.OverviewCardStyle overviewDefault=f12.overviewCardStyle(ThemeSpec.OverviewCardKind.STANDARD);
+        ThemeSpec.OverviewCardStyle overviewSpecial=f12.overviewCardStyle(ThemeSpec.OverviewCardKind.TIRE_PRESSURE);
+        check(overviewDefault.padding.top==12&&overviewDefault.padding.right==12
+              &&overviewSpecial.padding.top==12&&overviewSpecial.padding.left==12,
+              "overview card types inherit the default inner padding");
         check(f12.backdrop.mode==ThemeSpec.Backdrop.Mode.GRADIENT&&f12.backdrop.endColor==0xffe5efff,
               "F1-2 Glass defines the shared gradient");
         check(f12.wallpapers().size()==4&&"f1_2_blue".equals(f12.defaultWallpaperId())
@@ -76,13 +93,19 @@ public final class ThemeManifestTest {
               "Flat inherits material parameters, palette, background, layout, decoration and font assets");
         ThemeSpec optics=bundled.find("f1_2_optics");
         check(optics!=null&&"Liquid Glass (Optics)".equals(optics.displayName)
-              &&optics.shell().left()&&optics.shell().dock()&&optics.shell().width==f12.shell().width
+              &&optics.shell().left()&&optics.shell().dock()&&optics.shell().width==64
+              &&f12.shell().width==64&&optics.shell().framePadding==16&&optics.shell().top==16&&optics.shell().bottom==16
               &&optics.mediaControls()==ThemeSpec.MediaControls.CONTAINER&&f12.usesLiquidGlass()
               &&!flat.usesLiquidGlass()&&optics.usesLiquidGlass(),
               "Optics is selectable with a left dock and retains its wide media container");
+        check(f12.layoutSpacing().horizontalPadding==16&&f12.layoutSpacing().verticalPadding==16
+              &&optics.layoutSpacing().horizontalPadding==16&&optics.layoutSpacing().verticalPadding==16,
+              "Liquid Glass themes preserve 16-unit horizontal and vertical frame padding");
         ThemeSpec materialAuto=bundled.find("material_auto_cowork");
         String materialAutoManifest=read(assetRoot+"/material_auto_cowork/manifest.json");
         ThemeSpec originalTheme=bundled.find("original");
+        check(flat.shell().menuIcons()&&optics.shell().menuIcons()&&materialAuto.shell().menuIcons()
+              &&!originalTheme.shell().menuIcons(),"navigation presentation defaults inherit per theme");
         check(materialAuto!=null&&"Material Auto".equals(materialAuto.displayName)
               &&!materialAutoManifest.contains("\"extends\"")
               &&materialAuto.background==0xff090d12&&materialAuto.accent==0xff9ccbff
@@ -91,7 +114,7 @@ public final class ThemeManifestTest {
               &&materialAuto.materialFor(SurfaceRole.DATA_CARD).style.equals("flat")
               &&materialAuto.materialFor(SurfaceRole.PANEL).style.equals("flat")
               &&materialAuto.columns==5&&materialAuto.rows==4
-              &&materialAuto.spacing.gridGapX==12&&materialAuto.spacing.gridGapY==10
+              &&materialAuto.layoutSpacing().horizontal==12&&materialAuto.layoutSpacing().vertical==10
               &&materialAuto.typography.bodyScale==104&&materialAuto.typography.numericScale==112
               &&materialAuto.shell().dock()&&materialAuto.shell().width==80
               &&materialAuto.backdrop.mode==ThemeSpec.Backdrop.Mode.SOLID
@@ -142,7 +165,7 @@ public final class ThemeManifestTest {
               "Material and Liquid Glass expose engine-specific palette labels");
         check(materialAuto.typography.bodyScale!=originalTheme.typography.bodyScale
               &&materialAuto.typography.numericScale!=originalTheme.typography.numericScale
-              &&materialAuto.spacing.gridGapX!=originalTheme.spacing.gridGapX
+              &&materialAuto.layoutSpacing().gap!=originalTheme.layoutSpacing().gap
               &&materialAuto.backdrop.mode==ThemeSpec.Backdrop.Mode.SOLID
               &&materialAuto.backdrop.startColor==null&&materialAuto.backdrop.scanlineColor==0
               &&!materialAuto.footerButtonBackground()&&materialAuto.footerContainerVisible(),
@@ -165,7 +188,7 @@ public final class ThemeManifestTest {
               &&"flat".equals(optics.materialFor(SurfaceRole.MEDIA_CONTAINER).style)
               &&"flat".equals(optics.materialFor(SurfaceRole.NAVIGATION_DOCK).style)
               &&(optics.panel>>>24)==0x91
-              &&!f12.shell().dock()&&f12.blurFor(SurfaceRole.DATA_CARD)==0,
+              &&f12.shell().dock()&&f12.blurFor(SurfaceRole.DATA_CARD)==0,
               "Optics separates subdued content surfaces from lightly blurred control containers");
         check(optics.background==f12.background&&optics.backdrop.mode==f12.backdrop.mode
               &&optics.backdrop.endColor==f12.backdrop.endColor&&optics.backgroundAsset.equals(f12.backgroundAsset)
@@ -173,20 +196,26 @@ public final class ThemeManifestTest {
               &&"f1_2".equals(optics.wallpapers().get(0).owner)&&bundled.wallpapers().size()==7,
               "Optics inherits the F1-2 backdrop and wallpaper assets without adding gallery duplicates");
         check(optics.f1Grid()!=null&&optics.f1Grid().gap==f12.f1Grid().gap&&optics.rows==f12.rows
-              &&optics.columns==f12.columns&&optics.bodyFont.equals(f12.bodyFont)
-              &&ThemeResources.load(bundledContext,optics).font("body",false)!=android.graphics.Typeface.DEFAULT
-              &&"themes/f1_2/fonts/Pretendard-Regular.otf".equals(android.graphics.Typeface.lastAssetPath),
-              "Optics inherits F1 and overview geometry and loads Pretendard from F1-2");
-        for(String id:new String[]{"original","aurora_focus"}){
-            ThemeSpec old=catalog.find(id),current=bundled.find(id);
-            check(current!=null&&current.background==old.background&&current.accent==old.accent&&current.columns==old.columns&&current.rows==old.rows&&current.bodyFont.equals(old.bodyFont)&&current.spacing.cardPadding==old.spacing.cardPadding&&current.material.style.equals(old.material.style),"v3 migration preserves v2 values for "+id);
-            check(current.footerButtonBackground()&&current.footerContainerVisible(),
-                  id+" retains the existing footer appearance");
-        }
-        check(catalog.size()==4,"v2 compatibility fixture parses all manifests");
-        check(catalog.find("original").background==0xff040506,"Original manifest tokens parse");
+              &&optics.columns==f12.columns&&optics.bodyFont.equals(f12.bodyFont),
+              "Optics inherits F1 and overview geometry from F1-2");
+        check(optics.fontStyle("body")!=null&&optics.fontStyle("body").normal==400&&optics.fontStyle("body").emphasis==600
+              &&optics.fontStyle("numeric")!=null&&optics.fontStyle("numeric").normal==500&&optics.fontStyle("numeric").emphasis==700
+              &&"fonts/Pretendard-Medium.otf".equals(optics.fallbackWeightFont(500)),
+              "Optics inherits the four-weight Pretendard role mapping from F1-2");
+        ThemeResources opticsResources=ThemeResources.load(bundledContext,optics);
+        check(opticsResources.font("body",false)!=android.graphics.Typeface.DEFAULT,
+              "Optics loads its inherited body font");
+        check("themes/f1_2/fonts/PretendardVariable.ttf".equals(opticsResources.font("numeric",true).sourceAssetPath),
+              "Optics loads the inherited variable Pretendard face from F1-2");
+        android.graphics.Typeface.failVariableBuild=true;
+        ThemeResources opticsStaticResources=ThemeResources.load(bundledContext,optics);
+        android.graphics.Typeface.failVariableBuild=false;
+        check("themes/f1_2/fonts/Pretendard-Bold.otf".equals(opticsStaticResources.font("numeric",true).sourceAssetPath),
+              "Optics uses its inherited API 17 fallback faces from F1-2");
+        check(catalog.size()==6,"current schema 3 catalog resolves all bundled themes: "+catalog.size());
+        check(catalog.find("original").background==0xff040506,"Original schema 3 tokens parse");
         ThemeSpec focus=catalog.find("aurora_focus");
-        check(focus!=null&&focus.columns==5&&focus.rows==4&&"aurora_focus".equals(focus.id),"Focus ID and existing grid parse");
+        check(focus!=null&&focus.columns==5&&focus.rows==4&&"aurora_focus".equals(focus.id),"Focus ID and fixed grid parse");
         check(bundled.find("carplay_glass_light")==null&&bundled.find("carplay_glass_dark")==null,
               "CarPlay Glass Light and Dark are no longer selectable");
         check(bundled.find("aurora_focus").background==0xff071118
@@ -195,66 +224,50 @@ public final class ThemeManifestTest {
         ThemeSpec originalLeft=ThemeCatalog.withMenuPosition(bundled.find("original"),ThemeSpec.MENU_LEFT);
         check(originalLeft.shell().width==96&&originalLeft.shell().left==0&&originalLeft.shell().right==0,
               "Original left navigation occupies 96px");
-        check("original".equals(load("{\"schemaVersion\":2,\"themeIds\":[\"original\",\"aurora_focus\",\"aurora_focus\"]}",manifests).resolve("aurora_focus").id),"duplicate catalog ID falls back to Original only");
+        check("original".equals(load("{\"schemaVersion\":3,\"themeIds\":[\"original\",\"aurora_focus\",\"aurora_focus\"]}",manifests).resolve("aurora_focus").id),"duplicate catalog ID falls back to Original only");
         check("original".equals(load(catalogJson,new LinkedHashMap<String,String>()).resolve("aurora_focus").id),"missing manifests fall back safely");
-        check("original".equals(load(catalogJson.replace("\"schemaVersion\": 2","\"schemaVersion\": 99"),manifests).resolve("aurora_focus").id),"unsupported catalog version falls back");
+        check("original".equals(load(catalogJson.replace("\"schemaVersion\": 3","\"schemaVersion\": 99"),manifests).resolve("aurora_focus").id),"unsupported catalog version falls back");
         Map<String,String> bad=new LinkedHashMap<String,String>(manifests);
-        bad.put("aurora_focus",bad.get("aurora_focus").replace("#FF65E0D0","cyan"));
+        bad.put("aurora_focus/colors.json",bad.get("aurora_focus/colors.json").replace("#FF65E0D0","cyan"));
         check("original".equals(load(catalogJson,bad).resolve("aurora_focus").id),"invalid token value rejects catalog and falls back");
         bad=new LinkedHashMap<String,String>(manifests);
-        bad.put("aurora_focus",bad.get("aurora_focus").replace("#FF071118","#80071118"));
-        check(load(catalogJson,bad).size()==1,"v2 rejects a translucent screen base");
+        bad.put("aurora_focus/colors.json",bad.get("aurora_focus/colors.json").replace("#FF071118","#80071118"));
+        check(load(catalogJson,bad).size()==1,"translucent screen base is rejected");
         bad=new LinkedHashMap<String,String>(manifests);
-        bad.put("aurora_focus",bad.get("aurora_focus").replace("\"rows\": 4","\"rows\": 8"));
-        check("original".equals(load(catalogJson,bad).resolve("aurora_focus").id),"out-of-range layout rejects catalog");
-        bad=new LinkedHashMap<String,String>(manifests);
-        bad.put("aurora_focus",bad.get("aurora_focus").replace("\"columns\": 5","\"columns\": 4"));
-        check("original".equals(load(catalogJson,bad).resolve("aurora_focus").id),"unsupported renderer grid rejects catalog");
-        bad=new LinkedHashMap<String,String>(manifests);
-        bad.put("original",bad.get("original").replace("#FF040506","#FF000000"));
+        bad.put("original/colors.json",bad.get("original/colors.json").replace("#FF040506","#FF000000"));
         check("original".equals(load(catalogJson,bad).resolve("aurora_focus").id)&&load(catalogJson,bad).size()==1,"altered Original manifest falls back to canonical Original");
-        check(ThemeSpec.VERSION==3&&focus.typography.bodyScale==100&&focus.spacing.cardPadding==10&&focus.material.legacy(),"v2 compatibility preserves legacy visuals");
-        Map<String,String> custom=new LinkedHashMap<String,String>(manifests);
-        custom.put("aurora_focus",custom.get("aurora_focus").replace("\"numericScale\": 100","\"numericScale\": 120").replace("\"gridGapX\": 8","\"gridGapX\": 20"));
-        ThemeSpec resized=load(catalogJson,custom).find("aurora_focus");
-        check(resized!=null&&resized.textSize("124",50,true)==60&&resized.textSize("SPEED",20,true)==20,"role-based text scale applies once");
-        OverviewLayout resizedLayout=new OverviewLayout();resizedLayout.theme(resized);int first=resizedLayout.signalAt(0);
-        float end=resizedLayout.left(first)+resizedLayout.width(first);
-        check(Math.abs(resizedLayout.leftAt(1)-end-20)<.01f&&resizedLayout.hit(end-1,100)==first&&resizedLayout.hit(end+1,100)==-1,"custom card gap updates drawing and hit geometry together");
-        String[] invalidBefore={"\"bodyScale\": 100","\"numericScale\": 100","\"gearSize\": 184","\"buttonPadding\": 12","\"gridGapX\": 8","\"radius\": 0","\"topAlpha\": 255","\"style\": \"legacy\""};
-        String[] invalidAfter={"\"bodyScale\": 0","\"numericScale\": 100.5","\"gearSize\": 221","\"buttonPadding\": 25","\"gridGapX\": -1","\"radius\": 37","\"topAlpha\": 256","\"style\": \"unknown\""};
-        for(int i=0;i<invalidBefore.length;i++){
-            bad=new LinkedHashMap<String,String>(manifests);String value=bad.get("aurora_focus");
-            check(value.contains(invalidBefore[i]),"test mutation exists: "+invalidBefore[i]);
-            bad.put("aurora_focus",value.replace(invalidBefore[i],invalidAfter[i]));
-            check(load(catalogJson,bad).size()==1,"invalid v2 property falls back: "+invalidAfter[i]);
+        check(ThemeSpec.VERSION==3&&focus.typography.bodyScale==100&&focus.material.legacy(),"schema 3 values load without legacy spacing fields");
+        Map<String,String> retired=new LinkedHashMap<String,String>();
+        for(int version:new int[]{1,2}){
+            retired.put("legacy","{\"schemaVersion\":"+version+",\"id\":\"legacy\",\"displayName\":\"Legacy\"}");
+            check(load("{\"schemaVersion\":"+version+",\"themeIds\":[\"legacy\"]}",retired).find("legacy")==null,
+                "schema "+version+" catalog is rejected");
+            check(load("{\"schemaVersion\":3,\"themeIds\":[\"legacy\"]}",retired).find("legacy")==null,
+                "schema "+version+" manifest is rejected");
         }
-        bad=new LinkedHashMap<String,String>(manifests);bad.put("original",bad.get("original").replace("\"cardPadding\": 10","\"cardPadding\": 12"));
-        check(load(catalogJson,bad).size()==1,"Original typography/spacing/material baseline is immutable");
-        check(load(catalogJson.replace("\"schemaVersion\": 2","\"schemaVersion\": 1"),manifests).size()==1,"v1 requires explicit migration");
         String v3catalog="{\"schemaVersion\":3,\"themeIds\":[\"original\",\"parent\",\"child\"]}";
         Map<String,String> v3=new LinkedHashMap<String,String>();
-        v3.put("original",manifests.get("original"));
+        v3.putAll(manifests);
         v3.put("parent","{\"schemaVersion\":3,\"id\":\"parent\",\"displayName\":\"Parent\",\"extends\":\"original\",\"files\":{\"colors\":\"colors.json\",\"fonts\":\"fonts.json\"}}");
         v3.put("parent/colors.json","{\"tokens\":{\"accent\":\"#FF123456\"}}");
         v3.put("parent/fonts.json","{\"fonts\":{\"body\":\"fonts/parent.otf\"}}");
         v3.put("child","{\"schemaVersion\":3,\"id\":\"child\",\"displayName\":\"Child\",\"extends\":\"parent\",\"files\":{\"fonts\":\"fonts.json\",\"shell\":\"layouts/shell.json\",\"overview\":\"layouts/overview.json\"}}");
         v3.put("child/fonts.json","{\"typography\":{\"numericScale\":120}}");
-        v3.put("child/layouts/shell.json","{\"shell\":{\"position\":\"left\",\"alignment\":\"center\",\"width\":160,\"padding\":{\"top\":10,\"right\":12,\"bottom\":20,\"left\":8},\"gap\":5,\"buttonHeight\":40}}");
-        v3.put("child/layouts/overview.json","{\"overview\":{\"columns\":5,\"rows\":4,\"padding\":{\"top\":4,\"right\":8,\"bottom\":6,\"left\":10},\"gapX\":8,\"gapY\":0,\"cards\":[{\"id\":\"speed_wide\",\"source\":7,\"column\":0,\"row\":0,\"columnSpan\":2,\"rowSpan\":1},{\"id\":\"speed_again\",\"source\":7,\"column\":2,\"row\":0,\"columnSpan\":1,\"rowSpan\":1},{\"id\":\"rpm\",\"source\":0,\"column\":0,\"row\":1,\"columnSpan\":1,\"rowSpan\":1}]}}");
+        v3.put("child/layouts/shell.json","{\"shell\":{\"navigationPosition\":\"left\",\"frame\":{\"padding\":0,\"gap\":{\"horizontal\":0,\"vertical\":0}},\"sideMenuBar\":{\"alignment\":\"center\",\"width\":160,\"gap\":5,\"itemGap\":5,\"buttonHeight\":40}}}");
+        v3.put("child/layouts/overview.json","{\"overview\":{\"grid\":{\"columns\":5,\"rows\":4,\"itemGapX\":8,\"itemGapY\":0},\"cards\":[{\"id\":\"speed_wide\",\"source\":7,\"column\":0,\"row\":0,\"columnSpan\":2,\"rowSpan\":1},{\"id\":\"speed_again\",\"source\":7,\"column\":2,\"row\":0,\"columnSpan\":1,\"rowSpan\":1},{\"id\":\"rpm\",\"source\":0,\"column\":0,\"row\":1,\"columnSpan\":1,\"rowSpan\":1}]}}");
         ThemeCatalog inherited=load(v3catalog,v3);
         check(inherited.size()==3&&inherited.find("child").accent==0xff123456&&inherited.find("child").typography.numericScale==120&&"fonts/parent.otf".equals(inherited.find("child").bodyFont),"v3 files inherit and merge individual properties");
         check(inherited.find("original").accent==0xffa4d9ef&&inherited.find("parent").typography.numericScale==100,"child merge leaves ancestors unchanged");
         ThemeSpec child=inherited.find("child");
-        check(child.shell().left()&&child.shell().width==160&&child.shell().left==8&&child.shell().right==12,"shell settings load with four-sided padding");
+        check(child.shell().left()&&child.shell().width==160&&child.shell().left==0&&child.shell().right==0&&child.shell().gap==5,"shell uses item spacing without outer padding");
         check(com.veloster.dashboard.view.DashboardPage.shellHit(child,78,com.veloster.dashboard.view.DashboardPage.shellTop(child,1)+10)==1,"left navigation uses calculated bounds");
         OverviewLayout customLayout=new OverviewLayout();customLayout.theme(child);
         check(customLayout.count()==3&&customLayout.signalAt(0)==7&&customLayout.signalAt(1)==7&&customLayout.signalAt(2)==0,"custom cards preserve order and allow repeated sources on one screen");
         check(customLayout.widthAt(0)>customLayout.widthAt(1)*1.9f&&customLayout.hit(customLayout.leftAt(1)+5,customLayout.topAt(1)+5)==7,"spans and repeated card hit geometry");
         Map<String,String> topShell=new LinkedHashMap<String,String>(v3);
-        topShell.put("child/layouts/shell.json",topShell.get("child/layouts/shell.json").replace("\"position\":\"left\"","\"position\":\"top\""));
+        topShell.put("child/layouts/shell.json",topShell.get("child/layouts/shell.json").replace("\"navigationPosition\":\"left\"","\"navigationPosition\":\"top\""));
         ThemeSpec topTheme=load(v3catalog,topShell).find("child");
-        check(topTheme!=null&&!topTheme.shell().left(),"shell position top restores the legacy horizontal geometry");
+        check(topTheme!=null&&!topTheme.shell().left(),"shell position top restores top navigation");
         android.content.Context assetContext=new android.content.Context(){public android.content.res.AssetManager getAssets(){return new android.content.res.AssetManager(){public java.io.InputStream open(String path){return new java.io.ByteArrayInputStream(new byte[]{1});}};}};
         ThemeResources.load(assetContext,inherited.find("child"));
         check("themes/parent/fonts/parent.otf".equals(android.graphics.Typeface.lastAssetPath),"inherited fonts resolve in their owning theme bundle");
@@ -280,9 +293,9 @@ public final class ThemeManifestTest {
         grandchild.put("variant/layouts/overview.json","{\"overview\":{\"cards\":[]}}");
         ThemeCatalog replaced=load("{\"schemaVersion\":3,\"themeIds\":[\"original\",\"parent\",\"child\",\"variant\"]}",grandchild);
         check(replaced.size()==4&&replaced.find("variant").overview().count()==0&&replaced.find("child").overview().count()==3,"empty array replaces inherited cards without changing parent");
-        grandchild.put("variant/layouts/overview.json","{\"overview\":{\"padding\":{\"left\":30}}}");
+        grandchild.put("variant/layouts/overview.json","{\"overview\":{\"grid\":{\"itemGapX\":12}}}");
         ThemeSpec partial=load("{\"schemaVersion\":3,\"themeIds\":[\"original\",\"parent\",\"child\",\"variant\"]}",grandchild).find("variant");
-        check(partial!=null&&partial.overview().left==30&&partial.overview().right==8&&partial.overview().count()==3,"nested overrides retain inherited siblings and arrays");
+        check(partial!=null&&partial.overview().gapX==12&&partial.overview().gapY==0&&partial.overview().count()==3,"nested item spacing override retains inherited siblings and cards");
         Map<String,String> styled=new LinkedHashMap<String,String>(v3);
         for(String id:new String[]{"parent","child"})
             styled.put(id,styled.get(id).replace("\"files\":{","\"files\":{\"components\":\"components.json\","));
@@ -293,7 +306,7 @@ public final class ThemeManifestTest {
         ThemeSpec variant=mixed.find("child").withDisplayOptions(1,0,2);
         check(variant.mediaButtonGap(6)==21&&mixed.find("parent").mediaButtonGap(6)==12,
             "media button spacing is theme-controlled, inherited, overridden, and retained by render copies");
-        check(variant.backdrop.mode==ThemeSpec.Backdrop.Mode.SOLID,"v3 without a backdrop defaults to solid independently of surface styles");
+        check(variant.backdrop.mode==ThemeSpec.Backdrop.Mode.GRADIENT,"child inherits Original's backdrop independently of surface styles");
         check(variant.materialFor(SurfaceRole.NAVIGATION_BUTTON).glass()&&variant.materialFor(SurfaceRole.MEDIA_BUTTON).glass()
             &&variant.materialFor(SurfaceRole.SETTINGS_GROUP).glass()
             &&"flat".equals(variant.materialFor(SurfaceRole.CONTROL_BUTTON).style)

@@ -73,7 +73,7 @@ public final class ThemeCatalog {
             Map<String,Object> catalog=object(parsed,"catalog");
             exactKeys(catalog,new String[]{"schemaVersion","themeIds"});
             int catalogVersion=integer(catalog,"schemaVersion");
-            if(catalogVersion!=2&&catalogVersion!=3)throw new IllegalArgumentException("unsupported catalog version");
+            if(catalogVersion!=3)throw new IllegalArgumentException("unsupported catalog version");
             List<Object> ids=array(catalog.get("themeIds"),"themeIds");
             if(ids.isEmpty()||ids.size()>32)throw new IllegalArgumentException("catalog theme count out of range");
             Set<String> catalogIds=new HashSet<String>();
@@ -90,8 +90,7 @@ public final class ThemeCatalog {
                 Map<String,Object> document=object(ThemeJsonParser.parse(manifest),"manifest");
                 int version=integer(document,"schemaVersion");
                 ThemeSpec spec;
-                if(version==2)spec=parseManifest(id,manifest);
-                else if(version==3&&catalogVersion==3){
+                if(version==3){
                     Resolved resolved=resolveV3(id,manifests,catalogIds,new HashSet<String>(),0);
                     Map<String,Object> resolvedValues=new LinkedHashMap<String,Object>(resolved.root);
                     Object shell=resolvedValues.remove("shell");
@@ -101,6 +100,8 @@ public final class ThemeCatalog {
                     Object f1Grid=resolvedValues.remove("f1Grid");
                     Object viewports=resolvedValues.remove("viewports");
                     Object weights=resolvedValues.remove("weights");
+                    Object fontStyles=resolvedValues.remove("fontStyles");
+                    Object fallbackWeights=resolvedValues.remove("fallbackWeights");
                     Object surfaceStyles=resolvedValues.remove("surfaceStyles");
                     Object surfaceBlur=resolvedValues.remove("surfaceBlur");
                     Object mediaControls=resolvedValues.remove("mediaControls");
@@ -111,7 +112,8 @@ public final class ThemeCatalog {
                     Object decorations=resolvedValues.remove("decorations");
                     Object fills=resolvedValues.remove("fills");
                     Object wallpapers=resolvedValues.remove("wallpapers");
-                    spec=parseManifestMap(id,resolvedValues,false,backdrop==null?null:parseBackdrop(id,object(backdrop,"backdrop")));
+                    spec=parseManifestMap(id,resolvedValues,backdrop==null?null:parseBackdrop(id,object(backdrop,"backdrop")));
+                    if(shell!=null)spec.shell(parseShell(object(shell,"shell")));
                     if(palette!=null){
                         if("theme".equals(palette))spec.palette(ThemeSpec.Palette.THEME);
                         else if("componentDefaults".equals(palette))spec.palette(ThemeSpec.Palette.COMPONENT_DEFAULTS);
@@ -139,11 +141,16 @@ public final class ThemeCatalog {
                     }
                     if(shell!=null){
                         spec.shell(parseShell(object(shell,"shell")));
+                        spec.layoutSpacing(new ThemeSpec.LayoutSpacing(spec.shell().frameGapHorizontal,spec.shell().frameGapVertical,
+                            spec.overview()==null?12:Math.max(spec.overview().gapX,spec.overview().gapY),spec.shell().framePaddingHorizontal,spec.shell().framePaddingVertical));
                         if(spec.isOriginal()&&spec.shell().left())throw new IllegalArgumentException("Original shell is immutable");
                     }
                     if(overview!=null){
-                        if(spec.isOriginal())throw new IllegalArgumentException("Original overview is immutable");
-                        spec.overview(parseOverview(object(overview,"overview")));
+                        ThemeSpec.Overview parsedOverview=parseOverview(object(overview,"overview"));
+                        if(spec.isOriginal()&&parsedOverview.count()!=0)throw new IllegalArgumentException("Original overview cards are immutable");
+                        spec.overview(object(overview,"overview").containsKey("cards")?parsedOverview:null);
+                        spec.layoutSpacing(new ThemeSpec.LayoutSpacing(spec.shell().frameGapHorizontal,spec.shell().frameGapVertical,
+                            Math.max(parsedOverview.gapX,parsedOverview.gapY),spec.shell().framePaddingHorizontal,spec.shell().framePaddingVertical));
                     }
                     if(cardDefaults!=null||cardTypes!=null){
                         if(spec.isOriginal())throw new IllegalArgumentException("Original overview card styles are immutable");
@@ -161,9 +168,19 @@ public final class ThemeCatalog {
                         for(String role:rawWeights.keySet()){String weight=string(rawWeights,role);if(!(weight.equals("auto")||weight.equals("regular")||weight.equals("bold"))||spec.isOriginal()&&!weight.equals("auto"))throw new IllegalArgumentException("invalid font weight");fontWeights.put(role,weight);}
                         spec.weights(fontWeights);
                     }
+                    Map<String,ThemeSpec.FontStyle> parsedFontStyles=fontStyles==null?Collections.<String,ThemeSpec.FontStyle>emptyMap():parseFontStyles(object(fontStyles,"fontStyles"));
+                    if(fontStyles!=null)spec.fontStyles(parsedFontStyles);
+                    if(fallbackWeights!=null){
+                        Map<Integer,String> staticFonts=parseFallbackWeightFonts(object(fallbackWeights,"fallbackWeights"));
+                        if(fontStyles!=null)for(ThemeSpec.FontStyle rule:parsedFontStyles.values())
+                            if(!staticFonts.containsKey(Integer.valueOf(rule.normal))||!staticFonts.containsKey(Integer.valueOf(rule.emphasis)))
+                                throw new IllegalArgumentException("font styles require API 17 fallback files");
+                        spec.fallbackWeightFonts(staticFonts);
+                    }else if(fontStyles!=null)throw new IllegalArgumentException("font styles require API 17 fallback files");
                     validateContentSize(spec);
                     spec.bodyFontOwner=resolved.body;spec.numericFontOwner=resolved.numeric;
                     spec.displayFontOwner=resolved.display;spec.backgroundAssetOwner=resolved.background;
+                    spec.fallbackWeightFontOwner=resolved.fallbackWeightFonts;
                     if(wallpapers!=null){
                         List<ThemeSpec.Wallpaper> options=parseWallpapers(array(wallpapers,"wallpapers"),resolved.wallpaper);
                         String defaultId="";
@@ -234,8 +251,8 @@ public final class ThemeCatalog {
 
     private static final class Resolved {
         Map<String,Object> root;
-        String body,numeric,display,background,wallpaper;
-        Resolved(String owner,Map<String,Object> value){root=value;body=owner;numeric=owner;display=owner;background=owner;wallpaper=owner;}
+        String body,numeric,display,background,wallpaper,fallbackWeightFonts;
+        Resolved(String owner,Map<String,Object> value){root=value;body=owner;numeric=owner;display=owner;background=owner;wallpaper=owner;fallbackWeightFonts=owner;}
     }
 
     /** Resolve once when the catalog is loaded; no JSON parsing occurs while drawing. */
@@ -245,11 +262,6 @@ public final class ThemeCatalog {
         if(source==null||source.getBytes("UTF-8").length>MAX_MANIFEST_BYTES)throw new IllegalArgumentException("manifest missing or oversized");
         Map<String,Object> manifest=object(ThemeJsonParser.parse(source),"manifest");
         int version=integer(manifest,"schemaVersion");
-        if(version==2){
-            parseManifestMap(id,manifest,true,null);
-            visiting.remove(id);
-            return new Resolved(id,manifest);
-        }
         if(version!=3)throw new IllegalArgumentException("unsupported parent version");
         allowedKeys(manifest,new String[]{"schemaVersion","id","displayName","extends","files"});
         if(!id.equals(string(manifest,"id")))throw new IllegalArgumentException("manifest ID does not match catalog");
@@ -267,13 +279,13 @@ public final class ThemeCatalog {
         for(Map.Entry<String,Object> entry:files.entrySet()){
             if(!(entry.getValue() instanceof String)||!validFile((String)entry.getValue()))throw new IllegalArgumentException("invalid theme file path");
             String json=docs.get(id+"/"+entry.getValue());
-            if(json==null||json.getBytes("UTF-8").length>MAX_MANIFEST_BYTES)throw new IllegalArgumentException("theme file missing or oversized");
+            if(json==null||json.getBytes("UTF-8").length>MAX_MANIFEST_BYTES)throw new IllegalArgumentException("theme file missing or oversized: "+id+"/"+entry.getValue());
             Map<String,Object> part=object(ThemeJsonParser.parse(json),"theme file");
             String role=entry.getKey();
             if("colors".equals(role))allowedKeys(part,new String[]{"tokens","backdrop","palette"});
-            else if("fonts".equals(role))allowedKeys(part,new String[]{"fonts","typography","weights"});
+            else if("fonts".equals(role))allowedKeys(part,new String[]{"fonts","typography","weights","fontStyles","fallbackWeights"});
             else if("components".equals(role))allowedKeys(part,new String[]{"spacing","material","surfaceStyles","surfaceBlur","mediaControls","mediaFooter","mediaButtonGap","decorations","fills","assets","wallpapers"});
-            else if("overview".equals(role))allowedKeys(part,new String[]{"layout","overview","viewport","cardDefaults","cardTypes"});
+            else if("overview".equals(role))allowedKeys(part,new String[]{"overview","viewport","cardDefaults","cardTypes"});
             else if("shell".equals(role))allowedKeys(part,new String[]{"shell"});
             else if("f1".equals(role))allowedKeys(part,new String[]{"f1","f1Grid","viewport"});
             else allowedKeys(part,new String[]{"viewport"});
@@ -283,6 +295,7 @@ public final class ThemeCatalog {
                 if(fonts.containsKey("numeric"))result.numeric=id;
                 if(fonts.containsKey("display"))result.display=id;
             }
+            if(part.containsKey("fallbackWeights"))result.fallbackWeightFonts=id;
             if(part.containsKey("assets")&&object(part.get("assets"),"assets").containsKey("background"))result.background=id;
             if(part.containsKey("wallpapers"))result.wallpaper=id;
             if(part.containsKey("viewport")){
@@ -291,7 +304,7 @@ public final class ThemeCatalog {
             }
             merge(result.root,part);
         }
-        result.root.put("schemaVersion",Long.valueOf(2));
+        result.root.put("schemaVersion",Long.valueOf(3));
         result.root.put("id",id);result.root.put("displayName",name);
         visiting.remove(id);
         return result;
@@ -314,31 +327,73 @@ public final class ThemeCatalog {
             throw new IllegalArgumentException("Original media footer is immutable");
     }
     private static ThemeSpec.Shell parseShell(Map<String,Object> shell){
-        allowedKeys(shell,new String[]{"position","alignment","width","padding","gap","buttonHeight","topPadding","mediaPadding","navigationAppearance","screenCornerRadius","screenCorner"});
-        String position=string(shell,"position"),alignment=string(shell,"alignment");
+        allowedKeys(shell,new String[]{"navigationPosition","frame","sideMenuBar","topMenuBar","contentArea","mediaArea","bottomMediaBar"});
+        String position=shell.containsKey("navigationPosition")?string(shell,"navigationPosition"):"top";
         if(!("left".equals(position)||"top".equals(position)))throw new IllegalArgumentException("unsupported shell position");
-        if(!("start".equals(alignment)||"center".equals(alignment)||"end".equals(alignment)))throw new IllegalArgumentException("unsupported shell alignment");
-        int width=range(shell,"width",80,240),gap=range(shell,"gap",0,16),height=range(shell,"buttonHeight",24,50);
-        Map<String,Object> padding=object(shell.get("padding"),"padding");exactKeys(padding,new String[]{"top","right","bottom","left"});
-        int top=range(padding,"top",0,60),right=range(padding,"right",0,40),bottom=range(padding,"bottom",0,60),left=range(padding,"left",0,40);
-        ThemeSpec.Insets topPadding=null;
-        if(shell.containsKey("topPadding")){
-            Map<String,Object> p=object(shell.get("topPadding"),"topPadding");exactKeys(p,new String[]{"top","right","bottom","left"});
-            topPadding=new ThemeSpec.Insets(range(p,"top",0,24),range(p,"right",0,40),range(p,"bottom",0,24),range(p,"left",0,40));
+        Map<String,Object> frame=shell.containsKey("frame")?object(shell.get("frame"),"frame"):Collections.<String,Object>emptyMap();
+        allowedKeys(frame,new String[]{"padding","gap","cornerShape","cornerRadius"});
+        int framePaddingHorizontal=0,framePaddingVertical=0,frameGapX=0,frameGapY=0;
+        if(frame.containsKey("padding")){
+            Object framePadding=frame.get("padding");
+            if(framePadding instanceof Map){
+                Map<String,Object> p=object(framePadding,"frame padding");exactKeys(p,new String[]{"horizontal","vertical"});
+                framePaddingHorizontal=range(p,"horizontal",0,40);framePaddingVertical=range(p,"vertical",0,40);
+            }else{
+                int uniform=range(frame,"padding",0,40);framePaddingHorizontal=uniform;framePaddingVertical=uniform;
+            }
         }
-        int mediaPadding=shell.containsKey("mediaPadding")?range(shell,"mediaPadding",0,40):-1;
-        int cornerRadius=rangeOr(shell,"screenCornerRadius",0,240,0);
-        String corner=shell.containsKey("screenCorner")?string(shell,"screenCorner"):"circle";
+        if(frame.containsKey("gap")){Map<String,Object> gaps=object(frame.get("gap"),"frame gap");exactKeys(gaps,new String[]{"horizontal","vertical"});frameGapX=rangeOr(gaps,"horizontal",0,40,0);frameGapY=rangeOr(gaps,"vertical",0,40,0);}
+        int cornerRadius=rangeOr(frame,"cornerRadius",0,240,0);
+        String corner=frame.containsKey("cornerShape")?string(frame,"cornerShape"):"circle";
+        if("sqircle".equals(corner))corner="squircle";
         ThemeSpec.ScreenCorner screenCorner;
         if("circle".equals(corner))screenCorner=ThemeSpec.ScreenCorner.CIRCLE;
-        else if("squircle".equals(corner)||"sqircle".equals(corner))screenCorner=ThemeSpec.ScreenCorner.SQUIRCLE;
-        else throw new IllegalArgumentException("invalid screenCorner");
-        String appearance=shell.containsKey("navigationAppearance")?string(shell,"navigationAppearance"):"buttons";
-        if(!"buttons".equals(appearance)&&!"dock".equals(appearance))throw new IllegalArgumentException("invalid navigationAppearance");
+        else if("squircle".equals(corner))screenCorner=ThemeSpec.ScreenCorner.SQUIRCLE;
+        else throw new IllegalArgumentException("invalid frame cornerShape");
+        Map<String,Object> side=shell.containsKey("sideMenuBar")?object(shell.get("sideMenuBar"),"sideMenuBar"):Collections.<String,Object>emptyMap();
+        allowedKeys(side,new String[]{"width","alignment","buttonHeight","padding","gap","itemGap","appearance","presentation"});
+        Map<String,Object> top=shell.containsKey("topMenuBar")?object(shell.get("topMenuBar"),"topMenuBar"):Collections.<String,Object>emptyMap();
+        allowedKeys(top,new String[]{"buttonHeight","padding","itemGap","presentation"});
+        int topMenuItemGap=rangeOr(top,"itemGap",0,40,6);
+        String alignment=side.containsKey("alignment")?string(side,"alignment"):"center";
+        if(!(alignment.equals("start")||alignment.equals("center")||alignment.equals("end")))throw new IllegalArgumentException("unsupported sideMenuBar alignment");
+        int width=rangeOr(side,"width",48,240,96),itemGap=rangeOr(side,"itemGap",0,24,0),height=rangeOr(side,"buttonHeight",24,50,38);
+        int innerPaddingVertical=0,innerPaddingLeft=0,innerPaddingRight=0;
+        if(side.containsKey("padding")){Map<String,Object> p=object(side.get("padding"),"sideMenuBar padding");allowedKeys(p,new String[]{"vertical","left","right"});innerPaddingVertical=rangeOr(p,"vertical",0,40,0);innerPaddingLeft=rangeOr(p,"left",0,40,0);innerPaddingRight=rangeOr(p,"right",0,40,0);}
+        int groupGap=rangeOr(side,"gap",0,40,0);
+        String appearance=side.containsKey("appearance")?string(side,"appearance"):"buttons";
+        if(!"buttons".equals(appearance)&&!"dock".equals(appearance))throw new IllegalArgumentException("invalid sideMenuBar appearance");
+        String menuPresentation="left".equals(position)
+            ?(side.containsKey("presentation")?string(side,"presentation"):"icons")
+            :(top.containsKey("presentation")?string(top,"presentation"):(side.containsKey("presentation")?string(side,"presentation"):"labels"));
+        if(!"labels".equals(menuPresentation)&&!"icons".equals(menuPresentation))throw new IllegalArgumentException("invalid menuPresentation");
         if("top".equals(position)&&"dock".equals(appearance))throw new IllegalArgumentException("dock requires left navigation");
-        if("top".equals(position))return ThemeSpec.Shell.legacy().withScreenOptions(topPadding,mediaPadding,cornerRadius,screenCorner);
-        if(width-left-right<48||top+bottom+8*height+7*gap>480)throw new IllegalArgumentException("shell contents do not fit");
-        return new ThemeSpec.Shell(position,alignment,width,top,right,bottom,left,gap,height).withScreenOptions(topPadding,mediaPadding,cornerRadius,screenCorner).withDock("dock".equals(appearance));
+        Map<String,Object> content=shell.containsKey("contentArea")?object(shell.get("contentArea"),"contentArea"):Collections.<String,Object>emptyMap();allowedKeys(content,new String[]{"padding"});
+        Map<String,Object> media=shell.containsKey("mediaArea")?object(shell.get("mediaArea"),"mediaArea"):Collections.<String,Object>emptyMap();allowedKeys(media,new String[]{"padding"});
+        Map<String,Object> bottom=shell.containsKey("bottomMediaBar")?object(shell.get("bottomMediaBar"),"bottomMediaBar"):Collections.<String,Object>emptyMap();allowedKeys(bottom,new String[]{"padding","itemGap"});
+        validateAreaPadding(top,"topMenuBar");validateAreaPadding(content,"contentArea");validateAreaPadding(media,"mediaArea");validateAreaPadding(bottom,"bottomMediaBar");
+        if(top.containsKey("presentation")){String p=string(top,"presentation");if(!"labels".equals(p)&&!"icons".equals(p))throw new IllegalArgumentException("invalid topMenuBar presentation");}
+        ThemeSpec.Shell parsed=new ThemeSpec.Shell(position,alignment,"left".equals(position)?width:0,innerPaddingVertical,innerPaddingRight,innerPaddingVertical,innerPaddingLeft,itemGap,height)
+            .withScreenCorner(cornerRadius,screenCorner).withDock("dock".equals(appearance)).withMenuIcons("icons".equals(menuPresentation))
+            .withLayout(framePaddingVertical,frameGapX,frameGapY,groupGap,itemGap).withTopMenuItemGap(topMenuItemGap).withFramePadding(framePaddingHorizontal,framePaddingVertical);
+        if("top".equals(position))parsed=new ThemeSpec.Shell("top","start",0,0,0,0,0,itemGap,rangeOr(top,"buttonHeight",24,50,ThemeSpec.Shell.TOP_BUTTON_HEIGHT))
+            .withScreenCorner(cornerRadius,screenCorner).withLayout(framePaddingVertical,frameGapX,frameGapY,groupGap,itemGap).withTopMenuItemGap(topMenuItemGap).withFramePadding(framePaddingHorizontal,framePaddingVertical);
+        parsed=parsed.withAreaPadding(new ThemeSpec.Insets(innerPaddingVertical,innerPaddingRight,innerPaddingVertical,innerPaddingLeft),
+            areaPadding(top),areaPadding(content),areaPadding(media),areaPadding(bottom));
+        return parsed;
+    }
+    private static ThemeSpec.Insets areaPadding(Map<String,Object> area){
+        if(!area.containsKey("padding"))return new ThemeSpec.Insets(0,0,0,0);
+        Map<String,Object> p=object(area.get("padding"),"area padding");
+        int horizontal=rangeOr(p,"horizontal",0,40,0),vertical=rangeOr(p,"vertical",0,40,0);
+        return new ThemeSpec.Insets(rangeOr(p,"top",0,40,vertical),rangeOr(p,"right",0,40,horizontal),
+            rangeOr(p,"bottom",0,40,vertical),rangeOr(p,"left",0,40,horizontal));
+    }
+    private static void validateAreaPadding(Map<String,Object> area,String name){
+        if(!area.containsKey("padding"))return;
+        Map<String,Object> p=object(area.get("padding"),name+" padding");
+        allowedKeys(p,new String[]{"top","right","bottom","left","horizontal","vertical"});
+        for(String key:p.keySet())range(p,key,0,40);
     }
     private static void parseOverviewCardStyles(ThemeSpec spec,Object defaults,Object types){
         Map<ThemeSpec.OverviewCardKind,ThemeSpec.OverviewCardStyle> styles=new java.util.EnumMap<ThemeSpec.OverviewCardKind,ThemeSpec.OverviewCardStyle>(ThemeSpec.OverviewCardKind.class);
@@ -365,8 +420,7 @@ public final class ThemeCatalog {
         ThemeSpec.OverviewCardStyle d=spec.overviewCardStyle(kind);
         ThemeSpec.Insets padding=sharedPadding==null?d.padding:sharedPadding;
         if(value.containsKey("padding")){
-            Map<String,Object> p=object(value.get("padding"),"overview card padding");
-            allowedKeys(p,new String[]{"top","right","bottom","left"});
+            Map<String,Object> p=object(value.get("padding"),"overview card padding");allowedKeys(p,new String[]{"top","right","bottom","left"});
             padding=new ThemeSpec.Insets(rangeOr(p,"top",0,24,padding.top),rangeOr(p,"right",0,24,padding.right),
                 rangeOr(p,"bottom",0,24,padding.bottom),rangeOr(p,"left",0,24,padding.left));
         }
@@ -387,14 +441,15 @@ public final class ThemeCatalog {
         return value.containsKey(key)?range(value,key,min,max):fallback;
     }
     private static ThemeSpec.Overview parseOverview(Map<String,Object> value){
-        exactKeys(value,new String[]{"columns","rows","padding","gapX","gapY","cards"});
-        int columns=range(value,"columns",1,6),rows=range(value,"rows",1,4);
+        allowedKeys(value,new String[]{"grid","cards"});
+        Map<String,Object> grid=object(value.get("grid"),"overview grid");
+        exactKeys(grid,new String[]{"columns","rows","itemGapX","itemGapY"});
+        int columns=range(grid,"columns",1,6),rows=range(grid,"rows",1,4);
         if(columns!=5||rows!=4)throw new IllegalArgumentException("overview must use the fixed 5x4 grid");
-        int gx=range(value,"gapX",0,30),gy=range(value,"gapY",0,30);
-        Map<String,Object> p=object(value.get("padding"),"overview padding");exactKeys(p,new String[]{"top","right","bottom","left"});
-        int top=range(p,"top",0,60),right=range(p,"right",0,60),bottom=range(p,"bottom",0,60),left=range(p,"left",0,60);
-        if((764-left-right-(columns-1)*gx)/columns<100||(390-top-bottom-(rows-1)*gy)/rows<95)throw new IllegalArgumentException("overview grid cells too small");
-        List<Object> list=array(value.get("cards"),"cards");
+        int gx=range(grid,"itemGapX",0,30),gy=range(grid,"itemGapY",0,30);
+        int top=0,right=0,bottom=0,left=0;
+        if((800-(columns-1)*gx)/columns<100||(480-(rows-1)*gy)/rows<95)throw new IllegalArgumentException("overview grid cells too small");
+        List<Object> list=value.containsKey("cards")?array(value.get("cards"),"cards"):Collections.<Object>emptyList();
         if(list.size()>20)throw new IllegalArgumentException("overview exceeds the 20 fixed slots");
         ThemeSpec.Card[] cards=new ThemeSpec.Card[list.size()];Set<String> ids=new HashSet<String>(),occupied=new HashSet<String>();
         for(int i=0;i<cards.length;i++){
@@ -411,14 +466,14 @@ public final class ThemeCatalog {
     private static Map<String,ThemeSpec.Rect> parseF1(Map<String,Object> value){
         String[] ids={"shift","gear","speed","boost","rpm","temperatures","pedal","brake"};exactKeys(value,ids);
         Map<String,ThemeSpec.Rect> result=new LinkedHashMap<String,ThemeSpec.Rect>();
-        for(String id:ids){Map<String,Object> bounds=object(value.get(id),"F1 component");allowedKeys(bounds,new String[]{"x","y","width","height","fontRole","colorRole","padding","alignment"});
+        for(String id:ids){Map<String,Object> bounds=object(value.get(id),"F1 component");allowedKeys(bounds,new String[]{"x","y","width","height","fontRole","colorRole","alignment","padding"});
             int x=range(bounds,"x",0,799),y=range(bounds,"y",52,447),w=range(bounds,"width",40,800),h=range(bounds,"height",20,396);
             if(x+w>800||y+h>448)throw new IllegalArgumentException("F1 component outside content");
             String font=bounds.containsKey("fontRole")?string(bounds,"fontRole"):null,color=bounds.containsKey("colorRole")?string(bounds,"colorRole"):null;
             String alignment=bounds.containsKey("alignment")?string(bounds,"alignment"):"stretch";
             int top=0,right=0,bottom=0,left=0;
             if(bounds.containsKey("padding")){Map<String,Object> p=object(bounds.get("padding"),"F1 padding");exactKeys(p,new String[]{"top","right","bottom","left"});top=range(p,"top",0,40);right=range(p,"right",0,40);bottom=range(p,"bottom",0,40);left=range(p,"left",0,40);}
-            if(w-left-right<20||h-top-bottom<10)throw new IllegalArgumentException("F1 padding exceeds bounds");
+            if(w-left-right<20||h-top-bottom<10)throw new IllegalArgumentException("F1 padding does not fit component bounds");
             if(!(alignment.equals("stretch")||alignment.equals("start")||alignment.equals("center")||alignment.equals("end")))throw new IllegalArgumentException("invalid F1 alignment");
             if(font!=null&&!(font.equals("body")||font.equals("numeric")||font.equals("display")))throw new IllegalArgumentException("invalid F1 font role");
             if(color!=null&&!(color.equals("primary")||color.equals("secondary")||color.equals("accent")||color.equals("warning")||color.equals("critical")))throw new IllegalArgumentException("invalid F1 color role");
@@ -428,9 +483,9 @@ public final class ThemeCatalog {
         return result;
     }
     private static ThemeSpec.F1Grid parseF1Grid(Map<String,Object> value){
-        exactKeys(value,new String[]{"columns","rowWeights","inset","gap","padding","radius","cells"});
-        int columns=range(value,"columns",1,8),inset=range(value,"inset",8,24),gap=range(value,"gap",6,16);
-        int padding=range(value,"padding",8,16),radius=range(value,"radius",10,24);
+        exactKeys(value,new String[]{"columns","rowWeights","itemGap","padding","radius","cells"});
+        int columns=range(value,"columns",1,8),gap=range(value,"itemGap",0,24);
+        int padding=range(value,"padding",0,24),radius=range(value,"radius",10,24);
         List<Object> rows=array(value.get("rowWeights"),"F1 row weights");
         if(rows.isEmpty()||rows.size()>8)throw new IllegalArgumentException("invalid F1 row count");
         int[] weights=new int[rows.size()];
@@ -453,7 +508,7 @@ public final class ThemeCatalog {
             }
             result.put(id,new ThemeSpec.Card(id,0,x,y,w,h));
         }
-        return new ThemeSpec.F1Grid(columns,weights,inset,gap,padding,radius,result);
+        return new ThemeSpec.F1Grid(columns,weights,gap,padding,radius,result);
     }
     /** Resolve the user's menu setting without altering the catalog or its theme defaults. */
     public static ThemeSpec withMenuPosition(ThemeSpec spec,int position){
@@ -463,7 +518,8 @@ public final class ThemeCatalog {
         else if(position==ThemeSpec.MENU_LEFT&&!shell.left())shell=ThemeSpec.Shell.sidebar();
         else return spec;
         ThemeSpec.Shell defaults=spec.shell();
-        ThemeSpec resolved=spec.withShell(shell.withScreenOptions(defaults.topPadding,defaults.mediaPadding,defaults.screenCornerRadius,defaults.screenCorner));
+        ThemeSpec resolved=spec.withShell(shell.withScreenCorner(defaults.screenCornerRadius,defaults.screenCorner).withMenuIcons(defaults.menuIcons())
+            .withTopMenuItemGap(defaults.topMenuItemGap));
         try{validateContentSize(resolved);return resolved;}
         catch(IllegalArgumentException unsupported){return spec;}
     }
@@ -477,14 +533,14 @@ public final class ThemeCatalog {
         }
         if(spec.f1Grid()!=null){
             ThemeSpec.F1Grid g=spec.f1Grid();ThemeSpec.Viewport v=spec.viewport("f1");
-            float w=(width-(v==null?0:v.left+v.right)-2*g.inset-g.gap)*0.64f;
-            float h=height-(v==null?0:v.top+v.bottom)-2*g.inset-44-g.gap;
+            float w=(width-(v==null?0:v.left+v.right)-g.gap)*0.64f;
+            float h=height-(v==null?0:v.top+v.bottom)-44-g.gap;
             float column=(w-(g.columns-1)*g.gap)/g.columns;
             float row=(h-(g.rows-1)*g.gap)/g.rowWeight(0,g.rows);
             for(String id:new String[]{"shift","gear","speed","boost","rpm","temperatures","pedal","brake"}){
                 ThemeSpec.Card c=g.cell(id);
                 if(column*c.columnSpan+g.gap*(c.columnSpan-1)<2*g.padding+42||
-                    row*g.rowWeight(c.row,c.row+c.rowSpan)+g.gap*(c.rowSpan-1)<38)
+                    row*g.rowWeight(c.row,c.row+c.rowSpan)+g.gap*(c.rowSpan-1)<2*Math.min(g.padding,18)+18)
                     throw new IllegalArgumentException("F1 cells do not fit combined content");
             }
         }
@@ -501,10 +557,9 @@ public final class ThemeCatalog {
         allowedKeys(value,new String[]{"overview","f1","gauges","graphs","performance","settings","diagnostics"});
         Map<String,ThemeSpec.Viewport> result=new LinkedHashMap<String,ThemeSpec.Viewport>();
         for(Map.Entry<String,Object> entry:value.entrySet()){
-            Map<String,Object> viewport=object(entry.getValue(),"viewport");exactKeys(viewport,new String[]{"padding","alignment"});
-            Map<String,Object> p=object(viewport.get("padding"),"viewport padding");exactKeys(p,new String[]{"top","right","bottom","left"});
+            Map<String,Object> viewport=object(entry.getValue(),"viewport");exactKeys(viewport,new String[]{"alignment"});
             String align=string(viewport,"alignment");if(!("start".equals(align)||"center".equals(align)||"end".equals(align)))throw new IllegalArgumentException("invalid viewport alignment");
-            result.put(entry.getKey(),new ThemeSpec.Viewport(range(p,"top",0,64),range(p,"right",0,64),range(p,"bottom",0,64),range(p,"left",0,64),align));
+            result.put(entry.getKey(),new ThemeSpec.Viewport(0,0,0,0,align));
         }
         return result;
     }
@@ -512,6 +567,24 @@ public final class ThemeCatalog {
         Set<String> allowed=new HashSet<String>();Collections.addAll(allowed,keys);
         for(String key:map.keySet())if(!allowed.contains(key))throw new IllegalArgumentException("unknown key: "+key);
     }
+    private static Map<String,ThemeSpec.FontStyle> parseFontStyles(Map<String,Object> values){
+        allowedKeys(values,new String[]{"body","numeric","display"});
+        Map<String,ThemeSpec.FontStyle> result=new LinkedHashMap<String,ThemeSpec.FontStyle>();
+        for(Map.Entry<String,Object> entry:values.entrySet()){
+            Map<String,Object> rule=object(entry.getValue(),"font style");exactKeys(rule,new String[]{"normal","emphasis"});
+            int normal=integer(rule,"normal"),emphasis=integer(rule,"emphasis");
+            if(!validFontWeight(normal)||!validFontWeight(emphasis))throw new IllegalArgumentException("unsupported font weight");
+            result.put(entry.getKey(),new ThemeSpec.FontStyle(normal,emphasis));
+        }
+        return result;
+    }
+    private static Map<Integer,String> parseFallbackWeightFonts(Map<String,Object> values){
+        allowedKeys(values,new String[]{"400","500","600","700"});
+        Map<Integer,String> result=new LinkedHashMap<Integer,String>();
+        for(String weight:values.keySet())result.put(Integer.valueOf(Integer.parseInt(weight)),fontPath(string(values,weight)));
+        return result;
+    }
+    private static boolean validFontWeight(int value){return value==400||value==500||value==600||value==700;}
     private static void merge(Map<String,Object> target,Map<String,Object> overlay){
         for(Map.Entry<String,Object> entry:overlay.entrySet()){
             Object value=entry.getValue(),previous=target.get(entry.getKey());
@@ -521,19 +594,16 @@ public final class ThemeCatalog {
         }
     }
 
-    private static ThemeSpec parseManifest(String id,String json){
-        return parseManifestMap(id,object(ThemeJsonParser.parse(json),"manifest"),true,null);
-    }
-    private static ThemeSpec parseManifestMap(String id,Map<String,Object> root,boolean v2,ThemeSpec.Backdrop backdrop){
-        exactKeys(root,new String[]{"schemaVersion","id","displayName","tokens","layout","fonts","assets","typography","spacing","material"});
-        if(integer(root,"schemaVersion")!=2)throw new IllegalArgumentException("unsupported manifest version");
+    private static ThemeSpec parseManifestMap(String id,Map<String,Object> root,ThemeSpec.Backdrop backdrop){
+        exactKeys(root,new String[]{"schemaVersion","id","displayName","tokens","fonts","assets","typography","material"});
+        if(integer(root,"schemaVersion")!=3)throw new IllegalArgumentException("unsupported manifest version");
         if(!id.equals(string(root,"id")))throw new IllegalArgumentException("manifest ID does not match catalog");
         String display=string(root,"displayName");if(display.length()==0||display.length()>64)throw new IllegalArgumentException("invalid display name");
         Map<String,Object> tokens=object(root.get("tokens"),"tokens");
         exactKeys(tokens,new String[]{"background","panel","panelRaised","stroke","textPrimary","textSecondary","accent","warning","critical","unavailable","cutPanels"});
-        Map<String,Object> layout=object(root.get("layout"),"layout");exactKeys(layout,new String[]{"columns","rows"});
-        int columns=integer(layout,"columns"),rows=integer(layout,"rows");
-        if(columns!=5||rows!=4)throw new IllegalArgumentException("theme overview must use the fixed 5x4 grid");
+        int columns=5,rows=4;
+        boolean original="original".equals(id);
+        ThemeSpec.LayoutSpacing layoutSpacing=new ThemeSpec.LayoutSpacing(original?16:0,original?12:0,12,0);
         Map<String,Object> fonts=object(root.get("fonts"),"fonts");exactKeys(fonts,new String[]{"body","numeric","display"});
         String body=fontPath(string(fonts,"body")),numeric=fontPath(string(fonts,"numeric")),displayFont=fontPath(string(fonts,"display"));
         Map<String,Object> assets=object(root.get("assets"),"assets");exactKeys(assets,new String[]{"background"});
@@ -542,38 +612,25 @@ public final class ThemeCatalog {
         exactKeys(type,new String[]{"bodyScale","numericScale","displayScale","gearSize","combinedGearSize"});
         ThemeSpec.Typography typography=new ThemeSpec.Typography(range(type,"bodyScale",60,140),range(type,"numericScale",60,140),
                 range(type,"displayScale",60,140),range(type,"gearSize",64,220),range(type,"combinedGearSize",64,160));
-        Map<String,Object> space=object(root.get("spacing"),"spacing");
-        exactKeys(space,new String[]{"buttonPadding","cardPadding","settingsPadding","pedalPadding","f1SidePadding","gearPadding","gridGapX","gridGapY"});
-        ThemeSpec.Spacing spacing=new ThemeSpec.Spacing(range(space,"buttonPadding",4,24),range(space,"cardPadding",4,24),
-                range(space,"settingsPadding",8,40),range(space,"pedalPadding",8,28),range(space,"f1SidePadding",4,24),
-                range(space,"gearPadding",0,24),range(space,"gridGapX",0,24),range(space,"gridGapY",0,24));
+        ThemeSpec.Spacing spacing=new ThemeSpec.Spacing(0,0,0,0,0,0,0,0);
         Map<String,Object> mat=object(root.get("material"),"material");
         allowedKeys(mat,new String[]{"style","radius","topAlpha","bottomAlpha","highlight","shadow","backdropEnd"});
         String style=string(mat,"style");
         validateMaterialStyle(style);
         ThemeSpec.Material material=new ThemeSpec.Material(style,range(mat,"radius",0,36),range(mat,"topAlpha",0,255),
                 range(mat,"bottomAlpha",0,255),color(mat,"highlight"),color(mat,"shadow"));
-        boolean original="original".equals(id);
-        // Only the v2 format encoded the backdrop as part of material; translate it at load time.
-        if(v2){
-            int end=opaqueColor(mat,"backdropEnd");
-            if(original&&end!=0xffe5efff)throw new IllegalArgumentException("Original v2 backdrop is immutable");
-            backdrop=original?ThemeSpec.Backdrop.LEGACY_GRADIENT
-                    :material.glass()?new ThemeSpec.Backdrop(ThemeSpec.Backdrop.Mode.GRADIENT,end)
-                    :material.legacy()?ThemeSpec.Backdrop.LEGACY:ThemeSpec.Backdrop.SOLID;
-        }else{
-            if(mat.containsKey("backdropEnd"))color(mat,"backdropEnd"); // Accept older v3 files without using this value.
-            if(backdrop==null)backdrop=original?ThemeSpec.Backdrop.LEGACY_GRADIENT:ThemeSpec.Backdrop.SOLID;
-        }
+        if(mat.containsKey("backdropEnd"))throw new IllegalArgumentException("backdropEnd belongs to an older theme format");
+        if(backdrop==null)backdrop=original?ThemeSpec.Backdrop.LEGACY_GRADIENT:ThemeSpec.Backdrop.SOLID;
         ThemeSpec spec=ThemeSpec.fromManifest(id,display,opaqueColor(tokens,"background"),color(tokens,"panel"),color(tokens,"panelRaised"),
                 color(tokens,"stroke"),color(tokens,"textPrimary"),color(tokens,"textSecondary"),color(tokens,"accent"),
                 color(tokens,"warning"),color(tokens,"critical"),color(tokens,"unavailable"),columns,rows,
                 bool(tokens,"cutPanels"),body,numeric,displayFont,backgroundAsset,typography,spacing,material,backdrop);
+        spec.layoutSpacing(layoutSpacing);
         if(original){
             // Older manifests had implicit component colors. New v3 files can state the same values explicitly.
             spec.palette(ThemeSpec.Palette.COMPONENT_DEFAULTS);
             spec.componentFills(ThemeSpec.LEGACY_FILLS);
-            if(!same(spec,v2?ThemeSpec.originalV2():ThemeSpec.original()))
+            if(!same(spec,ThemeSpec.original()))
                 throw new IllegalArgumentException("Original manifest must match the built-in baseline");
         }
         return spec;
@@ -685,7 +742,8 @@ public final class ThemeCatalog {
 
     private static boolean sameVisuals(ThemeSpec a,ThemeSpec b){
         return a.typography.bodyScale==b.typography.bodyScale&&a.typography.numericScale==b.typography.numericScale&&a.typography.displayScale==b.typography.displayScale&&a.typography.gearSize==b.typography.gearSize&&a.typography.combinedGearSize==b.typography.combinedGearSize
-            &&a.spacing.buttonPadding==b.spacing.buttonPadding&&a.spacing.cardPadding==b.spacing.cardPadding&&a.spacing.settingsPadding==b.spacing.settingsPadding&&a.spacing.pedalPadding==b.spacing.pedalPadding&&a.spacing.f1SidePadding==b.spacing.f1SidePadding&&a.spacing.gearPadding==b.spacing.gearPadding&&a.spacing.gridGapX==b.spacing.gridGapX&&a.spacing.gridGapY==b.spacing.gridGapY
+            &&a.layoutSpacing().horizontal==b.layoutSpacing().horizontal&&a.layoutSpacing().vertical==b.layoutSpacing().vertical&&a.layoutSpacing().gap==b.layoutSpacing().gap
+            &&a.layoutSpacing().horizontalPadding==b.layoutSpacing().horizontalPadding&&a.layoutSpacing().verticalPadding==b.layoutSpacing().verticalPadding
             &&a.material.style.equals(b.material.style)&&a.material.radius==b.material.radius&&a.material.topAlpha==b.material.topAlpha&&a.material.bottomAlpha==b.material.bottomAlpha&&a.material.highlight==b.material.highlight&&a.material.shadow==b.material.shadow
             &&a.backdrop.same(b.backdrop);
     }

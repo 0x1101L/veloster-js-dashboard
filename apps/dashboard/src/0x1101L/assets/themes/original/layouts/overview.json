@@ -1,6 +1,10 @@
 {
-  "layout": {
-    "columns": 5,
-    "rows": 4
+  "overview": {
+    "grid": {
+      "columns": 5,
+      "rows": 4,
+      "itemGapX": 12,
+      "itemGapY": 12
+    }
   }
 }

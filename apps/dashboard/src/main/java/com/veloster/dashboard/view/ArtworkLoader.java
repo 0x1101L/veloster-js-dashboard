@@ -47,7 +47,8 @@ final class ArtworkLoader {
                 byte[] bytes=track.artworkBytes;
                 if(bytes==null && track.artworkUri.length()>0)bytes=read(track.artworkUri);
                 decoded=decode(bytes);
-                if(decoded==null && "USB".equals(track.source) && track.artworkUri.length()>0)decoded=decode(embedded(track.artworkUri));
+                if(decoded==null && ("USB".equals(track.source)||"Bluetooth".equals(track.source))
+                        && track.artworkUri.length()>0)decoded=decode(embedded(track.artworkUri));
             }catch(Exception e){android.util.Log.i("VehicleDash","Album artwork unavailable");}
             catch(OutOfMemoryError e){android.util.Log.i("VehicleDash","Album artwork exceeds decoder memory");}
             synchronized(this){if(!closed && track.artworkRevision==revision)bitmap=decoded;}

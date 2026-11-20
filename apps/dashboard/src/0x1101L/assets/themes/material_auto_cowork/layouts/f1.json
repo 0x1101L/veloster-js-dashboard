@@ -7,10 +7,8 @@
       20,
       16
     ],
-    "inset": 14,
-    "gap": 12,
-    "padding": 12,
     "radius": 12,
+    "padding": 12,
     "cells": {
       "shift": {
         "column": 0,
@@ -60,6 +58,7 @@
         "columnSpan": 3,
         "rowSpan": 1
       }
-    }
+    },
+    "itemGap": 12
   }
 }

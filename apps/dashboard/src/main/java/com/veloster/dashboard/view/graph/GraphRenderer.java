@@ -43,13 +43,13 @@ public final class GraphRenderer {
         for(int i=0;i<2;i++){
             Bounds b=layout.timeButton(i);boolean selected=layout.window()==(i==0?60000:300000);
             surface.drawWithLegacy(c,theme,SurfaceRole.CONTROL_BUTTON,p,b.x,b.y,b.width,b.height,selected?theme.panelRaised:theme.panel,theme.stroke);
-            text(c,i==0?UiText.t("1분"):UiText.t("5분"),b.x+theme.spacing.buttonPadding,b.atY(.68f),14,selected?theme.accent:theme.textSecondary);
+            text(c,i==0?UiText.t("1분"):UiText.t("5분"),b.x+0,b.atY(.68f),14,selected?theme.accent:theme.textSecondary);
         }
         for(int slot=0;slot<GraphLayout.SLOTS;slot++)drawSeries(c,model,now,layout,slot);
     }
     private void drawSeries(Canvas c,Telemetry model,long now,GraphLayout layout,int slot){
         int signal=layout.signal(slot);
-        Bounds card=layout.card(slot),b=card.inset(theme.spacing.cardPadding);
+        Bounds card=layout.card(slot),b=card.inset(0);
         surface.panelWithLegacy(c,theme,p,card.x,card.y,card.width,card.height,theme.panel,theme.stroke);
         Telemetry.Sample current=model.sample(signal,now);
         boolean jsGear=signal==8&&model.jsProfile();

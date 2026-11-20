@@ -68,13 +68,14 @@ public final class JsPitRenderer {
     }
     public void setPerformancePage(boolean value){performancePage=value;}
     public void setMediaDisplay(int policy,boolean notices){mediaBarPolicy=MediaBar.normalize(policy);mediaNotices=notices;}
+    public void setMediaDisplay(int policy,boolean notices,boolean controls){setMediaDisplay(policy,notices);mediaBar.setControlsVisible(controls);}
+    public void setMediaDisplay(int policy,boolean notices,boolean controls,boolean icons){setMediaDisplay(policy,notices,controls);mediaBar.setButtonIcons(icons);}
     private SettingsPageRenderer.Editor settingsEditor;
     public void setSettingsEditor(SettingsPageRenderer.Editor editor){settingsEditor=editor;}
     public void setSettingsPage(boolean value,String language,String themeName,String menuPosition){settingsPage=value;settingsLanguage=language;settingsTheme=themeName;settingsMenuPosition=menuPosition;}
     public void setDiagnosticPage(boolean value,JsDiagState.Snapshot status){diagnosticPage=value;if(status!=null)diagnostic=status;}
     private final JsDiagnosticsRenderer diagnosticsRenderer=new JsDiagnosticsRenderer();
     public void diagnosticsViewport(DashboardPage.Content content){diagnosticsRenderer.viewport(content);}
-    public boolean transmissionHit(float x,float y){return diagnosticsRenderer.transmissionHit(x,y);}
     public boolean wifiSettingsHit(float x,float y){return diagnosticsRenderer.wifiSettingsHit(x,y);}
     public boolean selectDiagnosticTab(float downX,float downY,float x,float y){return diagnosticsRenderer.select(downX,downY,x,y);}
     public boolean carPlayImportHit(float x,float y){return diagnosticsRenderer.carPlayImportHit(x,y);}
@@ -105,7 +106,8 @@ public final class JsPitRenderer {
         surface.backdrop(c,theme,resources,width,height);
         if(!theme.shell().left()){
             c.save();c.clipRect(regions.topMenu.x,regions.topMenu.y,regions.topMenu.x+regions.topMenu.width,regions.topMenu.y+regions.topMenu.height);
-            box(c,0,0,width,regions.headerHeight,theme.panel);box(c,0,regions.headerHeight-1,width,regions.headerHeight,theme.stroke);
+            float outerX=theme.layoutSpacing().horizontalPadding*regions.scale,outerY=theme.layoutSpacing().verticalPadding*regions.scale;
+            box(c,outerX,outerY,width-outerX,outerY+regions.headerHeight,theme.panel);box(c,outerX,outerY+regions.headerHeight-1,width-outerX,outerY+regions.headerHeight,theme.stroke);
             c.scale(regions.scale,regions.scale);
             float navWidth=regions.logicalDisplayWidth;
             menuButton(c,UiText.t("퍼포먼스"),DashboardPage.PERFORMANCE,performancePage,navWidth);
@@ -141,7 +143,8 @@ public final class JsPitRenderer {
         String page=settingsPage?"settings":diagnosticPage?"diagnostics":performancePage?"performance":graphLayout!=null?"graphs":gaugeLayout!=null?"gauges":cluster?"f1":"overview";
         boolean footer=MediaBar.footerVisible(regions,mediaBarPolicy,track);
         DashboardPage.Content content=new DashboardPage.Content(theme,page,regions,footer);
-        overviewLayout.viewport(regions.logicalContentWidth,content.bodyViewportHeight,regions.mediaPanelVisible);
+        overviewLayout.viewport(regions.logicalContentWidth+regions.logicalOuterPaddingX,
+            content.bodyViewportHeight+regions.logicalOuterPaddingY,regions.mediaPanelVisible);
         c.save();c.clipRect(content.x,content.y,content.x+content.width,content.y+content.height);
         if(settingsPage){if(settingsEditor!=null)settingsRenderer.draw(c,theme,resources,settingsEditor,content);else settingsRenderer.draw(c,theme,resources,settingsLanguage,model.jsProfile(),content);}
         else if(diagnosticPage){diagnosticsRenderer.viewport(content);diagnosticsRenderer.draw(c,samples,diagnostic,model.dctTemperatures(now),track,carPlayRawStatus,carPlayLibraryStatus,carPlayProcessStatus,bluetoothStatus);}

@@ -11,16 +11,6 @@
     "gearSize": 128,
     "combinedGearSize": 100
   },
-  "spacing": {
-    "buttonPadding": 10,
-    "cardPadding": 14,
-    "settingsPadding": 28,
-    "pedalPadding": 20,
-    "f1SidePadding": 16,
-    "gearPadding": 16,
-    "gridGapX": 12,
-    "gridGapY": 10
-  },
   "material": {
     "style": "glass",
     "radius": 24,
@@ -41,5 +31,14 @@
   "decorations": {
     "overviewCardTopLine": false,
     "navigationUnderline": "off"
+  },
+  "layout": {
+    "columns": 5,
+    "rows": 4,
+    "spacing": {
+      "horizontal": 8,
+      "vertical": 8,
+      "gap": 8
+    }
   }
 }

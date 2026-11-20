@@ -145,6 +145,11 @@ public final class ThemeSpec {
     private Shell shell=Shell.legacy();
     public Shell shell(){return shell;}
     void shell(Shell value){shell=value;}
+    private LayoutSpacing layoutSpacing=new LayoutSpacing(0,0,0,0);
+    public LayoutSpacing layoutSpacing(){return layoutSpacing;}
+    void layoutSpacing(LayoutSpacing value){layoutSpacing=value;}
+    public int layoutGapX(){return layoutSpacing.gap;}
+    public int layoutGapY(){return layoutSpacing.gap;}
     public ThemeSpec withMenuDock(int mode){
         if(!shell.left()||(mode!=DOCK_ON&&mode!=DOCK_OFF)||shell.dock()==(mode==DOCK_ON))return this;
         return withShell(shell.withDock(mode==DOCK_ON));
@@ -160,12 +165,14 @@ public final class ThemeSpec {
         copy.overviewCardStyles=overviewCardStyles;
         copy.surfaceBlur=surfaceBlur;copy.mediaControls=mediaControls;copy.mediaButtonGap=mediaButtonGap;
         copy.mediaFooter(footerButtonBackground,footerContainerVisible);
-        copy.viewports=viewports;copy.weights=weights;
+        copy.viewports=viewports;copy.weights=weights;copy.fontStyles=fontStyles;
+        copy.fallbackWeightFonts=fallbackWeightFonts;copy.fallbackWeightFontOwner=fallbackWeightFontOwner;
         copy.palette=palette;copy.overviewCardTopLine=overviewCardTopLine;copy.navigationUnderline=navigationUnderline;copy.fills=fills;
         copy.pedalBarStyle=pedalBarStyle;copy.brakeBarStyle=brakeBarStyle;copy.f1Order=f1Order;
         copy.liquidGlassTransparency=liquidGlassTransparency;copy.liquidGlassBlur=liquidGlassBlur;copy.liquidGlassHighlight=liquidGlassHighlight;
         copy.bodyFontOwner=bodyFontOwner;copy.numericFontOwner=numericFontOwner;
         copy.displayFontOwner=displayFontOwner;copy.backgroundAssetOwner=backgroundAssetOwner;
+        copy.layoutSpacing=layoutSpacing;
         copy.wallpapers=wallpapers;copy.defaultWallpaperId=defaultWallpaperId;
         return copy;
     }
@@ -205,7 +212,7 @@ public final class ThemeSpec {
     private java.util.Map<OverviewCardKind,OverviewCardStyle> overviewCardStyles=java.util.Collections.emptyMap();
     public OverviewCardStyle overviewCardStyle(OverviewCardKind kind){
         OverviewCardStyle value=overviewCardStyles.get(kind);
-        return value==null?OverviewCardStyle.defaults(kind,spacing.cardPadding):value;
+        return value==null?OverviewCardStyle.defaults(kind,12):value;
     }
     void overviewCardStyles(java.util.Map<OverviewCardKind,OverviewCardStyle> value){
         overviewCardStyles=java.util.Collections.unmodifiableMap(value);
@@ -220,11 +227,11 @@ public final class ThemeSpec {
     public F1Grid f1Grid(){return f1Grid;}
     void f1Grid(F1Grid value){f1Grid=value;}
     public static final class F1Grid {
-        public final int columns,rows,inset,gap,padding,radius;
+        public final int columns,rows,gap,padding,radius;
         private final int[] weights;
         private final java.util.Map<String,Card> cells;
-        F1Grid(int columns,int[] weights,int inset,int gap,int padding,int radius,java.util.Map<String,Card> cells){
-            this.columns=columns;this.rows=weights.length;this.weights=weights.clone();this.inset=inset;
+        F1Grid(int columns,int[] weights,int gap,int padding,int radius,java.util.Map<String,Card> cells){
+            this.columns=columns;this.rows=weights.length;this.weights=weights.clone();
             this.gap=gap;this.padding=padding;this.radius=radius;
             this.cells=java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<String,Card>(cells));
         }
@@ -237,6 +244,18 @@ public final class ThemeSpec {
     private java.util.Map<String,String> weights=java.util.Collections.emptyMap();
     public boolean fontBold(String role,boolean requested){String weight=weights.get(role);return "bold".equals(weight)||(!"regular".equals(weight)&&requested);}
     void weights(java.util.Map<String,String> value){weights=java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<String,String>(value));}
+    public static final class FontStyle {
+        public final int normal,emphasis;
+        public FontStyle(int normal,int emphasis){this.normal=normal;this.emphasis=emphasis;}
+        public int weight(boolean emphasized){return emphasized?emphasis:normal;}
+    }
+    private java.util.Map<String,FontStyle> fontStyles=java.util.Collections.emptyMap();
+    private java.util.Map<Integer,String> fallbackWeightFonts=java.util.Collections.emptyMap();
+    String fallbackWeightFontOwner;
+    public FontStyle fontStyle(String role){return fontStyles.get(role);}
+    void fontStyles(java.util.Map<String,FontStyle> value){fontStyles=java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<String,FontStyle>(value));}
+    void fallbackWeightFonts(java.util.Map<Integer,String> value){fallbackWeightFonts=java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<Integer,String>(value));}
+    public String fallbackWeightFont(int weight){return fallbackWeightFonts.get(Integer.valueOf(weight));}
     public static final class Viewport {
         public final int top,right,bottom,left;
         public final String alignment;
@@ -275,31 +294,67 @@ public final class ThemeSpec {
         public static final int TOP_BUTTON_HEIGHT=38;
         public final String position,alignment;
         public final int width,top,right,bottom,left,gap,buttonHeight;
-        public final Insets topPadding;
-        public final int mediaPadding,screenCornerRadius;
+        public final int framePadding,framePaddingHorizontal,framePaddingVertical,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap;
+        public final Insets sideMenuPadding,topMenuPadding,contentPadding,mediaPadding,bottomMediaPadding;
+        public final int screenCornerRadius;
         public final ScreenCorner screenCorner;
         private final boolean dock;
+        private final boolean menuIcons;
         Shell(String position,String alignment,int width,int top,int right,int bottom,int left,int gap,int buttonHeight){
-            this(position,alignment,width,top,right,bottom,left,gap,buttonHeight,null,-1,0,ScreenCorner.CIRCLE,false);
+            this(position,alignment,width,top,right,bottom,left,gap,buttonHeight,0,ScreenCorner.CIRCLE,false,false,0,0,0,gap,gap,6);
         }
-        private Shell(String position,String alignment,int width,int top,int right,int bottom,int left,int gap,int buttonHeight,Insets topPadding,int mediaPadding,int screenCornerRadius,ScreenCorner screenCorner,boolean dock){
+        private Shell(String position,String alignment,int width,int top,int right,int bottom,int left,int gap,int buttonHeight,int screenCornerRadius,ScreenCorner screenCorner,boolean dock,boolean menuIcons,int framePadding,int frameGapHorizontal,int frameGapVertical,int groupGap,int itemGap,int topMenuItemGap){
+            this(position,alignment,width,top,right,bottom,left,gap,buttonHeight,screenCornerRadius,screenCorner,dock,menuIcons,framePadding,framePadding,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap,new Insets(top,right,bottom,left),new Insets(0,0,0,0),new Insets(0,0,0,0),new Insets(0,0,0,0),new Insets(0,0,0,0));
+        }
+        private Shell(String position,String alignment,int width,int top,int right,int bottom,int left,int gap,int buttonHeight,int screenCornerRadius,ScreenCorner screenCorner,boolean dock,boolean menuIcons,int framePaddingHorizontal,int framePaddingVertical,int frameGapHorizontal,int frameGapVertical,int groupGap,int itemGap,int topMenuItemGap,Insets sidePadding,Insets topPadding,Insets contentPadding,Insets mediaPadding,Insets bottomPadding){
             this.position=position;this.alignment=alignment;this.width=width;this.top=top;this.right=right;
             this.bottom=bottom;this.left=left;this.gap=gap;this.buttonHeight=buttonHeight;
-            this.topPadding=topPadding;this.mediaPadding=mediaPadding;this.screenCornerRadius=screenCornerRadius;this.screenCorner=screenCorner;this.dock=dock;
+            this.framePadding=framePaddingVertical;this.framePaddingHorizontal=framePaddingHorizontal;this.framePaddingVertical=framePaddingVertical;
+            this.frameGapHorizontal=frameGapHorizontal;this.frameGapVertical=frameGapVertical;
+            this.groupGap=groupGap;this.itemGap=itemGap;this.topMenuItemGap=topMenuItemGap;
+            this.sideMenuPadding=sidePadding;this.topMenuPadding=topPadding;this.contentPadding=contentPadding;this.mediaPadding=mediaPadding;this.bottomMediaPadding=bottomPadding;
+            this.screenCornerRadius=screenCornerRadius;this.screenCorner=screenCorner;this.dock=dock;this.menuIcons=menuIcons;
         }
-        Shell withScreenOptions(Insets topPadding,int mediaPadding,int screenCornerRadius,ScreenCorner screenCorner){
-            return new Shell(position,alignment,width,top,right,bottom,left,gap,buttonHeight,topPadding,mediaPadding,screenCornerRadius,screenCorner,dock);
+        Shell withAreaPadding(Insets side,Insets top,Insets content,Insets media,Insets bottom){
+            return new Shell(position,alignment,width,this.top,right,this.bottom,left,gap,buttonHeight,screenCornerRadius,screenCorner,dock,menuIcons,
+                framePaddingHorizontal,framePaddingVertical,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap,side,top,content,media,bottom);
         }
-        Shell withDock(boolean value){return new Shell(position,alignment,width,top,right,bottom,left,gap,buttonHeight,topPadding,mediaPadding,screenCornerRadius,screenCorner,value);}
+        Shell withFramePadding(int horizontal,int vertical){
+            return new Shell(position,alignment,width,top,right,bottom,left,gap,buttonHeight,screenCornerRadius,screenCorner,dock,menuIcons,
+                horizontal,vertical,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap,sideMenuPadding,topMenuPadding,contentPadding,mediaPadding,bottomMediaPadding);
+        }
+        Shell withScreenCorner(int screenCornerRadius,ScreenCorner screenCorner){
+            return new Shell(position,alignment,width,top,right,bottom,left,gap,buttonHeight,screenCornerRadius,screenCorner,dock,menuIcons,framePadding,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap);
+        }
+        Shell withDock(boolean value){return new Shell(position,alignment,width,top,right,bottom,left,gap,buttonHeight,screenCornerRadius,screenCorner,value,menuIcons,framePadding,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap);}
+        Shell withMenuIcons(boolean value){return new Shell(position,alignment,width,top,right,bottom,left,gap,buttonHeight,screenCornerRadius,screenCorner,dock,value,framePadding,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap);}
+        Shell withLayout(int framePadding,int frameGapHorizontal,int frameGapVertical,int groupGap,int itemGap){
+            return new Shell(position,alignment,width,top,right,bottom,left,itemGap,buttonHeight,screenCornerRadius,screenCorner,dock,menuIcons,framePadding,frameGapHorizontal,frameGapVertical,groupGap,itemGap,topMenuItemGap);
+        }
+        Shell withTopMenuItemGap(int value){return new Shell(position,alignment,width,top,right,bottom,left,gap,buttonHeight,screenCornerRadius,screenCorner,dock,menuIcons,framePadding,frameGapHorizontal,frameGapVertical,groupGap,itemGap,value);}
         public boolean dock(){return left()&&dock;}
-        public int topMenuHeight(){return topPadding==null?52:topPadding.top+TOP_BUTTON_HEIGHT+topPadding.bottom;}
+        public boolean menuIcons(){return menuIcons;}
+        public int topMenuHeight(){return TOP_BUTTON_HEIGHT;}
         static Shell legacy(){return new Shell("top","start",0,0,0,0,0,0,0);}
         static Shell sidebar(){return new Shell("left","center",96,10,0,20,0,5,40);}
         public boolean left(){return "left".equals(position);}
     }
     public static final class Insets {
         public final int top,right,bottom,left;
-        Insets(int top,int right,int bottom,int left){this.top=top;this.right=right;this.bottom=bottom;this.left=left;}
+        public Insets(int top,int right,int bottom,int left){this.top=top;this.right=right;this.bottom=bottom;this.left=left;}
+    }
+
+    /** Shared outer padding and gaps between top-level layout regions, in 800×480 design units. */
+    public static final class LayoutSpacing {
+        public final int horizontal,vertical,gap,padding,horizontalPadding,verticalPadding;
+        public LayoutSpacing(int horizontal,int vertical,int gap){this(horizontal,vertical,gap,0,0);}
+        public LayoutSpacing(int horizontal,int vertical,int gap,int padding){this(horizontal,vertical,gap,padding,padding);}
+        public LayoutSpacing(int horizontal,int vertical,int gap,int horizontalPadding,int verticalPadding){
+            this.horizontal=horizontal;this.vertical=vertical;this.gap=gap;this.horizontalPadding=horizontalPadding;this.verticalPadding=verticalPadding;
+            this.padding=verticalPadding;
+        }
+        public int horizontalGap(){return horizontal>=0?horizontal:gap;}
+        public int verticalGap(){return vertical>=0?vertical:gap;}
     }
 
     public static final class Typography {
@@ -348,7 +403,7 @@ public final class ThemeSpec {
     }
 
     public static Typography defaultTypography(){return new Typography(100,100,100,184,130);}
-    public static Spacing defaultSpacing(){return new Spacing(12,10,24,14,4,0,8,6);}
+    public static Spacing defaultSpacing(){return new Spacing(0,0,0,0,0,0,0,0);}
     public static Material defaultMaterial(){return new Material("legacy",0,255,255,0xd9ffffff,0x0f2859a0);}
 
     /** Same role rule as ThemeResources.fontForText; measurement and drawing share this scale. */
@@ -360,6 +415,7 @@ public final class ThemeSpec {
         return size*("numeric".equals(role)?typography.numericScale:"display".equals(role)?typography.displayScale:typography.bodyScale)/100f;
     }
     public static String textRole(String text,boolean bold){
+        if(text!=null&&text.startsWith("F1")&&(text.length()==2||!Character.isDigit(text.charAt(2))))return bold?"display":"body";
         if(text!=null)for(int i=0;i<text.length();i++)if(text.charAt(i)>='0'&&text.charAt(i)<='9')return "numeric";
         return bold?"display":"body";
     }
@@ -439,11 +495,9 @@ public final class ThemeSpec {
     }
 
     public static ThemeSpec original() {
-        return original(new Spacing(12,10,24,14,4,0,16,12));
-    }
-
-    static ThemeSpec originalV2() {
-        return original(defaultSpacing());
+        ThemeSpec spec=original(new Spacing(0,0,0,0,0,0,0,0));
+        spec.layoutSpacing(new LayoutSpacing(16,12,12,0));
+        return spec;
     }
 
     private static ThemeSpec original(Spacing spacing) {

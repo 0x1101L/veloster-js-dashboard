@@ -1,6 +1,18 @@
 {
-  "layout": {
-    "columns": 5,
-    "rows": 4
+  "cardDefaults": {
+    "padding": {
+      "top": 12,
+      "right": 12,
+      "bottom": 12,
+      "left": 12
+    }
+  },
+  "overview": {
+    "grid": {
+      "columns": 5,
+      "rows": 4,
+      "itemGapX": 6,
+      "itemGapY": 6
+    }
   }
 }

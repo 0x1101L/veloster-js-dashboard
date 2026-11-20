@@ -13,7 +13,7 @@ import test_js_diagnostics_renderer as renderer
 PAGES = ('전체 조망', 'HUD·내비', 'CarPlay', '차량', '연결', 'Bindings', '퍼포먼스', 'F1', '게이지', '그래프', '설정')
 STATES = ('waiting', 'received', 'invalid', 'held', 'expired')
 LANGUAGES = ('ko', 'en')
-THEMES = ('original', 'aurora_focus', 'material_auto_cowork')
+THEMES = ('original', 'aurora_focus', 'material_auto_cowork', 'f1_2')
 VEHICLES = {
     'js': {'name': 'Veloster', 'resolution': (800, 480)},
     'js_n': {'name': 'Veloster N', 'resolution': (800, 480)},

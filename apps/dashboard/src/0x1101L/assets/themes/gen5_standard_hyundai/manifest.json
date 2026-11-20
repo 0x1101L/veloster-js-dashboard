@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 3,
+  "id": "gen5_standard_hyundai",
+  "displayName": "Standard Gen5 · Hyundai Study",
+  "files": {
+    "colors": "colors.json",
+    "fonts": "fonts.json",
+    "components": "components.json",
+    "shell": "layouts/shell.json",
+    "f1": "layouts/f1.json",
+    "overview": "layouts/overview.json"
+  }
+}

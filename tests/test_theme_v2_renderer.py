@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exercise schema v2 with production renderers/resources on the desktop shim."""
+"""Verify retired v1/v2 themes are rejected; retain the baseline probe for visual comparisons."""
 from pathlib import Path
 import subprocess
 import sys
@@ -188,7 +188,7 @@ public final class ThemeV2Probe {
     Telemetry t=new Telemetry();t.profile(false,js,!js);
     boolean changed=theme.id.equals("child");
     layout.viewport(1000,640);
-    near(text(overview(theme,t,layout,js),com.veloster.i18n.UiText.t("타이어 공기압")).size,changed?18:13,
+    near(text(overview(theme,t,layout,js),com.veloster.i18n.UiText.t("타이어 공기압")+" (psi)").size,changed?18:13,
         "tire pressure has independent title");
     for(int mode:new int[]{2,1,0}){
      layout.viewport(800,480);layout.style(layout.signalAt(0),mode);
@@ -333,16 +333,30 @@ public final class ThemeVisualProbe {
 }'''
 
 class ThemeV2RendererTests(unittest.TestCase):
-    def test_theme_values_reach_production_renderers(self):
-        with tempfile.TemporaryDirectory(prefix='theme-v2-') as folder:
+    def test_v1_and_v2_catalogs_and_manifests_are_rejected(self):
+        source = r'''import com.veloster.dashboard.theme.*;import java.util.*;
+public final class RetiredThemeProbe {
+ public static void main(String[] args){
+  for(int version:new int[]{1,2}){
+   String manifest="{\"schemaVersion\":"+version+",\"id\":\"legacy\",\"displayName\":\"Legacy\"}";
+   Map<String,String> docs=new LinkedHashMap<String,String>();docs.put("legacy",manifest);
+   ThemeCatalog oldCatalog=ThemeCatalog.fromJsonDocuments("{\"schemaVersion\":"+version+",\"themeIds\":[\"legacy\"]}",docs);
+   if(oldCatalog.size()!=1||oldCatalog.find("legacy")!=null)throw new AssertionError("catalog v"+version+" accepted");
+   ThemeCatalog oldManifest=ThemeCatalog.fromJsonDocuments("{\"schemaVersion\":3,\"themeIds\":[\"legacy\"]}",docs);
+   if(oldManifest.size()!=1||oldManifest.find("legacy")!=null)throw new AssertionError("manifest v"+version+" accepted");
+  }
+  System.out.println("PASS v1/v2 catalog and manifest rejection");
+ }
+}'''
+        with tempfile.TemporaryDirectory(prefix='theme-retired-') as folder:
             java, classes = runtime.compile_runtime(folder)
             _, javac = java_tools()
-            probe = Path(folder) / 'ThemeV2Probe.java'
-            probe.write_text(PROBE)
+            probe = Path(folder) / 'RetiredThemeProbe.java'
+            probe.write_text(source)
             subprocess.run([javac, '-encoding', 'UTF-8', '-cp', str(classes), '-d', str(classes), str(probe)], check=True)
-            result = subprocess.run([java, '-Djava.awt.headless=true', '-Ddashboard.assets=' + str(ROOT / 'apps/dashboard/src/0x1101L/assets'), '-Ddashboard.v2fixtures=' + str(ROOT / 'tests/fixtures/theme_v2'), '-cp', str(classes), 'ThemeV2Probe'], capture_output=True, text=True)
+            result = subprocess.run([java, '-Djava.awt.headless=true', '-cp', str(classes), 'RetiredThemeProbe'], capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            print(result.stdout.strip())
+            self.assertIn('PASS v1/v2 catalog and manifest rejection', result.stdout)
 
 if __name__ == '__main__':
     unittest.main()

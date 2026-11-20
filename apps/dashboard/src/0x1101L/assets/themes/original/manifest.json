@@ -6,6 +6,7 @@
     "colors": "colors.json",
     "fonts": "fonts.json",
     "components": "components.json",
-    "overview": "layouts/overview.json"
+    "overview": "layouts/overview.json",
+    "shell": "layouts/shell.json"
   }
 }

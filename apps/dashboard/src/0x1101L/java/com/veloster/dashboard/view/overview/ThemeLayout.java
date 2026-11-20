@@ -9,6 +9,6 @@ public final class ThemeLayout {
     public int columns(){return 5;}
     public float left(int slot){return 18+(slot%columns())*155;}
     public float top(int slot){return 58+(slot/columns())*104;}
-    public float width(){return 155-theme.spacing.gridGapX;}
-    public float height(){return 104-theme.spacing.gridGapY;}
+    public float width(){return 155-theme.layoutSpacing().gap;}
+    public float height(){return 104-theme.layoutSpacing().gap;}
 }
