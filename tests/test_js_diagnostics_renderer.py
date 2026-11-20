@@ -39,6 +39,11 @@ public class JsDiagnosticsPreview {
     t.hscanJsn(0xc7,7,new byte[]{0,0,74,8,32,0,0,0},1000);
     t.hscanJsn(0xc7,0x23,new byte[]{0,0,100,0,0,0,0,0},1000);
    }
+   byte[] additional=new byte[40];additional[1]=94;additional[4]=4;additional[6]=1;additional[7]=0;
+   additional[20]=1;additional[21]=44;additional[22]=1;
+   for(int i=0;i<4;i++)additional[28+i*2]= (byte)(32+i);
+   t.additional(additional,1000);
+   t.gforce(new byte[]{(byte)0x89,0x31,0,20,0x7d,0x1f,0,0},1000);
   }
   if(state.equals("invalid")||state.equals("held")){
    if(js){
@@ -94,15 +99,23 @@ public class JsDiagnosticsPreview {
      else check(c.texts.contains("Example Track")&&c.texts.contains("Example Artist"),"actual CarPlay media snapshot rendered");
     }else if(tab==2){
      check(c.texts.contains(UiText.t("신호별 수신 · 유효성")),"signal page");
-     check(c.texts.contains(UiText.t("DCT 관측"))&&c.texts.contains(UiText.t("변속기 종류"))&&c.texts.contains(UiText.t("변속기 설정")),"vehicle signal and DCT share one page");
+     check(c.pixel(300,height-15)!=c.pixel(300,height-2),"vehicle diagnostics panel uses the available content height");
+     check(c.texts.contains(UiText.t("DCT 관측"))&&c.texts.contains(UiText.t("변속기 종류")),"diagnostics reports transmission data");
+     check(!c.texts.contains(UiText.t("변속기 설정")),"transmission setting moved out of diagnostics");
      check(c.texts.contains(UiText.t("차체 · 조명 (실험)"))&&c.texts.contains(UiText.t("원시 b3/b4"))&&c.texts.contains(UiText.t("비트 후보")),"lighting experiment sits below DCT on vehicle page");
      check(c.texts.contains(UiText.t("AUTO · Day/Night 의미 미확인")),"unverified lighting semantics remain explicit");
      if(state.equals("received"))check(c.texts.contains("00/00 · 2x · 0.1s")&&c.texts.contains("lamp7=0 sw=0"),"lighting shows latest bytes, candidate bits, count, and age");
+     if(state.equals("received")){
+      for(int signal:new int[]{10,11,12})check(t.sample(signal,now).hasDisplayValue(),"received preview seeds signal "+Telemetry.LABELS[signal]);
+      check(c.texts.contains(String.format(java.util.Locale.US,"%+.2f G",t.sample(11,now).value))
+       &&c.texts.contains(String.format(java.util.Locale.US,"%+.2f G",t.sample(12,now).value))
+       &&c.texts.contains(String.format(java.util.Locale.US,"%.1f bar",t.sample(10,now).value)),"received preview renders brake pressure and both acceleration samples");
+     }
      if(state.equals("waiting"))check(c.texts.contains(UiText.t("미수신")),"lighting stays unknown before first frame");
      String expected=state.equals("waiting")?"미수신":state.equals("invalid")?"무효 수신":state.equals("held")?"보관값":state.equals("expired")?"만료":"유효";
      check(c.texts.contains(UiText.t(expected)),"distinct signal state: "+state);
      if(state.equals("invalid"))check(!c.texts.contains("14.20 V")&&t.sample(Telemetry.BAT_VOLTAGE,now).receivedCount==1,"invalid-only reception is counted without a fabricated value");
-     if(state.equals("held"))check(c.texts.contains("14.20 V")&&c.texts.contains("2 · 0.0s / 1.0s")&&t.sample(Telemetry.BAT_VOLTAGE,now).receivedCount==2,"held value keeps separate reception and valid ages");
+     if(state.equals("held"))check(c.texts.contains("14.20 V")&&!c.texts.contains("2 · 0.0s / 1.0s")&&t.sample(Telemetry.BAT_VOLTAGE,now).receivedCount==2,"held value remains visible without the removed count and age column");
      if(state.equals("expired"))check(c.texts.contains("14.20 V"),"expired battery still shows its last valid voltage");
     }else if(tab==3){
      check(c.texts.contains(UiText.t("Wi-Fi 상태"))&&c.texts.contains(UiText.t("Wi-Fi 서비스")),"Wi-Fi status rendered");
@@ -129,8 +142,7 @@ public class JsDiagnosticsPreview {
    check(sc.texts.contains(kind==1?"DCT":"MT"),"saved transmission displayed");
    check(!sc.texts.contains("MT (test)")&&!sc.texts.contains("DCT (test)"),"stored selection overrides trial");
   }
-  JsPitRenderer hit=new JsPitRenderer();check(!hit.transmissionHit(756,171)&&!hit.wifiSettingsHit(300,137),"settings requires vehicle category");
-  hit.selectDiagnosticTab(350,80,350,80);check(hit.transmissionHit(756,171)&&!hit.transmissionHit(450,170),"settings hit restricted to DCT button");
+  JsPitRenderer hit=new JsPitRenderer();check(!hit.wifiSettingsHit(300,137),"Wi-Fi settings requires its diagnostics category");
   hit.selectDiagnosticTab(500,80,500,80);check(hit.wifiSettingsHit(300,137)&&!hit.wifiSettingsHit(300,170),"Wi-Fi settings hit restricted to button");
   Telemetry t=fixture("held");long before=t.sample(Telemetry.BAT_VOLTAGE,2000).receivedCount;
   t.snapshot(9000);check(t.sample(Telemetry.BAT_VOLTAGE,9000).receivedCount==before,"redraw cannot simulate new reception");

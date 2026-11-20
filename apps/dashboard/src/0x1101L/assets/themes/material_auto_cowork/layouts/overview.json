@@ -1,13 +1,9 @@
 {
-  "layout": {
-    "columns": 5,
-    "rows": 4
-  },
   "cardDefaults": {
     "padding": {
-      "top": 10,
+      "top": 12,
       "right": 12,
-      "bottom": 10,
+      "bottom": 12,
       "left": 12
     },
     "titleSize": 11,
@@ -38,6 +34,14 @@
     "stability": {
       "rowGap": 5,
       "labelValueGap": 5
+    }
+  },
+  "overview": {
+    "grid": {
+      "columns": 5,
+      "rows": 4,
+      "itemGapX": 10,
+      "itemGapY": 10
     }
   }
 }

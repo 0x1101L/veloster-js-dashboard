@@ -1,8 +1,4 @@
 {
-  "layout": {
-    "columns": 5,
-    "rows": 4
-  },
   "cardDefaults": {
     "padding": {
       "top": 12,
@@ -15,5 +11,13 @@
     "titleUnitGap": 4,
     "valueUnitGap": 4,
     "valueGaugeGap": 4
+  },
+  "overview": {
+    "grid": {
+      "columns": 5,
+      "rows": 4,
+      "itemGapX": 8,
+      "itemGapY": 8
+    }
   }
 }

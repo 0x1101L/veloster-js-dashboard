@@ -58,7 +58,7 @@ public final class GaugeRenderer {
             Bounds card=layout.card(slot);
             surface.panelWithLegacy(c,theme,p,card.x,card.y,card.width,card.height,
                 ThemePalette.panel(theme,0xff101920),ThemePalette.stroke(theme,0xff293943));
-            Bounds inner=card.inset(theme.spacing.cardPadding);
+            Bounds inner=card.inset(0);
             int cardSave=c.save();c.clipRect(card.x,card.y,card.right(),card.bottom());
             float scale=Math.min(inner.width/232,inner.height/170);
             if(scale<=0){c.restoreToCount(cardSave);continue;}

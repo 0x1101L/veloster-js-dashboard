@@ -1,12 +1,23 @@
 {
   "fonts": {
-    "body": "fonts/Pretendard-Regular.otf",
-    "numeric": "fonts/Pretendard-Regular.otf",
-    "display": "fonts/Pretendard-Regular.otf"
+    "body": "fonts/PretendardVariable.ttf",
+    "numeric": "fonts/PretendardVariable.ttf",
+    "display": "fonts/PretendardVariable.ttf"
+  },
+  "fontStyles": {
+    "body": { "normal": 400, "emphasis": 600 },
+    "numeric": { "normal": 500, "emphasis": 700 },
+    "display": { "normal": 600, "emphasis": 700 }
+  },
+  "fallbackWeights": {
+    "400": "fonts/Pretendard-Regular.otf",
+    "500": "fonts/Pretendard-Medium.otf",
+    "600": "fonts/Pretendard-SemiBold.otf",
+    "700": "fonts/Pretendard-Bold.otf"
   },
   "typography": {
     "bodyScale": 100,
-    "numericScale": 96,
+    "numericScale": 108,
     "displayScale": 105,
     "gearSize": 128,
     "combinedGearSize": 100

@@ -10,6 +10,7 @@ public final class ThemeSettingsStore {
     private static final String KEY_MENU_POSITION = "menu_position";
     private static final String KEY_MENU_DOCK = "menu_dock";
     private static final String KEY_WALLPAPER_ID = "wallpaper_id";
+    private static final String KEY_MENU_STYLE_MIGRATED = "menu_style_migrated";
     private final SharedPreferences preferences;
     private final SharedPreferences uiPreferences;
 
@@ -75,8 +76,28 @@ public final class ThemeSettingsStore {
                 .putInt("liquid_glass_blur",blur>=0&&blur<=4?blur:1)
                 .putInt("liquid_glass_highlight",highlight>=0&&highlight<=2?highlight:1).apply();
     }
-    public boolean menuIcons(){return option("menu_icon_mode",2)==1;}
-    public void saveMenuIcons(boolean value){uiPreferences.edit().putInt("menu_icon_mode",value?1:0).apply();}
+    private String menuStyleKey(String themeId){return "menu_style_"+(themeId==null?"":themeId);}
+    /** -1 means inherit the theme default; 0 is labels and 1 is icons. */
+    public int menuStyleOverride(String themeId){
+        try{int value=preferences.getInt(menuStyleKey(themeId),-1);return value==0||value==1?value:-1;}
+        catch(ClassCastException ignored){return -1;}
+    }
+    public boolean menuIcons(String themeId,boolean themeDefault){
+        int override=menuStyleOverride(themeId);
+        return override<0?themeDefault:override==1;
+    }
+    public void saveMenuStyle(String themeId,int value){
+        if(themeId==null||themeId.length()==0)return;
+        preferences.edit().putInt(menuStyleKey(themeId),value<0?-1:value==1?1:0).apply();
+    }
+    /** Preserve the previous shared choice for the theme active during the one-time upgrade. */
+    public void migrateLegacyMenuStyle(String themeId){
+        try{if(preferences.getInt(KEY_MENU_STYLE_MIGRATED,0)!=0)return;}
+        catch(ClassCastException ignored){}
+        try{int old=uiPreferences.getInt("menu_icon_mode",-1);if(old==0||old==1)saveMenuStyle(themeId,old);}
+        catch(ClassCastException ignored){}
+        preferences.edit().putInt(KEY_MENU_STYLE_MIGRATED,1).apply();
+    }
     public void saveDisplayOptions(int pedal,int brake,int order){
         uiPreferences.edit().putInt("pedal_bar_style",pedal).putInt("brake_bar_style",brake).putInt("f1_order",order).apply();
     }

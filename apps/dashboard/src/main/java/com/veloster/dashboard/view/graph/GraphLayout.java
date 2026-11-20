@@ -20,12 +20,12 @@ public final class GraphLayout {
     private Bounds area=new DashboardPage.Content(theme,"graphs").padded(theme);
     public void viewport(ThemeSpec theme,DashboardPage.Content content){this.theme=theme;area=content.padded(theme);}
     public Bounds timeButton(int i){
-        float w=Math.min(area.width*.18f,theme.spacing.buttonPadding*2+50),gap=theme.spacing.gridGapX;
+        float w=Math.min(area.width*.18f,0*2+50),gap=theme.layoutSpacing().gap;
         return new Bounds(area.right()-w-(1-i)*(w+gap),area.y,w,26);
     }
     public Bounds card(int slot){
         check(slot);
-        int gap=theme.spacing.gridGapY;
+        int gap=theme.layoutSpacing().gap;
         float top=timeButton(0).bottom()+gap,h=(area.bottom()-top-(SLOTS-1)*gap)/SLOTS;
         return new Bounds(area.x,top+slot*(h+gap),area.width,h);
     }

@@ -41,16 +41,19 @@ public final class JsDiagnosticsRenderer {
     public void viewport(DashboardPage.Content content){area=content.padded(theme);}
     // Resolve individual panel edges and text anchors without transforming the canvas.
     private float x(float anchor){return area.atX((anchor-18)/764f);}
-    private float y(float anchor){return area.atY((anchor-62)/410f);}
+    // Keep a visible breathing gap below the tab track while retaining the
+    // content area's bottom edge for the full-height panels.
+    private float y(float anchor){return area.atY((anchor-52)/410f);}
     private Bounds bounds(float x,float y,float w,float h){
         return new Bounds(x(x),y(y),area.width*w/764f,area.height*h/410f);
     }
-    private Bounds tab(int i){return bounds(18+i*154,62,148,38);}
+    private Bounds tab(int i){
+        float inset=4,width=(area.width-2*inset)/5;
+        return new Bounds(area.x+inset+i*width,area.y+4,width,36);
+    }
     private Bounds wifi(){return bounds(244,118,135,36);}
-    private Bounds transmission(){return bounds(642,154,128,36);}
     private Bounds carPlayImport(){return bounds(423,310,344,42);}
     public boolean wifiSettingsHit(float x,float y){return diagnosticTab==3&&wifi().contains(x,y);}
-    public boolean transmissionHit(float x,float y){return diagnosticTab==2&&transmission().contains(x,y);}
     public boolean carPlayImportHit(float x,float y){return diagnosticTab==1&&carPlayImport().contains(x,y);}
     public boolean select(float downX,float downY,float x,float y){
         for(int i=0;i<5;i++)if(tab(i).contains(x,y)&&tab(i).contains(downX,downY)){diagnosticTab=i;return true;}
@@ -60,6 +63,11 @@ public final class JsDiagnosticsRenderer {
     private void box(Canvas c,float l,float t,float r,float b,int color){paint.setColor(color);c.drawRect(l,t,r,b,paint);}
     private void panel(Canvas c,float x,float y,float w,float h,int fill,int edge){panel(c,bounds(x,y,w,h),fill,edge);}
     private void panel(Canvas c,Bounds b,int fill,int edge){surface.panelWithLegacy(c,theme,paint,b.x,b.y,b.width,b.height,fill,edge);}
+    private void bodyPanel(Canvas c,float x,float top,float width){
+        float left=x(x),yTop=y(top);
+        panel(c,new Bounds(left,yTop,area.width*width/764f,Math.max(0,area.y+area.height-yTop-4)),
+                ThemePalette.panel(theme,0xff101315),ThemePalette.stroke(theme,0xff303638));
+    }
     private String observed(int state,String yes,String no){return UiText.t(state==1?yes:state==0?no:"미확인");}
     private String wifiRadio(int state){
         switch(state){case 0:return UiText.t("꺼지는 중");case 1:return UiText.t("꺼짐");case 2:return UiText.t("켜지는 중");
@@ -77,7 +85,7 @@ public final class JsDiagnosticsRenderer {
         String right=Float.isNaN(dct.evenC)?"—":String.format(Locale.US,"%.0f",dct.evenC);
         return UiText.t("후보")+" "+left+(dct.single?"":" / "+right)+" °C";
     }
-    private float cardInset(){return theme.spacing.cardPadding*764f/Math.max(1,area.width);}
+    private float cardInset(){return 0*764f/Math.max(1,area.width);}
     private void diagRow(Canvas c,float x,float y,String label,String value){
         fitted(c,UiText.t(label),x+cardInset(),y,14,150,ThemePalette.secondary(theme,0xff91a5ae));
         fitted(c,value,x+165,y,15,190,ThemePalette.primary(theme,0xffe1edf2));
@@ -94,18 +102,14 @@ public final class JsDiagnosticsRenderer {
     }
     private void diagNote(Canvas c,String key,float y){fitted(c,UiText.t(key),32,y,13,736,ThemePalette.secondary(theme,0xff91a5ae));}
     private void drawDiagnostics(Canvas c,Telemetry.DctTemperatures dct){
-        button(c,UiText.t("HUD · 내비"),tab(0),diagnosticTab==0,ThemePalette.accent(theme,0xffa4d9ef));
-        button(c,"CarPlay",tab(1),diagnosticTab==1,ThemePalette.accent(theme,0xffa4d9ef));
-        button(c,UiText.t("차량"),tab(2),diagnosticTab==2,ThemePalette.accent(theme,0xffa4d9ef));
-        button(c,UiText.t("연결"),tab(3),diagnosticTab==3,ThemePalette.accent(theme,0xffa4d9ef));
-        button(c,"Bindings",tab(4),diagnosticTab==4,ThemePalette.accent(theme,0xffa4d9ef));
+        drawTabs(c);
         if(diagnosticTab==1){drawCarPlay(c);return;}
         if(diagnosticTab==2){drawVehicleDiagnostics(c,dct);return;}
         if(diagnosticTab==3){drawConnectivityDiagnostics(c);return;}
-        panel(c,18,112,373,316,ThemePalette.panel(theme,0xff101315),ThemePalette.stroke(theme,0xff303638));panel(c,409,112,373,316,ThemePalette.panel(theme,0xff101315),ThemePalette.stroke(theme,0xff303638));
+        bodyPanel(c,18,112,373);bodyPanel(c,409,112,373);
         if(diagnosticTab==4){drawBindings(c);return;}
-        text(c,UiText.t("내비 수신"),32,138,16,ThemePalette.accent(theme,0xffa4d9ef),true);
-        text(c,UiText.t("HUD 정보"),423,138,16,ThemePalette.accent(theme,0xffa4d9ef),true);
+        text(c,UiText.t("내비 수신"),32,138,16,ThemePalette.primary(theme,0xffe1edf2),true);
+        text(c,UiText.t("HUD 정보"),423,138,16,ThemePalette.primary(theme,0xffe1edf2),true);
         String source=UiText.t(diagnostic.routeSource==1?"초기 sticky":diagnostic.routeSource==0?"방송 수신":"미확인");
         String[] labels={"경로 방송 관찰","경로 방송값","방송 종류","정수 수신 횟수","마지막 방송 경과","잘못된 방송 횟수","방송 오류","내비 관찰","내비 상태값","정수 조회 횟수","변경 알림 횟수","조회 / 알림 경과","내비 오류"};
         String[] values={observerState(diagnostic.routeWatch),diagnostic.routeNotice==1?String.valueOf(diagnostic.routeValue):UiText.t(diagnostic.routeNotice==0?"대기 중":"미확인"),
@@ -119,6 +123,20 @@ public final class JsDiagnosticsRenderer {
         diagNote(c,"경로 변경 전후의 정수값과 수신 횟수를 대조하세요.",448);
         diagNote(c,"경과는 앱 수신 이후 시간입니다. sticky 원 발신 시각은 미확인입니다.",468);
     }
+    private void drawTabs(Canvas c){
+        float stripY=area.y,stripH=44,inset=4,segment=(area.width-2*inset)/5;
+        surface.tabs(c,theme,paint,area.x,stripY,area.width,stripH,5,diagnosticTab);
+        String[] labels={UiText.t("HUD · 내비"),"CarPlay",UiText.t("차량"),UiText.t("연결"),"Bindings"};
+        for(int i=0;i<labels.length;i++){
+            String label=labels[i];paint.setTypeface(resources==null?Typeface.DEFAULT_BOLD:resources.fontForText(label,true));
+            float size=theme.textSize(label,14,true),left=area.x+inset+i*segment;
+            paint.setTextSize(size);float measured=paint.measureText(label),max=segment-12;
+            if(measured>max)size*=max/measured;
+            paint.setTextSize(size);measured=paint.measureText(label);
+            rawText(c,label,left+(segment-measured)/2,stripY+stripH/2+5,size,
+                    diagnosticTab==i?ThemePalette.primary(theme,0xffe1edf2):ThemePalette.secondary(theme,0xff91a5ae),true);
+        }
+    }
     private String mediaObserverState(String status){
         if("registered".equals(status))return UiText.t("등록됨");
         if("stopped".equals(status))return UiText.t("미등록");
@@ -127,9 +145,9 @@ public final class JsDiagnosticsRenderer {
         return UiText.t("미확인");
     }
     private void drawCarPlay(Canvas c){
-        panel(c,18,112,373,316,ThemePalette.panel(theme,0xff101315),ThemePalette.stroke(theme,0xff303638));panel(c,409,112,373,316,ThemePalette.panel(theme,0xff101315),ThemePalette.stroke(theme,0xff303638));
-        text(c,UiText.t("CarPlay 미디어"),32,138,16,ThemePalette.accent(theme,0xffa4d9ef),true);
-        text(c,UiText.t("iAP2 연결 진단"),423,138,16,ThemePalette.accent(theme,0xffa4d9ef),true);
+        bodyPanel(c,18,112,373);bodyPanel(c,409,112,373);
+        text(c,UiText.t("CarPlay 미디어"),32,138,16,ThemePalette.primary(theme,0xffe1edf2),true);
+        text(c,UiText.t("iAP2 연결 진단"),423,138,16,ThemePalette.primary(theme,0xffe1edf2),true);
         JsDiagState.SourceSnapshot source=diagnostic.source("media.3");
         boolean active=media!=null&&"CarPlay".equals(media.source);
         diagRow(c,18,170,"미디어 관찰",mediaObserverState(source.status));
@@ -148,31 +166,28 @@ public final class JsDiagnosticsRenderer {
         diagNote(c,"라이브러리 로드 확인과 Frida 후킹·원본 수신은 별개입니다.",468);
     }
     private void drawVehicleDiagnostics(Canvas c,Telemetry.DctTemperatures dct){
-        panel(c,18,112,500,316,ThemePalette.panel(theme,0xff101315),ThemePalette.stroke(theme,0xff303638));panel(c,530,112,252,316,ThemePalette.panel(theme,0xff101315),ThemePalette.stroke(theme,0xff303638));
-        text(c,UiText.t("신호별 수신 · 유효성"),32,138,16,ThemePalette.accent(theme,0xffa4d9ef),true);
+        bodyPanel(c,18,112,500);bodyPanel(c,530,112,252);
+        text(c,UiText.t("신호별 수신 · 유효성"),32,138,16,ThemePalette.primary(theme,0xffe1edf2),true);
         text(c,UiText.t("신호"),32,163,12,ThemePalette.secondary(theme,0xff91a5ae),false);
-        text(c,UiText.t("상태"),150,163,12,ThemePalette.secondary(theme,0xff91a5ae),false);
-        text(c,UiText.t("값"),235,163,12,ThemePalette.secondary(theme,0xff91a5ae),false);
-        text(c,UiText.t("횟수 · 경과"),352,163,12,ThemePalette.secondary(theme,0xff91a5ae),false);
+        text(c,UiText.t("상태"),190,163,12,ThemePalette.secondary(theme,0xff91a5ae),false);
+        text(c,UiText.t("값"),294,163,12,ThemePalette.secondary(theme,0xff91a5ae),false);
         int[] indices={Telemetry.BAT_VOLTAGE,Telemetry.BAT_SOC,Telemetry.TPMS_FL,Telemetry.TPMS_FR,Telemetry.TPMS_RL,Telemetry.TPMS_RR,1,10,11,12};
         for(int row=0;row<indices.length;row++){
             int i=indices[row];Telemetry.Sample s=samples[i];float y=184+row*21;
-            fitted(c,UiText.t(Telemetry.LABELS[i]),32,y,13,112,ThemePalette.primary(theme,0xffe1edf2));
-            fitted(c,sampleState(s),150,y,13,78,!s.seen?ThemePalette.secondary(theme,0xff91a5ae):s.valid?ECO_GREEN:s.held?ThemePalette.accent(theme,0xffa4d9ef):ThemePalette.critical(theme,0xffff4059));
+            fitted(c,UiText.t(Telemetry.LABELS[i]),32,y,13,148,ThemePalette.primary(theme,0xffe1edf2));
+            fitted(c,sampleState(s),190,y,13,96,!s.seen?ThemePalette.secondary(theme,0xff91a5ae):s.valid?ECO_GREEN:s.held?ThemePalette.accent(theme,0xffa4d9ef):ThemePalette.critical(theme,0xffff4059));
             String reading="—";
             if(s.hasDisplayValue())reading=String.format(Locale.US,i==Telemetry.BAT_VOLTAGE?"%.2f":i==11||i==12?"%+.2f":"%.1f",s.value)+" "+Telemetry.UNITS[i];
-            fitted(c,reading,235,y,13,112,ThemePalette.primary(theme,0xffe1edf2));
-            fitted(c,s.receivedCount+" · "+diagAge(s.seen?s.ageMs:-1)+" / "+diagAge(s.lastValidAgeMs),352,y,12,154,ThemePalette.secondary(theme,0xff91a5ae));
+            fitted(c,reading,294,y,13,188,ThemePalette.primary(theme,0xffe1edf2));
         }
-        text(c,UiText.t("DCT 관측"),544,138,16,ThemePalette.accent(theme,0xffa4d9ef),true);
-        button(c,UiText.t("변속기 설정"),transmission(),false,ThemePalette.accent(theme,0xffa4d9ef));
-        compactDiagRow(c,544,211,"변속기 종류",dct.transmissionSetting==1?"DCT":dct.transmissionSetting==2?"MT":dct.dctEstimate?"DCT (test)":"MT (test)");
-        compactDiagRow(c,544,235,"DCT 온도",dctValue(dct));
-        compactDiagRow(c,544,259,"DCT 서비스",connectionState(diagnostic.dctService));
-        compactDiagRow(c,544,283,"차량 속도",diagnosticSample(7," km/h",false));
-        compactDiagRow(c,544,307,"클러치 수명",UiText.t("미검증"));
+        text(c,UiText.t("DCT 관측"),544,138,16,ThemePalette.primary(theme,0xffe1edf2),true);
+        compactDiagRow(c,544,170,"변속기 종류",dct.transmissionSetting==1?"DCT":dct.transmissionSetting==2?"MT":dct.dctEstimate?"DCT (test)":"MT (test)");
+        compactDiagRow(c,544,194,"DCT 온도",dctValue(dct));
+        compactDiagRow(c,544,218,"DCT 서비스",connectionState(diagnostic.dctService));
+        compactDiagRow(c,544,242,"차량 속도",diagnosticSample(7," km/h",false));
+        compactDiagRow(c,544,266,"클러치 수명",UiText.t("미검증"));
         fitted(c,UiText.t("온도는 기존 진단 응답만 표시합니다."),544,326,10,220,ThemePalette.secondary(theme,0xff91a5ae));
-        text(c,UiText.t("차체 · 조명 (실험)"),544,349,13,ThemePalette.accent(theme,0xffa4d9ef),true);
+        text(c,UiText.t("차체 · 조명 (실험)"),544,349,13,ThemePalette.primary(theme,0xffe1edf2),true);
         String raw=diagnostic.lightingByte3<0?UiText.t("미수신"):
             hexByte(diagnostic.lightingByte3)+"/"+hexByte(diagnostic.lightingByte4)+" · "+diagnostic.lightingCount+"x · "+diagAge(diagnostic.lightingAgeMs);
         String bits=diagnostic.lightingByte3<0?"—":
@@ -200,8 +215,8 @@ public final class JsDiagnosticsRenderer {
         return state<0?"—":UiText.t(state==1?"연결 상태 미확인":"연결 안 됨");
     }
     private void drawBindings(Canvas c){
-        text(c,UiText.t("차량 연결"),32,138,16,ThemePalette.accent(theme,0xffa4d9ef),true);
-        text(c,UiText.t("서비스"),423,138,16,ThemePalette.accent(theme,0xffa4d9ef),true);
+        text(c,UiText.t("차량 연결"),32,138,16,ThemePalette.primary(theme,0xffe1edf2),true);
+        text(c,UiText.t("서비스"),423,138,16,ThemePalette.primary(theme,0xffe1edf2),true);
         String[] keys={"bcm","nmode","speed","pgs","hscan","media"};
         String[] names={"BCM","N Mode","속도","후방 카메라","HSCAN","미디어"};
         for(int i=0;i<keys.length;i++)diagRow(c,18,170+i*36,names[i],connectionState(diagnostic.source(keys[i]).status));
@@ -211,8 +226,8 @@ public final class JsDiagnosticsRenderer {
         diagRow(c,409,278,"MICOM 서비스",serviceAvailability(diagnostic.micom));
     }
     private void drawConnectivityDiagnostics(Canvas c){
-        panel(c,18,112,373,316,ThemePalette.panel(theme,0xff101315),ThemePalette.stroke(theme,0xff303638));panel(c,409,112,373,316,ThemePalette.panel(theme,0xff101315),ThemePalette.stroke(theme,0xff303638));
-        text(c,UiText.t("Wi-Fi 상태"),32,138,16,ThemePalette.accent(theme,0xffa4d9ef),true);
+        bodyPanel(c,18,112,373);bodyPanel(c,409,112,373);
+        text(c,UiText.t("Wi-Fi 상태"),32,138,16,ThemePalette.primary(theme,0xffe1edf2),true);
         button(c,UiText.t("Wi-Fi 설정"),wifi(),false,ThemePalette.accent(theme,0xffa4d9ef));
         diagRow(c,18,174,"Wi-Fi 기능",observed(diagnostic.wifiFeature,"선언됨","선언 안 됨"));
         diagRow(c,18,207,"Wi-Fi 상태",wifiRadio(diagnostic.wifiState));
@@ -221,7 +236,7 @@ public final class JsDiagnosticsRenderer {
         diagRow(c,18,306,"Wi-Fi 모듈",UiText.t("미검증"));
         diagRow(c,18,339,"Android 상태",wifiRadio(diagnostic.wifiState));
         fitted(c,UiText.t("Wi-Fi 켜짐은 통신 모듈 검증과 별개"),32,386,12,340,ThemePalette.secondary(theme,0xff91a5ae));
-        text(c,UiText.t("Bluetooth HAL 관찰"),423,138,16,ThemePalette.accent(theme,0xffa4d9ef),true);
+        text(c,UiText.t("Bluetooth HAL 관찰"),423,138,16,ThemePalette.primary(theme,0xffe1edf2),true);
         wideDiagRow(c,423,174,"컨트롤러",UiText.t(bluetoothStatus.controller));
         wideDiagRow(c,423,207,"선택된 HCD",UiText.t(bluetoothStatus.patch));
         wideDiagRow(c,423,240,"초기화 상태",UiText.t(bluetoothStatus.status));
@@ -245,7 +260,7 @@ public final class JsDiagnosticsRenderer {
     }
     private void button(Canvas c,String s,Bounds b,boolean on,int accent){
         float x=b.x,y=b.y,w=b.width,h=b.height;
-        float padding=Math.min(theme.spacing.buttonPadding,Math.max(0,w/2-2));
+        float padding=Math.min(0,Math.max(0,w/2-2));
         boolean legacy=theme.materialFor(SurfaceRole.CONTROL_BUTTON).legacy();
         int fill=on?(legacy?0xff233b46:theme.panelRaised):(legacy?0xff111415:theme.panel);
         surface.drawWithLegacy(c,theme,SurfaceRole.CONTROL_BUTTON,paint,x,y,w,h,fill,

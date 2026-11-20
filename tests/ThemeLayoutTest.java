@@ -35,8 +35,8 @@ public final class ThemeLayoutTest {
         check("aurora_focus".equals(applied.apply().id)&&applied.closed(),"apply returns the selected ID for persistence");
         OverviewLayout layout=new OverviewLayout();
         check(layout.count()==20&&layout.theme().columns==5&&layout.theme().rows==4,"Original preserves all 20 overview slots");
-        check(layout.left(layout.signalAt(0))==10&&layout.top(layout.signalAt(0))==62,"Original uses theme padding");
-        check(layout.width(layout.signalAt(0))==143.2f&&layout.height(layout.signalAt(0))==93f,"Original uses available width and height");
+        check(layout.left(layout.signalAt(0))==0&&layout.top(layout.signalAt(0))==50,"Original starts at the content edge after the shared region gap");
+        check(layout.width(layout.signalAt(0))==150.4f&&layout.height(layout.signalAt(0))==98.5f,"Original distributes the available content across its grid");
         for(int i=0;i<20;i++){
             int signal=layout.signalAt(i);float x=layout.left(signal),y=layout.top(signal);
             check(layout.hit(x+layout.width(signal)/2,y+layout.height(signal)/2)==signal,"Original hit mapping");
@@ -47,9 +47,9 @@ public final class ThemeLayoutTest {
         for(int i=0;i<layout.count();i++){
             int signal=layout.signalAt(i);seen[signal]=true;
             float x=layout.left(signal),y=layout.top(signal),w=layout.width(signal),h=layout.height(signal);
-            check(x>=0&&y>=52&&x+w<=800&&y+h<=480,"Focus card remains inside its content bounds");
+            check(x>=0&&y>=38&&x+w<=800&&y+h<=480,"Focus card remains inside its content bounds");
             check(layout.hit(x+w/2,y+h/2)==signal,"Focus draw and hit geometry agree");
-            check(w==149.6f&&h==97.5f,"Focus uses the available width and height");
+            check(w==160f&&h==110.5f,"Focus uses the available width and height");
             for(int j=i+1;j<layout.count();j++){
                 int other=layout.signalAt(j);float ox=layout.left(other),oy=layout.top(other);
                 check(x+w<=ox||ox+layout.width(other)<=x||y+h<=oy||oy+layout.height(other)<=y,"Focus cards do not overlap");

@@ -1,0 +1,22 @@
+{
+  "shell": {
+    "navigationPosition": "top",
+    "frame": {
+      "padding": {
+        "horizontal": 16,
+        "vertical": 16
+      },
+      "gap": {
+        "horizontal": 16,
+        "vertical": 12
+      },
+      "cornerShape": "circle",
+      "cornerRadius": 0
+    },
+    "topMenuBar": {
+      "buttonHeight": 38,
+      "itemGap": 6,
+      "presentation": "labels"
+    }
+  }
+}

@@ -8,10 +8,9 @@ public final class DashboardPage {
     public static final int OVERVIEW=0,F1=1,GAUGES=2,GRAPHS=3,PERFORMANCE=4; // The retired diagnostics ID (5) falls back to Overview.
     public static final int SETTINGS=6,CLOCK=7,BACK=8;
     static final int FOOTER_HEIGHT=44;
-    private static final float ADJACENT_CONTENT_PADDING_FACTOR=.5f;
     private static final int[] LEFT={144,250,328,418,18},WIDTH={100,72,84,110,120};
-    private static final int TOP=8, BUTTON_HEIGHT=ThemeSpec.Shell.TOP_BUTTON_HEIGHT, BACK_HEIGHT=34, ICON_WIDTH=96;
-    private static final int SETTINGS_LEFT=534, SETTINGS_WIDTH=68, MENU_RIGHT=782, CLOCK_GAP=12;
+    private static final int TOP=0, BUTTON_HEIGHT=ThemeSpec.Shell.TOP_BUTTON_HEIGHT, BACK_HEIGHT=34, ICON_WIDTH=96;
+    private static final int SETTINGS_LEFT=534, SETTINGS_WIDTH=68, MENU_RIGHT=800, CLOCK_GAP=12;
     private static final String[][] F1_ORDERS={{"speed","gear","rpm"},{"rpm","gear","speed"},{"gear","speed","rpm"},{"gear","rpm","speed"},{"speed","rpm","gear"},{"rpm","speed","gear"}};
     public static String f1OrderNode(int order,int slot){return F1_ORDERS[order][slot];}
     private DashboardPage(){}
@@ -50,7 +49,8 @@ public final class DashboardPage {
         public void visible(int page,boolean value){if(page<0||page>PERFORMANCE)throw new IllegalArgumentException("menu page");if(value)mask|=1<<page;else mask&=~(1<<page);}
         public int count(){int n=0;for(int id:MENU_ORDER)if(visible(id))n++;return n;}
     }
-    public static float menuLeft(Menu menu,int page){float x=18;for(int id:MENU_ORDER){if(id==page)return x;if(menu.visible(id))x+=menuWidth(menu,id)+6;}return -1;}
+    public static float menuLeft(Menu menu,int page){float x=0;for(int id:MENU_ORDER){if(id==page)return x;if(menu.visible(id))x+=menuWidth(menu,id)+6;}return -1;}
+    private static float menuLeft(ThemeSpec theme,Menu menu,int page){float x=0;for(int id:MENU_ORDER){if(id==page)return x;if(menu.visible(id))x+=menuWidth(menu,id)+theme.shell().topMenuItemGap;}return -1;}
     private static int menuWidth(Menu menu,int page){return menu.icons()?ICON_WIDTH:width(page);}
     private static Bounds topBounds(Menu menu,int page){
         int backWidth=menu.icons()?ICON_WIDTH:100,backLeft=MENU_RIGHT-backWidth;
@@ -62,21 +62,32 @@ public final class DashboardPage {
         }
         return new Bounds(menuLeft(menu,page),TOP,menuWidth(menu,page),BUTTON_HEIGHT);
     }
-    private static Bounds topBounds(Menu menu,int page,float layoutWidth,ThemeSpec.Insets padding){
+    private static Bounds topBounds(ThemeSpec theme,Menu menu,int page){
+        int backWidth=menu.icons()?ICON_WIDTH:100,backLeft=MENU_RIGHT-backWidth;
+        Bounds bounds;
+        if(page==BACK)bounds=new Bounds(backLeft,TOP+(BUTTON_HEIGHT-BACK_HEIGHT)/2f,backWidth,BACK_HEIGHT);
+        else if(page==SETTINGS)bounds=new Bounds(SETTINGS_LEFT,TOP,SETTINGS_WIDTH,BUTTON_HEIGHT);
+        else if(page==CLOCK){int left=SETTINGS_LEFT+SETTINGS_WIDTH+CLOCK_GAP;bounds=new Bounds(left,TOP,backLeft-CLOCK_GAP-left,BUTTON_HEIGHT);}
+        else bounds=new Bounds(menuLeft(theme,menu,page),TOP,menuWidth(menu,page),BUTTON_HEIGHT);
+        ThemeSpec.Insets p=theme.shell().topMenuPadding;
+        return new Bounds(bounds.x+p.left,bounds.y+p.top,Math.max(0,bounds.width-p.left-p.right),Math.max(0,bounds.height-p.top-p.bottom));
+    }
+    private static Bounds topBounds(Menu menu,int page,float layoutWidth,float padding){
         Bounds base=topBounds(menu,page);
-        if(padding!=null){
-            float referenceInset=800-MENU_RIGHT;
-            float factor=(layoutWidth-padding.left-padding.right)/(800-2*referenceInset);
-            return new Bounds(padding.left+(base.x-referenceInset)*factor,base.y-TOP+padding.top,base.width*factor,base.height);
-        }
-        float factor=layoutWidth/800f;
-        return new Bounds(base.x*factor,base.y,base.width*factor,base.height);
+        float factor=Math.max(0,layoutWidth-2*padding)/800f;
+        return new Bounds(padding+base.x*factor,padding+base.y,base.width*factor,base.height);
+    }
+    private static Bounds topBounds(Menu menu,int page,float layoutWidth){
+        return topBounds(menu,page,layoutWidth,0);
     }
     public static Bounds navigationBounds(ThemeSpec theme,Menu menu,int page){
         return navigationBounds(theme,menu,page,800);
     }
     public static Bounds navigationBounds(ThemeSpec theme,Menu menu,int page,float layoutWidth){
-        return theme.shell().left()?sidebarBounds(theme,menu,page):topBounds(menu,page,layoutWidth,theme.shell().topPadding);
+        if(theme.shell().left())return sidebarBounds(theme,menu,page);
+        Bounds base=topBounds(theme,menu,page);float horizontal=theme.layoutSpacing().horizontalPadding,vertical=theme.layoutSpacing().verticalPadding;
+        float factor=Math.max(0,layoutWidth-2*horizontal)/800f;
+        return new Bounds(horizontal+base.x*factor,vertical+base.y,base.width*factor,base.height);
     }
     public static int menuHit(Menu menu,float x,float y){
         if(y<TOP||y>=TOP+BUTTON_HEIGHT)return -1;
@@ -84,51 +95,63 @@ public final class DashboardPage {
         return -1;
     }
     public static int menuHit(Menu menu,float x,float y,float layoutWidth){
-        return menuHit(menu,x,y,layoutWidth,null);
+        for(int id:MENU_BUTTONS)if(menu.visible(id)&&topBounds(menu,id,layoutWidth).contains(x,y))return id;
+        return -1;
     }
-    private static int menuHit(Menu menu,float x,float y,float layoutWidth,ThemeSpec.Insets padding){
-        for(int id:MENU_BUTTONS)if(menu.visible(id)&&topBounds(menu,id,layoutWidth,padding).contains(x,y))return id;
+    private static int menuHit(ThemeSpec theme,Menu menu,float x,float y,float layoutWidth){
+        float horizontal=theme.layoutSpacing().horizontalPadding,vertical=theme.layoutSpacing().verticalPadding;
+        float factor=Math.max(0,layoutWidth-2*horizontal)/800f;
+        for(int id:MENU_BUTTONS)if(menu.visible(id)){
+            Bounds base=topBounds(theme,menu,id);
+            Bounds bounds=new Bounds(horizontal+base.x*factor,vertical+base.y,base.width*factor,base.height);
+            if(bounds.contains(x,y))return id;
+        }
         return -1;
     }
     public static int tap(Menu menu,float downX,float downY,float x,float y){int id=menuHit(menu,x,y);return id>=0&&id==menuHit(menu,downX,downY)?id:-1;}
     public static int tap(Menu menu,float downX,float downY,float x,float y,float layoutWidth){int id=menuHit(menu,x,y,layoutWidth);return id>=0&&id==menuHit(menu,downX,downY,layoutWidth)?id:-1;}
     public static int tap(ThemeSpec theme,Menu menu,float downX,float downY,float x,float y,float layoutWidth){
-        ThemeSpec.Insets padding=theme.shell().topPadding;
-        int id=menuHit(menu,x,y,layoutWidth,padding);
-        return id>=0&&id==menuHit(menu,downX,downY,layoutWidth,padding)?id:-1;
+        int id=theme.shell().left()?shellHit(theme,menu,x,y):menuHit(theme,menu,x,y,layoutWidth);
+        int down=theme.shell().left()?shellHit(theme,menu,downX,downY):menuHit(theme,menu,downX,downY,layoutWidth);
+        return id>=0&&id==down?id:-1;
     }
     public static float shellLeft(ThemeSpec theme,int id){
-        return theme.shell().left+(id==CLOCK?0:(shellWidth(theme)-sidebarSide(theme))/2);
+        return theme.layoutSpacing().horizontalPadding+theme.shell().left+(id==CLOCK?0:(shellWidth(theme)-sidebarSide(theme))/2);
     }
     public static float shellTop(ThemeSpec theme,int id){return shellTop(theme,new Menu(),id);}
     public static float shellTop(ThemeSpec theme,Menu menu,int id){
         ThemeSpec.Shell s=theme.shell();
-        if(id==CLOCK)return s.top;
+        float padding=theme.layoutSpacing().verticalPadding;
+        if(id==CLOCK)return padding+s.top;
         float side=sidebarSide(theme);
-        if(id==BACK)return 480-s.bottom-side;
+        if(id==BACK)return 480-padding-s.bottom-side;
         if(!menu.visible(id))return -10000;
         int slot=0;for(int page:MENU_ORDER){if(page==id)break;if(menu.visible(page))slot++;}
-        int count=menu.count()+1;
-        float end=480-s.bottom-side-s.gap,groupHeight=count*side+(count-1)*s.gap;
-        float start=s.top+s.buttonHeight+Math.max(s.gap,CLOCK_GAP);
+        int count=menu.count()+1; // Keep the reserved back-button slot used by the established vertical rhythm.
+        float groupGap=s.groupGap;
+        float end=480-padding-s.bottom-side-groupGap,groupHeight=count*side+Math.max(0,count-1)*s.itemGap;
+        float start=padding+s.top+s.buttonHeight+Math.max(groupGap,CLOCK_GAP);
         float free=end-start-groupHeight;
         float offset="center".equals(s.alignment)?free/2:"end".equals(s.alignment)?free:0;
-        return start+offset+slot*(side+s.gap);
+        return start+offset+slot*(side+s.itemGap);
     }
     public static float shellWidth(ThemeSpec theme){ThemeSpec.Shell s=theme.shell();return s.width-s.left-s.right;}
     public static Bounds dockBounds(ThemeSpec theme){
         ThemeSpec.Shell s=theme.shell();
+        float horizontal=theme.layoutSpacing().horizontalPadding,vertical=theme.layoutSpacing().verticalPadding;
         float inset=Math.min(6,Math.min(Math.min(s.left,s.right),Math.min(s.top,s.bottom)));
-        return new Bounds(s.left-inset,s.top-inset,shellWidth(theme)+2*inset,480-s.top-s.bottom+2*inset);
+        // Vertical shell insets position dock contents; the dock surface itself spans the available height.
+        return new Bounds(horizontal+s.left-inset,vertical-inset,shellWidth(theme)+2*inset,480-2*vertical+2*inset);
     }
     private static float sidebarSide(ThemeSpec theme){
         ThemeSpec.Shell s=theme.shell();
         // Keep the same button size when pages are hidden and reserve room for the clock.
-        int space=480-s.top-s.bottom-s.buttonHeight-Math.max(s.gap,CLOCK_GAP)-(MENU_BUTTONS.length-1)*s.gap;
+        int space=480-2*theme.layoutSpacing().verticalPadding-s.top-s.bottom-s.buttonHeight-Math.max(s.groupGap,CLOCK_GAP)-(MENU_BUTTONS.length-1)*s.itemGap;
         return Math.min(shellWidth(theme),space/MENU_BUTTONS.length);
     }
     private static Bounds sidebarBounds(ThemeSpec theme,Menu menu,int id){
-        if(id==CLOCK)return new Bounds(theme.shell().left,theme.shell().top,shellWidth(theme),theme.shell().buttonHeight);
+        if(id==CLOCK)return new Bounds(theme.layoutSpacing().horizontalPadding+theme.shell().left,
+            theme.layoutSpacing().verticalPadding+theme.shell().top,shellWidth(theme),theme.shell().buttonHeight);
         float side=sidebarSide(theme);
         return new Bounds(shellLeft(theme,id),shellTop(theme,menu,id),side,side);
     }
@@ -144,18 +167,22 @@ public final class DashboardPage {
         return regions(width,height,theme,false);
     }
     public static Regions regions(float width,float height,ThemeSpec theme,boolean expandedMedia){
-        int topHeight=theme==null?52:theme.shell().left()?0:theme.shell().topMenuHeight();
+        int topHeight=theme==null?52:theme.shell().left()?0:ThemeSpec.Shell.TOP_BUTTON_HEIGHT;
+        float scale=Math.min((width>=1800&&height>=700?width*5f/7f:width)/800f,height/480f);
+        float horizontalGap=theme==null?0:theme.layoutSpacing().horizontalGap()*scale;
+        float verticalGap=theme==null?0:theme.layoutSpacing().verticalGap()*scale;
+        float paddingX=theme==null?0:theme.layoutSpacing().horizontalPadding*scale;
+        float paddingY=theme==null?0:theme.layoutSpacing().verticalPadding*scale;
         boolean mediaEnabled=width>=1800&&height>=700;
         boolean mediaPanel=mediaEnabled||expandedMedia;
-        // Keep the existing wide-display scaling; compact media must not change screen scale.
-        float scale=Math.min((mediaEnabled?width*5f/7f:width)/800f,height/480f);
-        float contentWidth=width;
-        if(mediaEnabled)contentWidth=width*5f/7f;
+        float innerWidth=Math.max(0,width-2*paddingX);
+        float contentWidth=width-paddingX;
+        if(mediaEnabled)contentWidth=paddingX+(innerWidth-horizontalGap)*5f/7f;
         else if(expandedMedia){
             float fixedNavigation=theme!=null&&theme.shell().left()?theme.shell().width*scale:0;
-            contentWidth=fixedNavigation+(width-fixedNavigation)*5f/7f;
+            contentWidth=paddingX+fixedNavigation+(innerWidth-fixedNavigation-horizontalGap)*5f/7f;
         }
-        return new Regions(width,height,contentWidth,mediaEnabled,mediaPanel,topHeight>0,scale,topHeight*scale);
+        return new Regions(width,height,contentWidth,mediaEnabled,mediaPanel,topHeight>0,scale,topHeight*scale,horizontalGap,verticalGap,paddingX,paddingY,theme);
     }
     public static float screenScale(float width,float height){return regions(width,height).scale;}
     public static float screenLeft(float width,float height){return regions(width,height).left;}
@@ -167,16 +194,21 @@ public final class DashboardPage {
     public static float screenY(float y,float width,float height){return (y-regions(width,height).top)/regions(width,height).scale;}
     /** Three display regions: optional top navigation, page content, and an optional right media area. */
     public static final class Regions {
-        public final float displayWidth,displayHeight,contentWidth,scale,left,top,headerHeight,logicalContentWidth,logicalDisplayWidth,logicalHeight;
+        public final float displayWidth,displayHeight,contentWidth,scale,left,top,headerHeight,logicalContentWidth,logicalDisplayWidth,logicalHeight,logicalOuterPadding,logicalOuterPaddingX,logicalOuterPaddingY;
         public final boolean mediaEnabled,mediaPanelVisible;
         public final Bounds topMenu,content,media;
-        private Regions(float width,float height,float bodyWidth,boolean mediaEnabled,boolean mediaPanelVisible,boolean topVisible,float scale,float headerHeight){
+        private Regions(float width,float height,float bodyWidth,boolean mediaEnabled,boolean mediaPanelVisible,boolean topVisible,float scale,float headerHeight,float horizontalGap,float verticalGap,float outerPaddingX,float outerPaddingY,ThemeSpec theme){
             displayWidth=width;displayHeight=height;contentWidth=bodyWidth;this.mediaEnabled=mediaEnabled;this.mediaPanelVisible=mediaPanelVisible;
             this.scale=scale;this.headerHeight=headerHeight;left=0;top=0;
-            logicalContentWidth=bodyWidth/scale;logicalDisplayWidth=width/scale;logicalHeight=height/scale;
-            content=new Bounds(0,headerHeight,bodyWidth,height-headerHeight);
-            media=mediaPanelVisible?new Bounds(bodyWidth,headerHeight,width-bodyWidth,height-headerHeight):new Bounds(width,headerHeight,0,height-headerHeight);
-            topMenu=topVisible?new Bounds(0,0,width,headerHeight):new Bounds(0,0,0,0);
+            logicalContentWidth=bodyWidth/scale;logicalDisplayWidth=width/scale;logicalHeight=(height-outerPaddingY)/scale;logicalOuterPadding=outerPaddingY/scale;logicalOuterPaddingX=outerPaddingX/scale;logicalOuterPaddingY=outerPaddingY/scale;
+            float bodyTop=outerPaddingY+headerHeight+(topVisible?verticalGap:0);
+            ThemeSpec.Insets cp=theme==null?new ThemeSpec.Insets(0,0,0,0):theme.shell().contentPadding;
+            ThemeSpec.Insets mp=theme==null?new ThemeSpec.Insets(0,0,0,0):theme.shell().mediaPadding;
+            float cl=cp.left*scale,cr=cp.right*scale,ct=cp.top*scale,cb=cp.bottom*scale;
+            content=new Bounds(outerPaddingX+cl,bodyTop+ct,Math.max(0,bodyWidth-outerPaddingX-cl-cr),Math.max(0,height-outerPaddingY-bodyTop-ct-cb));
+            float mx=bodyWidth+horizontalGap,my=bodyTop,mw=Math.max(0,width-outerPaddingX-bodyWidth-horizontalGap),mh=Math.max(0,height-outerPaddingY-bodyTop);
+            media=mediaPanelVisible?new Bounds(mx+mp.left*scale,my+mp.top*scale,Math.max(0,mw-(mp.left+mp.right)*scale),Math.max(0,mh-(mp.top+mp.bottom)*scale)):new Bounds(width,my,0,mh);
+            topMenu=topVisible?new Bounds(outerPaddingX,outerPaddingY,Math.max(0,width-2*outerPaddingX),headerHeight):new Bounds(width,outerPaddingY,0,0);
         }
     }
     /** The actual page rectangle after navigation and theme viewport insets. */
@@ -188,8 +220,8 @@ public final class DashboardPage {
         private final boolean f1Page;
         private final boolean defaultF1;
         private final int f1Side,f1GapX,f1GapY,f1Padding;
-        private final float leftPaddingFactor,rightPaddingFactor;
-        private final float bottomPaddingFactor;
+        private final float horizontalGap,verticalGap;
+        private final ThemeSpec.Insets footerPadding;
         private final String[] f1Slots={"speed","gear","rpm"};
         public Content(ThemeSpec theme,String page){
             this(theme,page,800,480);
@@ -201,39 +233,37 @@ public final class DashboardPage {
             this(theme,page,viewportWidth,viewportHeight,footer,false);
         }
         public Content(ThemeSpec theme,String page,Regions regions,boolean footer){
-            this(theme,page,regions.logicalContentWidth,regions.logicalHeight,footer,regions.mediaPanelVisible);
+            this(theme,page,regions.logicalContentWidth+regions.logicalOuterPaddingX,
+                regions.logicalHeight+regions.logicalOuterPaddingY,footer,regions.mediaPanelVisible);
         }
         public Content(ThemeSpec theme,String page,float viewportWidth,float viewportHeight,boolean footer,boolean sideMedia){
             ThemeSpec.Viewport v=theme.viewport(page);
-            leftPaddingFactor=theme.shell().left()?ADJACENT_CONTENT_PADDING_FACTOR:1;
-            rightPaddingFactor=sideMedia?ADJACENT_CONTENT_PADDING_FACTOR:1;
-            bottomPaddingFactor=footer?ADJACENT_CONTENT_PADDING_FACTOR:1;
+            horizontalGap=theme.layoutSpacing().horizontalGap();
+            verticalGap=theme.layoutSpacing().verticalGap();
             f1Page="f1".equals(page);
             f1Grid=f1Page?theme.f1Grid():null;
             defaultF1=f1Page&&f1Grid==null&&!theme.hasF1();
-            f1Side=theme.spacing.f1SidePadding;
-            f1GapX=theme.spacing.gridGapX;
-            f1GapY=theme.spacing.gridGapY;
-            f1Padding=theme.spacing.cardPadding;
+            f1Side=0;
+            f1GapX=f1Grid==null?theme.layoutSpacing().gap:f1Grid.gap;
+            f1GapY=f1Grid==null?theme.layoutSpacing().gap:f1Grid.gap;
+            f1Padding=0;
+            footerPadding=theme.shell().bottomMediaPadding;
             for(int i=0;i<3;i++)for(int j=i+1;j<3;j++)if(f1SlotX(theme,f1Slots[i])>f1SlotX(theme,f1Slots[j])){String swap=f1Slots[i];f1Slots[i]=f1Slots[j];f1Slots[j]=swap;}
-            x=(theme.shell().left()?theme.shell().width:0)+(v==null?0:v.left);
-            y=(theme.shell().left()?0:theme.shell().topMenuHeight())+(v==null?0:v.top);
-            pageBottom=viewportHeight-(v==null?0:v.bottom);
-            float reserve=footer?FOOTER_HEIGHT+f1Padding+f1GapY:0;
-            bodyViewportHeight=Math.max(0,viewportHeight-reserve);
-            width=Math.max(0,viewportWidth-x-(v==null?0:v.right));height=Math.max(0,pageBottom-y-reserve);
+            float outerPaddingX=theme.layoutSpacing().horizontalPadding,outerPaddingY=theme.layoutSpacing().verticalPadding;
+            ThemeSpec.Insets area=theme.shell().contentPadding;
+            x=outerPaddingX+(theme.shell().left()?theme.shell().width+horizontalGap:0)+(v==null?0:v.left)+area.left;
+            y=outerPaddingY+(theme.shell().left()?0:theme.shell().topMenuHeight()+verticalGap)+(v==null?0:v.top)+area.top;
+            pageBottom=viewportHeight-outerPaddingY-(v==null?0:v.bottom)-area.bottom;
+            float reserve=footer?FOOTER_HEIGHT+verticalGap:0;
+            bodyViewportHeight=Math.max(0,pageBottom-reserve);
+            width=Math.max(0,viewportWidth-outerPaddingX-x-(v==null?0:v.right)-area.right);height=Math.max(0,pageBottom-y-reserve);
         }
         public boolean contains(float px,float py){return px>=x&&px<x+width&&py>=y&&py<y+height;}
         public Bounds bounds(){return new Bounds(x,y,width,height);}
-        public Bounds padded(ThemeSpec theme){
-            float dx=Math.min(theme.spacing.cardPadding,width/2),dy=Math.min(theme.spacing.cardPadding,height/2);
-            float left=dx*leftPaddingFactor,right=dx*rightPaddingFactor;
-            float bottom=dy*bottomPaddingFactor;
-            return new Bounds(x+left,y+dy,width-left-right,height-dy-bottom);
-        }
+        public Bounds padded(ThemeSpec theme){return bounds();}
         public Bounds notice(ThemeSpec theme){
             Bounds b=padded(theme);
-            float h=Math.min(b.height,76+2*theme.spacing.cardPadding);
+            float h=Math.min(b.height,76);
             return new Bounds(b.x,b.y+b.height-h,b.width,h);
         }
         private float f1SlotX(ThemeSpec theme,String id){
@@ -265,11 +295,11 @@ public final class DashboardPage {
             return new Bounds(b.atX(r.x/800f),b.atY((r.y-52f)/(theme.f1Bottom()-52)),r.width*b.width/800f,r.height*b.height/(theme.f1Bottom()-52));
         }
         private Bounds f1Frame(){
-            float side=f1Grid==null?f1Side:f1Grid.inset;
-            float vertical=f1Grid==null?f1Padding:f1Grid.inset;
+            float side=f1Side;
+            float vertical=0;
             float gapX=f1Grid==null?f1GapX:f1Grid.gap;
-            float left=side*leftPaddingFactor,innerWidth=width-left-side*rightPaddingFactor;
-            return new Bounds(x+left,y+vertical,innerWidth,height-vertical-vertical*bottomPaddingFactor);
+            float left=side,innerWidth=width-left-side;
+            return new Bounds(x+left,y+vertical,innerWidth,height-2*vertical);
         }
         private Bounds defaultF1Cell(String id){
             Bounds frame=f1Frame();
@@ -290,8 +320,10 @@ public final class DashboardPage {
         public Bounds footer(int action){
             float inset=f1Padding;
             float h=FOOTER_HEIGHT;
-            float l=x+inset*leftPaddingFactor,w=Math.max(0,width-inset*leftPaddingFactor-inset*rightPaddingFactor),t=pageBottom-h-inset;
+            float l=x+inset,w=Math.max(0,width-2*inset),t=pageBottom-h-inset;
             if(action==-10)return new Bounds(l,t,w,h);
+            l+=footerPadding.left;w=Math.max(0,w-footerPadding.left-footerPadding.right);
+            t+=footerPadding.top;h=Math.max(0,h-footerPadding.top-footerPadding.bottom);
             if(action==2)return new Bounds(l,t,48,h);
             float bw=Math.min(82,w*0.16f);
             int slot=action==-1?0:action==0?1:2;

@@ -1,14 +1,4 @@
 {
-  "spacing": {
-    "buttonPadding": 10,
-    "cardPadding": 14,
-    "settingsPadding": 28,
-    "pedalPadding": 20,
-    "f1SidePadding": 16,
-    "gearPadding": 16,
-    "gridGapX": 8,
-    "gridGapY": 8
-  },
   "material": {
     "style": "glass",
     "radius": 24,
@@ -26,10 +16,34 @@
     "background": "backgrounds/blue.png"
   },
   "wallpapers": [
-    {"id": "f1_2_blue", "name": "Blue", "asset": "backgrounds/blue.png", "thumbnail": "backgrounds/thumbnails/blue.png", "default": true},
-    {"id": "f1_2_red", "name": "Red", "asset": "backgrounds/red.png", "thumbnail": "backgrounds/thumbnails/red.png", "default": false},
-    {"id": "f1_2_green", "name": "Green", "asset": "backgrounds/green.png", "thumbnail": "backgrounds/thumbnails/green.png", "default": false},
-    {"id": "f1_2_mono", "name": "Mono", "asset": "backgrounds/mono.png", "thumbnail": "backgrounds/thumbnails/mono.png", "default": false}
+    {
+      "id": "f1_2_blue",
+      "name": "Blue",
+      "asset": "backgrounds/blue.png",
+      "thumbnail": "backgrounds/thumbnails/blue.png",
+      "default": true
+    },
+    {
+      "id": "f1_2_red",
+      "name": "Red",
+      "asset": "backgrounds/red.png",
+      "thumbnail": "backgrounds/thumbnails/red.png",
+      "default": false
+    },
+    {
+      "id": "f1_2_green",
+      "name": "Green",
+      "asset": "backgrounds/green.png",
+      "thumbnail": "backgrounds/thumbnails/green.png",
+      "default": false
+    },
+    {
+      "id": "f1_2_mono",
+      "name": "Mono",
+      "asset": "backgrounds/mono.png",
+      "thumbnail": "backgrounds/thumbnails/mono.png",
+      "default": false
+    }
   ],
   "decorations": {
     "overviewCardTopLine": false,

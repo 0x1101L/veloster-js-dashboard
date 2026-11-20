@@ -42,7 +42,7 @@ final class OverviewCardRenderer {
         float titleWidth=unitAtTop?Math.max(0,a.w-suffix.width-s.titleUnitGap):a.w;
         Line heading=line(title,BODY,s.titleSize,titleWidth,theme.textSecondary,false);
         float numberWidth=Math.max(0,a.w-diameter-gaugeGap-(unitBesideValue?suffix.width+valueUnitGap:0));
-        Line number=line(value,NUMERIC,s.valueSize,numberWidth,color,false);
+        Line number=line(value,NUMERIC,s.valueSize,numberWidth,glassValues()?theme.textPrimary:color,false);
         float headingHeight=Math.max(heading.height(),unitAtTop?suffix.height():0);
         float bodyHeight=Math.max(number.height(),diameter)+(bar?s.valueGaugeGap+s.barHeight:0);
         float bottomUnitHeight=suffix!=null&&!unitAtTop&&!unitBesideValue?suffix.height():0;
@@ -85,8 +85,8 @@ final class OverviewCardRenderer {
     }
 
     void tirePressure(Canvas c,OverviewLayout layout,int slot,String[] values,boolean bold){
-        drawGroup(c,layout,slot,OverviewCardKind.TIRE_PRESSURE,UiText.t("타이어 공기압"),
-            new String[]{"FL","FR","RL","RR"},values,null,"psi",2,bold,null);
+        drawGroup(c,layout,slot,OverviewCardKind.TIRE_PRESSURE,UiText.t("타이어 공기압")+" (psi)",
+            new String[]{"","","",""},values,null,"",2,bold,null);
     }
     void stability(Canvas c,OverviewLayout layout,int slot,int first,Telemetry.Sample[] samples){
         boolean enabled=first==Telemetry.PD_TCS_ENABLED;
@@ -95,7 +95,7 @@ final class OverviewCardRenderer {
         for(int n=0;n<3;n++){
             Telemetry.Sample sample=samples[first+n];
             boolean known=sample.valid&&(!enabled||sample.value==0||sample.value==1);
-            labels[n]=enabled?(n==0?"TCS":n==1?"ESC":UiText.t("ABS 경고등")):UiText.t(Telemetry.LABELS[first+n]);
+            labels[n]=enabled?(n==0?"TCS":n==1?"ESC":"ABS"):UiText.t(Telemetry.LABELS[first+n]);
             values[n]=!known?"—":enabled?(sample.value==1?"ON":"OFF"):UiText.t(sample.value==1?"작동":"비작동");
             boolean warning=enabled?(n<2?sample.value==0:sample.value==1):sample.value==1;
             colors[n]=known&&warning?theme.critical:theme.accent;
@@ -103,17 +103,16 @@ final class OverviewCardRenderer {
         drawGroup(c,layout,slot,OverviewCardKind.STABILITY,UiText.t(enabled?"TCS · ESC · ABS 상태":"TCS · ESC · ABS"),
             labels,values,colors,"",1,!enabled,null);
     }
-    void fuelEconomy(Canvas c,OverviewLayout layout,int slot,String trial,String cluster,String range){
+    void fuelEconomy(Canvas c,OverviewLayout layout,int slot,String cluster,String range){
         drawGroup(c,layout,slot,OverviewCardKind.FUEL_ECONOMY,UiText.t("연비"),
-            new String[]{UiText.t("실주행 시험"),UiText.t("계기판"),UiText.t("주행가능")},
-            new String[]{trial,cluster,range},null,"",1,false,null);
+            new String[]{UiText.t("계기판"),UiText.t("주행가능")},
+            new String[]{cluster,range},null,"",1,false,null);
     }
     void dctTemperature(Canvas c,OverviewLayout layout,int slot,Telemetry.DctTemperatures dct,String odd,String even){
+        String reading=dct.single?odd:"L "+odd+" | R "+even;
         drawGroup(c,layout,slot,OverviewCardKind.DCT_TEMPERATURE,UiText.t("DCT 온도"),
-            dct.single?new String[]{UiText.t("온도")}:new String[]{UiText.t("홀수단"),UiText.t("짝수단")},
-            dct.single?new String[]{odd}:new String[]{odd,even},
-            new int[]{Float.isNaN(dct.oddC)?theme.textSecondary:theme.accent,Float.isNaN(dct.evenC)?theme.textSecondary:theme.accent},
-            "",1,false,dct);
+            new String[]{""},new String[]{reading},
+            new int[]{Float.isNaN(dct.oddC)?theme.textSecondary:theme.accent},"",1,false,dct);
     }
     private void drawGroup(Canvas c,OverviewLayout layout,int slot,OverviewCardKind kind,String title,String[] labels,
             String[] values,int[] colors,String unit,int columns,boolean bold,Telemetry.DctTemperatures dct){
@@ -124,50 +123,80 @@ final class OverviewCardRenderer {
         float gaugeGap=dct==null?0:Math.min(s.valueGaugeGap,(a.w-gaugeWidth)*.35f);
         float columnGap=Math.min(s.columnGap,a.w*.25f);
         float colWidth=(a.w-gaugeWidth-gaugeGap-(columns-1)*columnGap)/columns;
-        float labelGap=Math.min(s.labelValueGap,colWidth*.15f);
-        float labelWidth=(colWidth-labelGap)*(columns==1?.43f:.35f);
+        boolean tire=kind==OverviewCardKind.TIRE_PRESSURE;
+        boolean sharedHeaders=kind==OverviewCardKind.STABILITY||kind==OverviewCardKind.FUEL_ECONOMY;
+        int headerSize=Math.max(styles[OverviewCardKind.STABILITY.ordinal()].labelSize,
+            styles[OverviewCardKind.FUEL_ECONOMY.ordinal()].labelSize);
+        int titleSize=sharedHeaders?styles[OverviewCardKind.STANDARD.ordinal()].titleSize:s.titleSize;
+        float labelGap=tire?0:Math.min(s.labelValueGap,colWidth*.15f);
+        float labelWidth=tire?0:(colWidth-labelGap)*(columns==1?.43f:.35f);
         float valueWidth=colWidth-labelWidth-labelGap;
         int rows=(values.length+columns-1)/columns;
         float[] heights=new float[rows];
         Line[] names=new Line[values.length],readings=new Line[values.length];
+        Line suffix=unit.isEmpty()?null:line(unit,BODY,s.unitSize,a.w,theme.textSecondary,false);
         for(int i=0;i<values.length;i++){
-            names[i]=line(labels[i],BODY,s.labelSize,labelWidth,theme.textSecondary,false);
-            readings[i]=line(values[i],kind==OverviewCardKind.STABILITY?BODY:NUMERIC,s.valueSize,valueWidth,
-                colors==null?theme.accent:colors[i],bold);
+            names[i]=line(labels[i],BODY,sharedHeaders?headerSize:s.labelSize,labelWidth,theme.textSecondary,false);
+            int valueColor=colors==null?(glassValues()?theme.textPrimary:theme.accent):colors[i];
+            if(glassValues())valueColor=theme.textPrimary;
+            float readingWidth=valueWidth;
+            readings[i]=line(values[i],kind==OverviewCardKind.STABILITY?BODY:NUMERIC,s.valueSize,readingWidth,valueColor,bold);
             heights[i/columns]=Math.max(heights[i/columns],Math.max(names[i].height(),readings[i].height()));
         }
-        Line heading=line(title,BODY,s.titleSize,a.w,theme.textSecondary,false);
-        Line suffix=unit.isEmpty()?null:line(unit,BODY,s.unitSize,a.w,theme.textSecondary,false);
-        Line lane=dct==null?null:line("L",BODY,s.labelSize,gaugeWidth/2,theme.textSecondary,false);
+        Line heading=line(title,BODY,titleSize,a.w,theme.textSecondary,false);
         float bodyHeight=(rows-1)*s.rowGap;
         for(float height:heights)bodyHeight+=height;
-        if(lane!=null)bodyHeight=Math.max(bodyHeight,lane.height()+12);
         float scale=fit(a.h,heading.height()+s.titleValueGap+bodyHeight+(suffix==null?0:s.valueUnitGap+suffix.height()));
+        float readingScale=scale;
+        float tireRowHeight=0;
+        if(tire){
+            float valueTop=a.y+heading.height()+s.titleValueGap;
+            float availableHeight=Math.max(0,a.y+a.h-valueTop);
+            tireRowHeight=availableHeight/rows;
+            float maxTextWidth=0,maxTextHeight=0;
+            for(int i=0;i<readings.length;i++){
+                maxTextWidth=Math.max(maxTextWidth,readings[i].width);
+                maxTextHeight=Math.max(maxTextHeight,readings[i].height());
+            }
+            readingScale=maxTextHeight==0?1:tireRowHeight/maxTextHeight;
+            if(maxTextWidth>0)readingScale=Math.min(readingScale,valueWidth/maxTextWidth);
+        }
         heading.draw(c,a.x,a.y,heading.height()*scale,scale,false,a.w);
         float y=a.y+(heading.height()+s.titleValueGap)*scale;
-        if(lane!=null)drawDctGauge(c,a.x+a.w-gaugeWidth,y,gaugeWidth,bodyHeight*scale,lane,s,scale,dct);
+        if(dct!=null){
+            bodyHeight=Math.max(0,a.y+a.h-y);
+            if(rows>0)for(int row=0;row<rows;row++)heights[row]=bodyHeight/rows;
+            drawDctGauge(c,a.x+a.w-gaugeWidth,y,gaugeWidth,bodyHeight,dct);
+        }
         for(int row=0;row<rows;row++){
-            float height=heights[row]*scale;
+            float height=tire?tireRowHeight:heights[row]*scale;
             for(int col=0;col<columns;col++){
                 int i=row*columns+col;
                 if(i>=values.length)break;
                 float x=a.x+col*(colWidth+columnGap);
                 names[i].draw(c,x,y,height,scale,false,labelWidth);
-                readings[i].draw(c,x+labelWidth+labelGap,y,height,scale,true,valueWidth);
+                if(tire){
+                    float textHeight=readings[i].height()*readingScale;
+                    float drawY=row==0?y+(height-textHeight)/2:y+height-textHeight;
+                    readings[i].draw(c,x+(valueWidth-readings[i].width*readingScale)/2,drawY,
+                        textHeight,readingScale,false,valueWidth);
+                }else readings[i].draw(c,x+labelWidth+labelGap,y,height,dct==null?scale:1,true,valueWidth);
             }
-            y+=height+(row+1<rows?s.rowGap*scale:0);
+            y+=height+(row+1<rows&&!tire&&dct==null?s.rowGap*scale:0);
         }
         if(suffix!=null)suffix.draw(c,a.x,y+s.valueUnitGap*scale,suffix.height()*scale,scale,false,a.w);
     }
-    private void drawDctGauge(Canvas c,float x,float y,float w,float h,Line lane,OverviewCardStyle s,float scale,Telemetry.DctTemperatures dct){
-        float half=w/2,laneHeight=lane.height()*scale,top=y+laneHeight,bottom=y+h;
-        lane.draw(c,x,y,laneHeight,scale,false,half);
-        if(!dct.single)line("R",BODY,s.labelSize,half,theme.textSecondary,false).draw(c,x+half,y,laneHeight,scale,false,half);
+    private boolean glassValues(){return theme!=null&&theme.id.startsWith("f1_2");}
+    private void drawDctGauge(Canvas c,float x,float y,float w,float h,Telemetry.DctTemperatures dct){
+        float half=w/2,top=y,bottom=y+h;
         box(c,x,top,x+w,bottom,theme.stroke);
         float inset=Math.min(1,Math.min(w,h)*.1f);
         box(c,x+inset,top+inset,x+w-inset,bottom-inset,theme.panel);
-        dctFill(c,dct.oddC,x+inset,x+half-inset,top+inset,bottom-inset);
-        if(!dct.single)dctFill(c,dct.evenC,x+half+inset,x+w-inset,top+inset,bottom-inset);
+        if(dct.single)dctFill(c,dct.oddC,x+inset,x+w-inset,top+inset,bottom-inset);
+        else{
+            dctFill(c,dct.oddC,x+inset,x+half-inset,top+inset,bottom-inset);
+            dctFill(c,dct.evenC,x+half+inset,x+w-inset,top+inset,bottom-inset);
+        }
     }
     private void dctFill(Canvas c,float temp,float l,float r,float t,float b){
         if(Float.isNaN(temp)||r<=l||b<=t)return;
@@ -193,7 +222,8 @@ final class OverviewCardRenderer {
     private Area frame(Canvas c,OverviewLayout layout,int slot,OverviewCardStyle s,int accent){
         float x=layout.leftAt(slot),y=layout.topAt(slot),w=layout.widthAt(slot),h=layout.heightAt(slot);
         if(w>0&&h>0)surface.overviewCard(c,theme,paint,x,y,w,h,accent);
-        return new Area(x+s.padding.left,y+s.padding.top,w-s.padding.left-s.padding.right,h-s.padding.top-s.padding.bottom);
+        return new Area(x+s.padding.left,y+s.padding.top,
+            Math.max(0,w-s.padding.left-s.padding.right),Math.max(0,h-s.padding.top-s.padding.bottom));
     }
     private static float fit(float available,float desired){return desired>available?available/desired:1;}
     private void box(Canvas c,float l,float t,float r,float b,int color){

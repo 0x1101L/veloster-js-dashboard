@@ -1,14 +1,4 @@
 {
-  "spacing": {
-    "buttonPadding": 14,
-    "cardPadding": 12,
-    "settingsPadding": 28,
-    "pedalPadding": 18,
-    "f1SidePadding": 8,
-    "gearPadding": 4,
-    "gridGapX": 12,
-    "gridGapY": 10
-  },
   "material": {
     "style": "flat",
     "radius": 12,

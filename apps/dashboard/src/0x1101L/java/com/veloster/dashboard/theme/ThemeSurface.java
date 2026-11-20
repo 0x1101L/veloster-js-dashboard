@@ -199,6 +199,17 @@ public final class ThemeSurface {
     public void panelWithLegacy(Canvas c,ThemeSpec theme,Paint caller,float x,float y,float w,float h,int fill,int edge){
         drawWithLegacy(c,theme,SurfaceRole.PANEL,caller,x,y,w,h,fill,edge);
     }
+    /** Shared segmented tabs: a themed glass track with one inset selected surface. */
+    public void tabs(Canvas c,ThemeSpec theme,Paint caller,float x,float y,float w,float h,int count,int selected){
+        if(count<=0||w<=0||h<=0)return;
+        float inset=Math.min(4,Math.min(w/count,h/4));
+        drawWithLegacy(c,theme,SurfaceRole.SETTINGS_GROUP,caller,x,y,w,h,theme.panel,theme.stroke);
+        if(selected<0||selected>=count)return;
+        float segment=(w-2*inset)/count;
+        float left=x+inset+selected*segment;
+        drawWithLegacy(c,theme,SurfaceRole.CONTROL_BUTTON,caller,left,y+inset,segment,h-2*inset,
+                theme.panelRaised,theme.accent);
+    }
     public void drawWithLegacy(Canvas c,ThemeSpec theme,SurfaceRole role,Paint caller,
                                float x,float y,float w,float h,int fill,int edge){
         if(draw(c,theme,role,x,y,w,h,fill,edge))return;
@@ -216,7 +227,7 @@ public final class ThemeSurface {
     public void overviewCard(Canvas c,ThemeSpec theme,Paint caller,float x,float y,float w,float h,int accent){
         drawWithLegacy(c,theme,SurfaceRole.DATA_CARD,caller,x,y,w,h,theme.panel,theme.stroke);
         if(theme.overviewCardTopLine()){
-            caller.setColor(accent);c.drawRect(x+theme.spacing.cardPadding,y,x+53,y+2,caller);
+            caller.setColor(accent);c.drawRect(x+0,y,x+53,y+2,caller);
         }
     }
     /** Navigation appearance; bounds and hit testing stay with DashboardPage. */
@@ -231,7 +242,7 @@ public final class ThemeSurface {
         }
         if(label==null)return;
         boolean sidebar=theme.shell().left();
-        float padding=Math.min(theme.spacing.buttonPadding,sidebar?w/8:Math.max(0,w/2-2));
+        float padding=Math.min(0,sidebar?w/8:Math.max(0,w/2-2));
         caller.setTypeface(resources==null?Typeface.DEFAULT_BOLD:resources.fontForText(label,true));
         float size=theme.textSize(label,14,true);caller.setTextSize(size);float measured=caller.measureText(label);
         caller.setColor(selected?accent:theme.color(ThemeSpec.ColorRole.ON_SURFACE_VARIANT));

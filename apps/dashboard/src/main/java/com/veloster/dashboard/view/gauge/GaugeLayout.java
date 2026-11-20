@@ -24,11 +24,11 @@ public final class GaugeLayout {
     private ThemeSpec theme=ThemeSpec.original();
     private Bounds area=new DashboardPage.Content(theme,"gauges").padded(theme);
     public void viewport(ThemeSpec theme,DashboardPage.Content content){this.theme=theme;area=content.padded(theme);}
-    public Bounds toggle(){float w=Math.min(area.width*.36f,theme.spacing.buttonPadding*2+112);
+    public Bounds toggle(){float w=Math.min(area.width*.36f,0*2+112);
         return new Bounds(area.right()-w,area.y,w,26);}
     public Bounds card(int i){
         slot(i);
-        int cols=columns(),rows=count()/cols,gx=theme.spacing.gridGapX,gy=theme.spacing.gridGapY;
+        int cols=columns(),rows=count()/cols,gx=theme.layoutSpacing().gap,gy=theme.layoutSpacing().gap;
         float top=toggle().bottom()+gy,w=(area.width-(cols-1)*gx)/cols,h=(area.bottom()-top-(rows-1)*gy)/rows;
         return new Bounds(area.x+i%cols*(w+gx),top+i/cols*(h+gy),w,h);
     }
