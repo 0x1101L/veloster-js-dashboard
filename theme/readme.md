@@ -33,22 +33,22 @@ npm run preview:live -- --theme f1-2
 
 `dashboard.json`의 `decorations`·`fills`·`mediaControls`·`mediaFooter`는 `components.json`으로, `palette`·`backdrop`은 `colors.json`으로 내보낸다. F1-2의 카드 상단선과 선택 메뉴 밑줄은 여기서 끈다. 시안과 정식 앱에서 ID가 달라도 같은 속성이 적용된다.
 
-전체 조망 카드의 내부 크기와 간격은 `layouts/overview.json`의 `cardDefaults`에서 지정한다. 공기압·DCT 온도·연비·안전장치 카드는 `cardTypes`의 각 규격을 사용한다. [지원 필드와 예제](../docs/theme_engine_v3.md#전체-조망-카드-내부).
+전체 조망 카드의 내부 padding과 크기·간격은 `layouts/overview.json`의 `cardDefaults`에서 지정한다. 공기압·DCT 온도·연비·안전장치 카드는 `cardTypes`에서 내부 padding을 상속하거나 별도로 지정할 수 있다. [지원 필드와 예제](../docs/theme_engine_v3.md#전체-조망-카드-내부).
 
 출력은 `artifacts/f1_blue.png`, `f1_blue_waiting.png`, `f1_original.png`다. Astryx의 `themes/f1-blue/preview.html`과 `sheet.html`은 별도의 웹 컴포넌트 색상 검수 자료다. `--png`에는 기존 Chrome을 사용할 수 있으며, 이 방식의 웹 PNG는 페이지 상단 2400px만 포함할 수 있다. 웹 프리뷰의 선택적 페이지에 필요한 recharts·아이콘 패키지는 설치하지 않았다.
 
 ## Liquid Glass
 
-`themes/f1-2/layouts/shell.json`의 `"screenCorner": "squircle"`은 디스플레이 외곽과 Liquid Glass UI의 둥근 카드·버튼·이미지·타일에 스쿼클 곡선을 적용한다. 컴포넌트마다 기존 반경을 유지한다. `"screenCornerRadius": 32`는 디스플레이 외곽 반경이다. Flat과 Optics도 부모 설정을 상속한다. 원호 모양을 원하면 `"screenCorner": "circle"`로 바꾼다. Astryx 컴포넌트의 `corners`와는 별개다.
+`themes/f1-2/layouts/shell.json`의 `shell.frame.cornerShape`는 화면 모서리 모양을, `shell.frame.cornerRadius`는 외곽 반경을 지정한다. Flat과 Optics는 부모 설정을 상속한다. 원호 모양은 `"cornerShape": "circle"`로 지정한다. Astryx 컴포넌트의 `corners`와는 별개다.
 
-`themes/f1-2/`는 정식 테마 Liquid Glass의 디자인 원본이며 좌측 메뉴, 재배치된 F1과 3열 전체 조망을 사용한다. Astryx 시안은 `surfaces=glass`, `corners=round`, `buttons=soft`를 사용한다. 앱과 앱 렌더러용 시안의 `dashboard.json`은 `glass` 표면과 그라데이션 배경을 따로 지정한다. 앱의 Liquid Glass (Flat)은 정식 Glass를 부모로 두고 `material.style`만 덮어쓰므로 별도의 Astryx 시안 폴더가 없다. 내보내기는 배경을 `colors.json`에 기록한다. 앱은 `apps/dashboard/src/0x1101L/assets/themes/f1_2/`의 승인된 사본을 읽는다. 색상과 컴포넌트는 Astryx 내보내기 결과를, 배치는 `layouts/`를 반영한다. Pretendard 글꼴은 F1-2에 번들되며 Flat과 Optics가 상속한다. F1 Blue 등 미등록 시안은 임시 카탈로그를 사용한다.
+`themes/f1-2/`는 정식 테마 Liquid Glass의 디자인 원본이며 좌측 메뉴, 재배치된 F1과 3열 전체 조망을 사용한다. Astryx 시안은 `surfaces=glass`, `corners=round`, `buttons=soft`를 사용한다. 앱과 앱 렌더러용 시안의 `dashboard.json`은 `glass` 표면과 그라데이션 배경을 따로 지정한다. 앱의 Liquid Glass (Flat)은 정식 Glass를 부모로 두고 `material.style`만 덮어쓰므로 별도의 Astryx 시안 폴더가 없다. 내보내기는 배경을 `colors.json`에 기록한다. 앱은 `apps/dashboard/src/0x1101L/assets/themes/f1_2/`의 승인된 사본을 읽는다. 색상과 컴포넌트는 Astryx 내보내기 결과를, 배치는 `layouts/`를 반영한다. Pretendard 1.3.9 Variable과 API 17용 Regular/Medium/SemiBold/Bold 정적 굵기는 F1-2에 번들되며 Flat과 Optics가 상속한다. 글꼴은 SIL Open Font License 1.1로 배포되고 라이선스 파일은 번들 폴더에 포함한다. 배율은 앱의 800×480 기준 글자 크기에 맞춰 본문 100%, 숫자 108%, 강조 105%로 둔다. F1 Blue 등 미등록 시안은 임시 카탈로그를 사용한다.
 
 기본 테마 엔진은 역할별 표면을 선택하고, Glass 역할은 독립 `LiquidGlassEngine`에 위임한다. 이 협력 엔진은 테마 렌더러의 캔버스·색상·재질 값을 사용하며 별도의 화면 렌더링 경로를 만들지 않는다. Glass 테마가 활성화되면 설정 → UI 설정 → Liquid Glass에서 투명도와 블러를 각각 다섯 단계로, 하이라이트를 세 단계로 조절할 수 있다. 투명도 감소에서는 블러를 끄며, 그 밖의 단계에서 블러는 테마의 역할별 블러 값을 기준으로 한다. 설정은 저장·복원되며 Glass가 없는 Flat 테마에서는 항목을 숨긴다. 렌더링은 Apple의 Liquid Glass를 참고한 Canvas 근사 표현이며 iOS 네이티브 재질 API나 광학 굴절, 움직임에 따른 반사를 제공하지 않는다.
 
-F1-2 왼쪽 메뉴 폭은 80이고 네 방향 여백은 16 논리 단위다. 상단 메뉴 여백은 위·아래 8, 좌·우 16이며, 와이드 미디어 카드와 F1 그리드의 외곽 여백 기준값은 네 방향 16이다. F1 본문의 메뉴·미디어 인접 가로 여백에는 공통 렌더러 규칙을 적용한다. 시계는 최상단, 돌아가기는 최하단에 고정하며 전체 화면 배경을 본문과 공유한다. 설정 → UI 설정에서 메뉴 위치와 각 페이지의 표시·숨김을 선택한다. 메뉴 위치는 테마 기본값·상단·왼쪽을 지원하며, 본문이 들어가지 않는 위치는 선택할 수 없다. 설정·돌아가기는 유지한다. 음악 아이콘·이전·재생·다음은 각 컨테이너 중앙에 정렬한다.
+F1-2 왼쪽 메뉴 폭은 80 논리 단위다. 화면 바깥 margin은 없으며 영역 사이 간격은 `shell.frame.gap`으로 정한다. 왼쪽 메뉴의 `gap`은 시계·메뉴·돌아가기 묶음 사이, `itemGap`은 메뉴 버튼 사이 간격이다. 각 영역의 `padding`은 안쪽 여백으로만 쓴다. 시계는 최상단, 돌아가기는 최하단에 고정하며 전체 화면 배경을 본문과 공유한다. 설정 → UI 설정에서 메뉴 위치와 각 페이지의 표시·숨김을 선택한다. 메뉴 위치는 테마 기본값·상단·왼쪽을 지원하며, 본문이 들어가지 않는 위치는 선택할 수 없다. 설정·돌아가기는 유지한다. 음악 아이콘·이전·재생·다음은 각 컨테이너 중앙에 정렬한다.
 
 
-F1-2의 `layouts/f1.json`은 `f1Grid`로 행 가중치와 열·행 span을 지정한다. 콘텐츠와 음악 바가 외곽선을 공유하며, 일반·음악 결합·하단 바 숨김에서 배치를 검증한다. [CarPlay 참고 이미지와 검수](../docs/f1_2_carplay_reference_review.md)를 참고한다.
+F1-2의 `layouts/f1.json`은 `f1Grid`로 행 가중치와 열·행 span을 지정한다. `itemGap`은 카드 사이 간격, `padding`은 카드 내부 여백이다. 콘텐츠와 음악 바가 외곽선을 공유하며, 일반·음악 결합·하단 바 숨김에서 배치를 검증한다. [CarPlay 참고 이미지와 검수](../docs/f1_2_carplay_reference_review.md)를 참고한다.
 
 출력은 `artifacts/f1-2/f1_2_settings.png`, `f1_2_menu_hidden.png`, `f1_2.png`, `f1_2_waiting.png`, `f1_original.png`, `f1_2_overview.png`, 분리 JSON과 `token_mapping.json`이다. 검수·승인 기록은 `@memory/theme_support/designs/f1_2/`에 둔다. Astryx는 soft 버튼의 일부 variant/state 대비 검사를 완료하지 않았다고 보고하므로 자동 검사 통과를 전체 접근성 검증으로 취급하지 않는다.
 

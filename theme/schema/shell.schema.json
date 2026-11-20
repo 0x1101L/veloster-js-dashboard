@@ -7,93 +7,116 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "position": {
+        "navigationPosition": {
           "enum": [
             "top",
             "left"
           ]
         },
-        "navigationAppearance": {
-          "enum": ["buttons", "dock"],
-          "default": "buttons",
-          "description": "Dock is available with left navigation only."
-        },
-        "alignment": {
-          "enum": [
-            "start",
-            "center",
-            "end"
-          ]
-        },
-        "width": {
-          "type": "integer",
-          "minimum": 80,
-          "maximum": 240
-        },
-        "padding": {
+        "frame": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "top": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 60
+            "padding": {
+              "oneOf": [
+                { "type": "integer", "minimum": 0, "maximum": 40 },
+                { "$ref": "#/$defs/framePadding" }
+              ]
             },
-            "right": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 40
-            },
-            "bottom": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 60
-            },
-            "left": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 40
-            }
+            "gap": { "$ref": "#/$defs/regionGap" },
+            "cornerShape": { "enum": ["circle", "squircle", "sqircle"], "default": "circle" },
+            "cornerRadius": { "type": "integer", "minimum": 0, "maximum": 240, "default": 0 }
           }
         },
-        "topPadding": {
+        "sideMenuBar": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["top", "right", "bottom", "left"],
           "properties": {
-            "top": {"type": "integer", "minimum": 0, "maximum": 24},
-            "right": {"type": "integer", "minimum": 0, "maximum": 40},
-            "bottom": {"type": "integer", "minimum": 0, "maximum": 24},
-            "left": {"type": "integer", "minimum": 0, "maximum": 40}
+            "width": { "type": "integer", "minimum": 48, "maximum": 240 },
+            "alignment": { "enum": ["start", "center", "end"] },
+            "buttonHeight": { "type": "integer", "minimum": 24, "maximum": 50 },
+            "padding": { "$ref": "#/$defs/sideMenuPadding" },
+            "gap": { "type": "integer", "minimum": 0, "maximum": 40, "description": "Gap between the clock, navigation group, and back button group." },
+            "itemGap": { "type": "integer", "minimum": 0, "maximum": 24, "description": "Gap between navigation buttons." },
+            "appearance": { "enum": ["buttons", "dock"], "default": "buttons" },
+            "presentation": { "enum": ["labels", "icons"], "default": "labels" }
           }
         },
-        "mediaPadding": {
+        "topMenuBar": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "buttonHeight": { "type": "integer", "minimum": 24, "maximum": 50 },
+            "padding": { "$ref": "#/$defs/areaPadding" },
+            "itemGap": { "type": "integer", "minimum": 0, "maximum": 40 },
+            "presentation": { "enum": ["labels", "icons"], "default": "labels" }
+          }
+        },
+        "contentArea": { "$ref": "#/$defs/paddedArea" },
+        "mediaArea": { "$ref": "#/$defs/paddedArea" },
+        "bottomMediaBar": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "padding": { "$ref": "#/$defs/areaPadding" },
+            "itemGap": { "type": "integer", "minimum": 0, "maximum": 40 }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "regionGap": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "horizontal": {
           "type": "integer",
           "minimum": 0,
           "maximum": 40
         },
-        "screenCorner": {
-          "enum": ["circle", "squircle", "sqircle"],
-          "default": "circle",
-          "description": "Global corner shape for the display frame and rounded UI components. Sqircle is an alias for squircle."
-        },
-        "screenCornerRadius": {
+        "vertical": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 240,
-          "default": 0,
-          "description": "Outer display frame radius in 800 by 480 design units."
-        },
-        "gap": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 16
-        },
-        "buttonHeight": {
-          "type": "integer",
-          "minimum": 24,
-          "maximum": 50
+          "maximum": 40
         }
+      }
+    },
+    "areaPadding": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "top": { "type": "integer", "minimum": 0, "maximum": 40 },
+        "right": { "type": "integer", "minimum": 0, "maximum": 40 },
+        "bottom": { "type": "integer", "minimum": 0, "maximum": 40 },
+        "left": { "type": "integer", "minimum": 0, "maximum": 40 },
+        "horizontal": { "type": "integer", "minimum": 0, "maximum": 40 },
+        "vertical": { "type": "integer", "minimum": 0, "maximum": 40 }
+      }
+    },
+    "framePadding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["horizontal", "vertical"],
+      "properties": {
+        "horizontal": { "type": "integer", "minimum": 0, "maximum": 40 },
+        "vertical": { "type": "integer", "minimum": 0, "maximum": 40 }
+      }
+    },
+    "sideMenuPadding": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "vertical": { "type": "integer", "minimum": 0, "maximum": 40 },
+        "left": { "type": "integer", "minimum": 0, "maximum": 40 },
+        "right": { "type": "integer", "minimum": 0, "maximum": 40 }
+      }
+    },
+    "paddedArea": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "padding": { "$ref": "#/$defs/areaPadding" }
       }
     }
   }

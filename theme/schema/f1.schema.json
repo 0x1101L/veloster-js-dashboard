@@ -47,32 +47,7 @@
                 "critical"
               ]
             },
-            "padding": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "top": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "right": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "bottom": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "left": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                }
-              }
-            },
+            "padding": {"$ref": "#/$defs/contentPadding"},
             "alignment": {
               "enum": [
                 "stretch",
@@ -123,32 +98,7 @@
                 "critical"
               ]
             },
-            "padding": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "top": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "right": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "bottom": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "left": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                }
-              }
-            },
+            "padding": {"$ref": "#/$defs/contentPadding"},
             "alignment": {
               "enum": [
                 "stretch",
@@ -199,32 +149,7 @@
                 "critical"
               ]
             },
-            "padding": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "top": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "right": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "bottom": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "left": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                }
-              }
-            },
+            "padding": {"$ref": "#/$defs/contentPadding"},
             "alignment": {
               "enum": [
                 "stretch",
@@ -275,32 +200,7 @@
                 "critical"
               ]
             },
-            "padding": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "top": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "right": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "bottom": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "left": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                }
-              }
-            },
+            "padding": {"$ref": "#/$defs/contentPadding"},
             "alignment": {
               "enum": [
                 "stretch",
@@ -351,32 +251,7 @@
                 "critical"
               ]
             },
-            "padding": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "top": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "right": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "bottom": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "left": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                }
-              }
-            },
+            "padding": {"$ref": "#/$defs/contentPadding"},
             "alignment": {
               "enum": [
                 "stretch",
@@ -427,32 +302,7 @@
                 "critical"
               ]
             },
-            "padding": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "top": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "right": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "bottom": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "left": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                }
-              }
-            },
+            "padding": {"$ref": "#/$defs/contentPadding"},
             "alignment": {
               "enum": [
                 "stretch",
@@ -503,32 +353,7 @@
                 "critical"
               ]
             },
-            "padding": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "top": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "right": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "bottom": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "left": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                }
-              }
-            },
+            "padding": {"$ref": "#/$defs/contentPadding"},
             "alignment": {
               "enum": [
                 "stretch",
@@ -579,32 +404,7 @@
                 "critical"
               ]
             },
-            "padding": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "top": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "right": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "bottom": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                },
-                "left": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 40
-                }
-              }
-            },
+            "padding": {"$ref": "#/$defs/contentPadding"},
             "alignment": {
               "enum": [
                 "stretch",
@@ -621,32 +421,6 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "padding": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "top": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 64
-            },
-            "right": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 64
-            },
-            "bottom": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 64
-            },
-            "left": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 64
-            }
-          }
-        },
         "alignment": {
           "enum": [
             "start",
@@ -673,21 +447,6 @@
           },
           "minItems": 1,
           "maxItems": 8
-        },
-        "inset": {
-          "type": "integer",
-          "minimum": 8,
-          "maximum": 24
-        },
-        "gap": {
-          "type": "integer",
-          "minimum": 6,
-          "maximum": 16
-        },
-        "padding": {
-          "type": "integer",
-          "minimum": 8,
-          "maximum": 16
         },
         "radius": {
           "type": "integer",
@@ -733,13 +492,22 @@
             "brake"
           ],
           "additionalProperties": false
+        },
+        "itemGap": {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 16
+        },
+        "padding": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
         }
       },
       "required": [
         "columns",
         "rowWeights",
-        "inset",
-        "gap",
+        "itemGap",
         "padding",
         "radius",
         "cells"
@@ -748,6 +516,16 @@
     }
   },
   "$defs": {
+    "contentPadding": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "top": { "type": "integer", "minimum": 0, "maximum": 40 },
+        "right": { "type": "integer", "minimum": 0, "maximum": 40 },
+        "bottom": { "type": "integer", "minimum": 0, "maximum": 40 },
+        "left": { "type": "integer", "minimum": 0, "maximum": 40 }
+      }
+    },
     "cell": {
       "type": "object",
       "properties": {

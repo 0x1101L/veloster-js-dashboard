@@ -78,6 +78,64 @@
           ]
         }
       }
+    },
+    "fontStyles": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "body": {
+          "$ref": "#/$defs/roleWeights"
+        },
+        "numeric": {
+          "$ref": "#/$defs/roleWeights"
+        },
+        "display": {
+          "$ref": "#/$defs/roleWeights"
+        }
+      }
+    },
+    "fallbackWeights": {
+      "type": "object",
+      "propertyNames": {
+        "enum": [
+          "400",
+          "500",
+          "600",
+          "700"
+        ]
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^fonts/[A-Za-z0-9_.-]+\\.(ttf|otf)$"
+      }
+    }
+  },
+  "$defs": {
+    "roleWeights": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "normal",
+        "emphasis"
+      ],
+      "properties": {
+        "normal": {
+          "enum": [
+            400,
+            500,
+            600,
+            700
+          ]
+        },
+        "emphasis": {
+          "enum": [
+            400,
+            500,
+            600,
+            700
+          ]
+        }
+      }
     }
   }
 }

@@ -3,59 +3,20 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "layout": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "columns": { "const": 5 },
-        "rows": { "const": 4 }
-      }
-    },
     "overview": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "columns": {
-          "const": 5
-        },
-        "rows": {
-          "const": 4
-        },
-        "padding": {
+        "grid": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "top": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 60
-            },
-            "right": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 60
-            },
-            "bottom": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 60
-            },
-            "left": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 60
-            }
-          }
-        },
-        "gapX": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 30
-        },
-        "gapY": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 30
+            "columns": { "const": 5 },
+            "rows": { "const": 4 },
+            "itemGapX": { "type": "integer", "minimum": 0, "maximum": 30 },
+            "itemGapY": { "type": "integer", "minimum": 0, "maximum": 30 }
+          },
+          "required": ["columns", "rows", "itemGapX", "itemGapY"]
         },
         "cards": {
           "type": "array",
@@ -110,32 +71,6 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "padding": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "top": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 64
-            },
-            "right": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 64
-            },
-            "bottom": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 64
-            },
-            "left": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 64
-            }
-          }
-        },
         "alignment": {
           "enum": [
             "start",
@@ -172,35 +107,17 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "top": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 24
-        },
-        "right": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 24
-        },
-        "bottom": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 24
-        },
-        "left": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 24
-        }
+        "top": { "type": "integer", "minimum": 0, "maximum": 24 },
+        "right": { "type": "integer", "minimum": 0, "maximum": 24 },
+        "bottom": { "type": "integer", "minimum": 0, "maximum": 24 },
+        "left": { "type": "integer", "minimum": 0, "maximum": 24 }
       }
     },
     "standardCard": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "padding": {
-          "$ref": "#/$defs/cardPadding"
-        },
+        "padding": { "$ref": "#/$defs/cardPadding" },
         "titleSize": {
           "type": "integer",
           "minimum": 8,
@@ -225,7 +142,8 @@
           "enum": [
             "topRight",
             "bottomLeft",
-            "bottomRight"
+            "bottomRight",
+            "valueRight"
           ]
         },
         "unitSize": {
@@ -259,9 +177,7 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "padding": {
-          "$ref": "#/$defs/cardPadding"
-        },
+        "padding": { "$ref": "#/$defs/cardPadding" },
         "titleSize": {
           "type": "integer",
           "minimum": 8,
@@ -313,9 +229,7 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "padding": {
-          "$ref": "#/$defs/cardPadding"
-        },
+        "padding": { "$ref": "#/$defs/cardPadding" },
         "titleSize": {
           "type": "integer",
           "minimum": 8,
@@ -362,9 +276,7 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "padding": {
-          "$ref": "#/$defs/cardPadding"
-        },
+        "padding": { "$ref": "#/$defs/cardPadding" },
         "titleSize": {
           "type": "integer",
           "minimum": 8,
@@ -401,9 +313,7 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "padding": {
-          "$ref": "#/$defs/cardPadding"
-        },
+        "padding": { "$ref": "#/$defs/cardPadding" },
         "titleSize": {
           "type": "integer",
           "minimum": 8,

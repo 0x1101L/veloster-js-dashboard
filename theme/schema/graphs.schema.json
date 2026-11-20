@@ -7,32 +7,6 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "padding": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "top": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 64
-            },
-            "right": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 64
-            },
-            "bottom": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 64
-            },
-            "left": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 64
-            }
-          }
-        },
         "alignment": {
           "enum": [
             "start",

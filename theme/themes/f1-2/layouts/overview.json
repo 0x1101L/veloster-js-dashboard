@@ -2,14 +2,6 @@
   "overview": {
     "columns": 3,
     "rows": 3,
-    "padding": {
-      "top": 4,
-      "right": 8,
-      "bottom": 6,
-      "left": 10
-    },
-    "gapX": 8,
-    "gapY": 6,
     "cards": [
       {
         "id": "speed",
@@ -101,6 +93,8 @@
         "columnSpan": 1,
         "rowSpan": 1
       }
-    ]
+    ],
+    "itemGapX": 8,
+    "itemGapY": 6
   }
 }
